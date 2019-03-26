@@ -1,0 +1,36 @@
+# confdir=../../
+# include ${confdir}/arch/make_config
+####
+CC=mpicc
+FC=mpif90
+
+CFLAGS  = -fast -mcmodel=medium -mp -tp haswel -m64 -fastsse  
+FFLAGS  = -fast -mcmodel=medium -mp -tp haswel -m64 -fastsse  -cpp
+
+MKLROOT    =/home/app/intel/compilers_and_libraries_2017/linux/mkl
+LD_LAPACK  = \
+ -L${MKLROOT}/lib/intel64 \
+  -lmkl_intel_lp64 -lmkl_sequential -lmkl_core 
+
+####
+
+INC = -I../src/
+LDFLAGS = ${LD_LAPACK} ${LD_MPI} ../src/parcel_sparse.a  \
+	-L/home/app/pgi/linux86-64/17.10/lib \
+	-lpgf90rtl -lpgf90 -lpgf90_rpm1 -lpgf902 -lpgftnrtl -lpgmp -lpgc \
+	-L /home/app/openmpi/1.10.6/pgi/lib \
+	-lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi -lopen-rte -lopen-pal
+
+PROG1    = run
+PROBLEM_FILE=problem.o 
+OBJS1 = ${PROBLEM_FILE} C_wrapper.o main.o
+
+%.o : %.c
+	${CC} -c ${CFLAGS} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${INC} $<
+all : ${OBJS1} 
+	${CC} -o ${PROG1} ${CFLAGS} ${OBJS1} ${LDFLAGS} 
+clean :
+	rm ${PROG1} ${PROG2} *o *mod *~
+

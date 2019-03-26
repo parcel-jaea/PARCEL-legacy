@@ -1,0 +1,19 @@
+CC     = gcc
+FC     = mpif90
+
+CFLAGS  = -O3 
+FFLAGS  = -O3 -cpp -fopenmp -mavx2  -m64
+FP_MODE =
+
+INCLUDEDIR =
+LD_MPI     = 
+
+MKLROOT    =/home/app/intel/compilers_and_libraries_2017/linux/mkl
+LD_LAPACK  = \
+ -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
+ -lmkl_gf_lp64 -lmkl_sequential -lmkl_core 
+
+
+
+
+# FDEFINE = -DPARCEL_INT8

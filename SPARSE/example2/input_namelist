@@ -1,0 +1,17 @@
+&input
+  ityp_eq                = 1       ! Matrix ::  (1:Symmetric,2:非Symmetric)
+  gnx                    = 40      ! Problem size in x
+  gny                    = 40      ! Problem size in y
+  itrmax                 = 100     ! Maximum number of iterations 
+  rtolmax                = 1.0d-9  ! Convergence criterion (Relative error) ||b-Ax||/||b||  
+  abstolmax              = 0.0d0   ! Convergence criterion (Absolute error) ||b-Ax|| 
+  ipreflag               = 2       ! Preconditioner :: (0:None,1:Point Jacobi,2:Block Jacobi,3:Additive Schwarz)
+  addL                   = 100     ! Overlapping width in Additive Schwarz 
+  iflagAS                = 4       ! Averaging method in Additive Schwarz :: (1:BASIC,2:RESTRICT,3:INTERPOLATE,4:NONE)
+  ILU_method             = 1       ! Incomplete LU factorization :: (0:ILU(0),1:D-ILU1,2:D-ILU2)
+  iovlflag               = 0       ! Communication overlap in SpMV :: (0:None,1:Single step,2:Multiple steps)
+  CAGMRES_sstep          = 5       ! Communication avoiding steps in CA-GMRES
+  CAGMRES_tstep          = 10      ! Number of outer iterations in CA-GMRES  
+  CAGMRES_basis          = 0       ! Basis vector in CA-GMRES :: (0:Monomial basis,1:Newton basis)
+  CAGMRES_QRflag         = 3       ! QR factorization in CA-GMRES :: (1:MGS,2:CGS,3:TSQR,4:Cholesky QR,5:Cholesky QR2)
+/

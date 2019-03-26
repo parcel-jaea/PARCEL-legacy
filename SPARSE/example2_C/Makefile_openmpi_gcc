@@ -1,0 +1,31 @@
+# confdir=../../
+# include ${confdir}/arch/make_config
+CC=mpicc
+FC=mpif90
+
+CFLAGS  = -O3 -lm -fopenmp 
+FFLAGS  = -O3 -cpp -fopenmp -mavx2  -m64
+
+MKLROOT    =/home/app/intel/compilers_and_libraries_2017/linux/mkl
+LD_LAPACK  = \
+ -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
+ -lmkl_gf_lp64 -lmkl_sequential -lmkl_core 
+####
+
+INC = -I../src/
+LDFLAGS = ${LD_LAPACK} ${LD_MPI} ../src/parcel_sparse.a  \
+	-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5 -lgfortran \
+	-L/home/app/openmpi/3.0.0/gnu/lib  -lmpi_mpifh
+PROG1    = run
+PROBLEM_FILE=problem.o 
+OBJS1 = ${PROBLEM_FILE} C_wrapper.o main.o
+
+%.o : %.c
+	${CC} -c ${CFLAGS} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${INC} $<
+all : ${OBJS1} 
+	${CC} -o ${PROG1} ${CFLAGS} ${OBJS1} ${LDFLAGS} 
+clean :
+	rm ${PROG1} ${PROG2} *o *mod *~
+

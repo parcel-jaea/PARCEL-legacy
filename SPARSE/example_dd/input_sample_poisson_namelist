@@ -1,0 +1,17 @@
+&input
+  ityp_eq             = 6
+  npoints_along_x     = 20
+  MAX_NITER           = 40
+  TOL                 = 1.0d-20
+  ipre                = 2
+  ilumethod           = -9
+  ch_mode             = 2
+  matA_format         = 2
+  ityp_solver         = 1
+  nas                 = 1
+  iflagAS             = 4
+  PRECISION_A	         = 2
+  PRECISION_b	         = 2 
+  PRECISION_x	         = 2
+  PRECISION_PRECONDITION = 2
+/
