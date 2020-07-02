@@ -604,11 +604,14 @@ subroutine ddKSP_pBiCG( pbicg &
 #if 0
   ! ------
   ! 真の残差を確認
-  call calc_res(pbicg,x,b,r)
-  call calc_dot(n,icomm,r,r,c1)
-  rnorm=sqrt(c1)
+  !call calc_res(pbicg,x,b,r)
+  !call calc_dot(n,icomm,r,r,c1)
+  call ddcalc_res(pbicg,x_hi,x_lo,b_hi,b_lo,r_hi,r_lo)
+  call ddcalc_dot(n,icomm,r_hi,r_lo,r_hi,r_lo,c1_hi,c1_lo)
+  call dd_sqrt(c1_hi,c1_lo,c1_hi,c1_lo)
+
   if(myrank.eq.0)then
-     write(*,*)"@ true res @",rnorm,rnorm/bnorm
+     write(*,*)"@ true res @",rnorm_hi,rnorm_hi/bnorm_hi
   endif
 #endif
   call xcpy(n,x_hi,pbicg%x_hi)

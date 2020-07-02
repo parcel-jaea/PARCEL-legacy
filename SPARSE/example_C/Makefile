@@ -12,7 +12,7 @@ LD_LAPACK  = -mkl
 
 INC = -I../src/
 LDFLAGS = ${LD_LAPACK} ${LD_MPI} ../src/parcel_sparse.a  \
-	/home/app/intel/compilers_and_libraries_2018.3.222/linux/compiler/lib/intel64/libifcore.a 
+	/apps/intel/2019.5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin/libifcore.a 
 PROG1    = run
 PROBLEM_FILE=problem.o 
 OBJS1 = ${PROBLEM_FILE} C_wrapper.o main.o

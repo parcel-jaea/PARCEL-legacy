@@ -29,8 +29,8 @@ program main
 !                       4: glued Wilkinson matrix
 !                       5: (reduced) Frank matrix
 !
-!     TOL          : Convergence tolerance
-!     IPRE         : preconditioning option
+!     rtolmax          : Convergence tolerance
+!     ipreflag         : preconditioning option
 !                  :    0: without
 !                       1: point Jacobi
 !                       2: block Jacobi
@@ -56,16 +56,15 @@ program main
   integer MAX_NDIM, NNZR, MAX_NITER
 !
 ! -- Parameters for the problems ----
-  integer ndim, ityp_eq, ityp_solver, ipre, nas
+  integer ndim, ityp_eq, ityp_solver, ipreflag, addL
   integer npoints_along_x
-  integer ilumethod, nres, restart
+  integer ILU_method, nres, restart
   integer blocksize, nrepeat
-  real*8  glue, TOL
+  real*8  glue, rtolmax
 
 ! -- info of matrix
   integer :: matA_format = 1               ! 1: CRS,   2:  DIA
   logical :: matA_is_symmetric = .false.
-  integer ILU_method
   integer iflagAS
   integer GMRES_GSflag
   integer CBCG_kstep
@@ -121,20 +120,27 @@ program main
   integer ierr, niter, iret
   integer I, num, j, is1, ie1
   real*8, allocatable :: Y(:), X_tmp(:)
+  !character(len=10) ::argc
+  !character(len=10) :: set_file_num
+  character(len=70) :: file_name
+  !integer imode_flg,input_num
 
-  integer ch_mode
+  integer iovlflag
+
+  !call getarg(1,argc)
+  !set_file_num=trim(argc)
 
   namelist/input/ &
        ityp_eq, &
        npoints_along_x, &
        MAX_NITER, &
-       TOL, &
-       ipre, &
-       ilumethod, &
-       ch_mode, &
+       rtolmax, &
+       ipreflag, &
+       ILU_method, &
+       iovlflag, &
        matA_format, &
        ityp_solver, &
-       nas, &
+       addL, &
        iflagAS, &
        GMRES_GSflag, &
        restart, &
@@ -173,13 +179,13 @@ program main
   ityp_eq             = 1
   npoints_along_x     = 10
   MAX_NITER           = 100
-  TOL                 = 1.0-8
-  ipre                = 0
-  ilumethod           = 1
-  ch_mode             = 1
+  rtolmax                 = 1.0-8
+  ipreflag                = 0
+  ILU_method           = 1
+  iovlflag             = 1
   matA_format         = 1
   ityp_solver         = 3
-  nas                 = 0
+  addL                 = 0
   iflagAS             = 4
   GMRES_GSflag        = 1
   restart             = 8
@@ -196,7 +202,20 @@ program main
   CAGMRES_QRflag      = 3
 ! -----
 !  if ( myproc == 0 ) then
-  open(33,file='input_sample_poisson_namelist')
+
+  !read(set_file_num,*,iostat=imode_flg) input_num
+  !if (imode_flg==0) then
+  !  if ((input_num>=1).and.(input_num<=35)) then
+  !    file_name='./templete/templete_input/input_sample_poisson_namelist'//set_file_num
+  !  else
+  !    print *,"invalid input file number"
+  !    stop
+  !  endif
+  !else
+    file_name='./input_sample_poisson_namelist'
+  !endif
+  !open(33,file='input_sample_poisson_namelist')
+  open(33,file=file_name)
   read(33,nml=input)
   close(33)
   select case( ityp_eq )
@@ -209,7 +228,6 @@ program main
     end select
 !  endif
   num_loops = 1
-  ILU_method=ilumethod
 
 #else
   if ( myproc == 0 ) then
@@ -221,30 +239,30 @@ program main
        &                            blocksize, nrepeat, glue, NNZR )
 
      call set_max_iterations( MAX_NITER )
-     call set_torelance( TOL )
-     call set_preconditioner_type( ipre )
+     call set_torelance( rtolmax )
+     call set_preconditioner_type( ipreflag )
 
-     call set_ilumthod_for_precon( ipre, ilumethod, nas )
+     call set_ilumthod_for_precon( ipreflag, ILU_method, addL )
 !
      call set_solver_type( ityp_solver )
      call set_restart_param( ityp_solver, restart )
 
      call set_matrix_format( matA_format )
-!!!     call set_lowerbit_param( iprec_matA, iprec_vecB, iprec_precon )
-     call set_communication_hiding( ch_mode )
+!!!     call set_lowerbit_param( ipreflagc_matA, ipreflagc_vecB, ipreflagc_precon )
+     call set_communication_hiding( iovlflag )
 
 !!     read(*,*) num_loops
      num_loops = 1
   end if
   call broadcast_params( icomm, ityp_eq, npoints_along_x, ndim, &
        &                 blocksize, nrepeat, glue, &
-       &                 MAX_NITER, TOL, ipre, ilumethod, nas, ityp_solver, restart, &
-       &                 NNZR, matA_format, ch_mode)
+       &                 MAX_NITER, rtolmax, ipreflag, ILU_method, addL, ityp_solver, restart, &
+       &                 NNZR, matA_format, iovlflag)
 !       &                 NNZR, matA_format )
   call mpi_bcast( num_loops, 1, mpi_integer, 0, icomm, ierr )
 #endif
 ! -------------------------------
-!  call JAERI_SET_LOCAL_ILU_METHOD( ilumethod )
+!  call JAERI_SET_LOCAL_ILU_METHOD( ILU_method )
 
 !  call alloc_arrays( ndim, NNZR, npes, num_nonzero, nres )
 
@@ -333,7 +351,7 @@ program main
   end select
 
 ! -----------------------
-  niter = MAX_NITER;   eps = TOL
+  niter = MAX_NITER;   eps = rtolmax
 
   call MPI_Barrier( icomm, ierr)
   
@@ -365,17 +383,24 @@ program main
         X(j) = X_tmp(j)
      End Do
 !$omp end parallel do
-     niter = max_niter;     eps = tol
+     niter = max_niter;     eps = rtolmax
 ! -------------------------------------------
 !      X(is1:ie1)=0.0d0
 !      vecB(is1:ie1)=-1.0d0
 
+  if ((ipreflag==3) .and.(ILU_method==0)) then
+    write(*,*)"Error:: Additive schwartz doesn't support ILU precondition."
+    stop
+  endif
+  if ((ipreflag==3).and.(addL==0)) then
+    ipreflag=2
+  endif
 ! ----------
 ! Solving the problem here.
 ! ----------
      select case( ityp_solver )
      case(1)
-! ---------
+!c ---------
 !c  CG
 !c ---------
         if ( matA_format == 1 ) then         ! CRS
@@ -384,20 +409,20 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim,num_nonzero,istart, &
                 matA_cmpr,matA_rowpointer_cmpr,matA_colindex_cmpr, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret )
+                iovlflag, iret )
         else                                 ! DIA
            call parcel_dcg_dia( &
                 icomm,&
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim, istart, &
                 matA_dia, matA_ioff_dia, nnd, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret )
+                iovlflag, iret )
         endif
      case(2)
 
@@ -410,20 +435,20 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim,num_nonzero,istart, &
                 matA_cmpr,matA_rowpointer_cmpr,matA_colindex_cmpr, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret )
+                iovlflag, iret )
         else                                 ! DIA
            call parcel_dbicgstab_dia( &
                 icomm,&
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim, istart, &
                 matA_dia, matA_ioff_dia, nnd, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret )
+                iovlflag, iret )
         endif
      case(3)
 !c ---------
@@ -435,10 +460,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim,num_nonzero,istart, &
                 matA_cmpr,matA_rowpointer_cmpr,matA_colindex_cmpr, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 restart,GMRES_GSflag)
         else
            call parcel_dgmres_dia( &
@@ -446,10 +471,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim, istart, &
                 matA_dia, matA_ioff_dia, nnd, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 restart,GMRES_GSflag)
         endif
      case(4)
@@ -462,10 +487,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim,num_nonzero,istart, &
                 matA_cmpr,matA_rowpointer_cmpr,matA_colindex_cmpr, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 CAGMRES_sstep,&
                 CAGMRES_tstep,&
                 CAGMRES_basis,&
@@ -477,10 +502,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim, istart, &
                 matA_dia, matA_ioff_dia, nnd, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 CAGMRES_sstep,&
                 CAGMRES_tstep,&
                 CAGMRES_basis,&
@@ -498,10 +523,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim,num_nonzero,istart, &
                 matA_cmpr,matA_rowpointer_cmpr,matA_colindex_cmpr, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 CBCG_kstep,CBCG_Eigenflag,power_method_itrmax, &
                 CAARNOLDI_sstep,CAARNOLDI_tstep, &
                 CAARNOLDI_basis,CAARNOLDI_QRflag &
@@ -512,10 +537,10 @@ program main
                 X(is1:ie1),vecB(is1:ie1),  &
                 ndist,ndim, istart, &
                 matA_dia, matA_ioff_dia, nnd, &
-                ipre,ILU_method,nas,iflagAS, &
+                ipreflag,ILU_method,addL,iflagAS, &
                 niter,eps,&
                 his_resid,&
-                ch_mode, iret,&
+                iovlflag, iret,&
                 CBCG_kstep,CBCG_Eigenflag,power_method_itrmax, &
                 CAARNOLDI_sstep,CAARNOLDI_tstep, &
                 CAARNOLDI_basis,CAARNOLDI_QRflag &
@@ -561,10 +586,9 @@ program main
      caltim = caltime -caltims;   tottim = tottime -tottims
 
      call print_time
-!     call calc_diffrence_from_exact_sol( ndim, X, X_exact )
+     !call calc_diffrence_from_exact_sol( ndim, X, X_exact )
 
   end if
-
   call mpi_barrier( icomm,ierr )
   call calc_diffrence_from_exact_sol_lm( ndim, X, X_exact, is1, ie1, myproc, icomm)
   call mpi_barrier( icomm,ierr )
@@ -800,26 +824,26 @@ contains
 
   end subroutine set_max_iterations
 
-  subroutine set_torelance( TOL )
-    real*8, intent(out) :: TOL
+  subroutine set_torelance( rtolmax )
+    real*8, intent(out) :: rtolmax
 !
     real*8 c1
 !
     write(*,*) 'Convergence tolerance ( 10**n ); specify n '
     read(*,*) c1
-    TOL = 10.0**c1
+    rtolmax = 10.0**c1
 
-    write(*,*) 'TOL is set to ',TOL
+    write(*,*) 'rtolmax is set to ',rtolmax
 
   end subroutine set_torelance
 
-  subroutine set_preconditioner_type( ipre )
-    integer, intent(out) :: ipre
+  subroutine set_preconditioner_type( ipreflag )
+    integer, intent(out) :: ipreflag
 
     write(*,*) 'Preconditioner Type(0:None 1:Jacobi 2:Additive Schwarz) ?'
-    read(*,*) IPRE
+    read(*,*) ipreflag
 
-    select case( ipre )
+    select case( ipreflag )
     case(0)
        write(*,*) 'Precon is not used.'
     case(1)
@@ -834,17 +858,17 @@ contains
 
   end subroutine set_preconditioner_type
 
-  subroutine  set_ilumthod_for_precon( ipre, ilumethod, nas )
-    integer, intent(in) :: ipre
-    integer, intent(out) :: ilumethod, nas
+  subroutine  set_ilumthod_for_precon( ipreflag, ILU_method, addL )
+    integer, intent(in) :: ipreflag
+    integer, intent(out) :: ILU_method, addL
     
-    nas = 0;     ilumethod = 1
-    if ( ipre == 3 ) then
-       write(*,*) 'ilumethod, NAS ? '
-       read(*,*) ilumethod, nas
+    addL = 0;     ILU_method = 1
+    if ( ipreflag == 3 ) then
+       write(*,*) 'ILU_method, addL ? '
+       read(*,*) ILU_method, addL
        
-       write(*,*) 'ilumethod = ', ilumethod
-       write(*,*) 'nas  = ', nas
+       write(*,*) 'ILU_method = ', ILU_method
+       write(*,*) 'addL  = ', addL
     else
        read(*,*)
     endif
@@ -893,13 +917,13 @@ contains
 
   end subroutine set_matrix_format
 
-  subroutine set_communication_hiding( ch_mode )
-    integer, intent(out) :: ch_mode
+  subroutine set_communication_hiding( iovlflag )
+    integer, intent(out) :: iovlflag
 !
     write(*,*) 'Communication hiding mode ( 0:none 1: once, 2: each process ) ?'
-    read(*,*) ch_mode
+    read(*,*) iovlflag
 !
-    select case( ch_mode )
+    select case( iovlflag )
     case(0)
        write(*,*) 'non Communication Hiding or single process'
     case(1)
@@ -928,15 +952,15 @@ contains
 
   subroutine broadcast_params( icomm, ityp_eq, npoints_along_x, ndim, &
        &                       blocksize, nrepeat, glue, &
-       &                       MAX_NITER, TOL, ipre, ilumethod, nas, &
+       &                       MAX_NITER, rtolmax, ipreflag, ILU_method, addL, &
        &                       ityp_solver, restart, NNZR, &
-       &                       matA_format, ch_mode)
+       &                       matA_format, iovlflag)
     integer, intent(in) :: icomm, ityp_eq,  npoints_along_x, ndim
     integer, intent(in) :: blocksize, nrepeat, MAX_NITER, NNZR
-    integer, intent(in) :: ipre, ilumethod, nas, ityp_solver, restart
-    real*8, intent(in) :: TOL, glue
+    integer, intent(in) :: ipreflag, ILU_method, addL, ityp_solver, restart
+    real*8, intent(in) :: rtolmax, glue
     integer, intent(in) :: matA_format
-    integer, intent(in) :: ch_mode
+    integer, intent(in) :: iovlflag
 
     integer info
 !
@@ -951,12 +975,12 @@ contains
     call mpi_bcast( MAX_NITER, 1, mpi_integer, 0, icomm, info )
 
     call mpi_bcast( glue, 1, mpi_double_precision, 0, icomm, info )
-    call mpi_bcast( TOL, 1, mpi_double_precision, 0, icomm, info )
+    call mpi_bcast( rtolmax, 1, mpi_double_precision, 0, icomm, info )
 
-    call mpi_bcast( IPRE, 1, mpi_integer, 0, icomm,  info )
+    call mpi_bcast( ipreflag, 1, mpi_integer, 0, icomm,  info )
 
-    call mpi_bcast( ilumethod, 1, mpi_integer, 0, icomm, info )
-    call mpi_bcast( nas, 1, mpi_integer, 0, icomm, info )
+    call mpi_bcast( ILU_method, 1, mpi_integer, 0, icomm, info )
+    call mpi_bcast( addL, 1, mpi_integer, 0, icomm, info )
     call mpi_bcast( ityp_solver, 1, mpi_integer, 0, icomm, info )
     call mpi_bcast( restart, 1, mpi_integer, 0, icomm, info )
 
@@ -964,7 +988,7 @@ contains
 !    call mpi_bcast( seed, 1, mpi_integer, 0, icomm, info )
 
    call mpi_bcast( matA_format, 1, mpi_integer, 0, icomm, info )
-   call mpi_bcast( ch_mode, 1, mpi_integer, 0, icomm, info )
+   call mpi_bcast( iovlflag, 1, mpi_integer, 0, icomm, info )
 
   end subroutine broadcast_params
 
@@ -1004,10 +1028,10 @@ contains
     
     write(*, *)
     write(*,'(2x,a)') '--- conditions ---'
-    write(*,'(2x,a,i1)')      'preconditioner:        ipre=', ipre
+    write(*,'(2x,a,i1)')      'preconditioner:        ipreflag=', ipreflag
     
-    if ( ipre == 3 ) then
-       write(*,'(2x,a,i5)') 'overlap of as:         nas=', nas
+    if ( ipreflag == 3 ) then
+       write(*,'(2x,a,i5)') 'overlap of as:         addL=', addL
     endif
     
     write(*,'(2x,a,i6)')  'max # of iterations:   MAX_NITER =', MAX_NITER
@@ -1016,7 +1040,7 @@ contains
        write(*,'(2x,a,i3)') 'restart number:      restart=',restart
     endif
     
-    write(*,'(2x,a,1pe15.6)') 'convergence condition: TOL=', TOL
+    write(*,'(2x,a,1pe15.6)') 'convergence condition: rtolmax=', rtolmax
     write(*, *)
     write(*,'(2x,a)') '--- results ---'
     write(*,'(2x,a,i3)')  'return code:           iret=', iret

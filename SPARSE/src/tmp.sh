@@ -1,0 +1,13 @@
+
+rm solve_ilu_ddm__genmod.f90
+rm set_as_vec_ddm__genmod.f90
+rm set_as_region_ddm__genmod.f90
+rm set_as_method_type_ddm__genmod.f90
+rm set_as_ddm__genmod.f90
+rm get_as_vec_ddm__genmod.f90
+rm get_as_region_ddm__genmod.f90
+rm free_as_region_ddm__genmod.f90
+rm as_dilu_ddm__genmod.f90
+rm additiveschwarz_ilu_ddm__genmod.f90
+rm additiveschwarz_ddm__genmod.f90
+

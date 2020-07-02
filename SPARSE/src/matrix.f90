@@ -1212,7 +1212,9 @@ contains
     integer myrank 
     integer irank,irank_start
     integer(kind=intType) kkmax,kmax,kmin
+    real*8 stime,etime
 
+    stime=mpi_wtime()
     n      = prm%n
     nnd    = prm%nnd
     istart = prm%istart
@@ -1256,8 +1258,9 @@ contains
        enddo
 
     enddo
-
     !$OMP END PARALLEL
+    etime=mpi_wtime()
+    !write(*,*)"init_matvec_time=",etime-stime,"[s]"
 
     !    stop
   end subroutine init_MatVec_dia
@@ -2157,13 +2160,13 @@ contains
     real*8 Dinv(n_startth:n_endth)
     integer ILU_method
 
-    real*8 D(n_startth:n_endth)
+    real*8 ,allocatable::D(:)
     integer(kind=intType) i,j,k
     integer(kind=intType) Row,Col
 
     integer(kind=intType) kr
     integer(kind=intType) jr,rCol,rRow
-    integer(kind=intType) jstart
+    integer(kind=intType) jstart,kk
 
     ! -----
     ! D-ILU分解
@@ -2173,12 +2176,36 @@ contains
     ! 条件2 行内の要素和が一致 :: D(i,i) = A(i,i) - Sum[j<i] Sum[k>j] A(i,j) D(j,j)^-1 A(j,k)
     ! -----
     !    write(*,*)"n_startth,n_endth",n_startth,n_endth
+    
+    allocate(D(n_startth:n_endth))
+    kk=0
+    do k=n_startth,n_endth
+      do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+        if(crsMat%crsCol(j)<istart_th) then
+          cycle
+        endif
+        if(iend_th<crsMat%crsCol(j)) then
+          cycle
+        endif
+        Col=crsMat%crsCol(j)-istart+1
+        if (Col .eq.k) then
+          kk=kk+1
+          exit
+        endif
+      enddo
+    enddo
+    if (kk/=(n_endth-n_startth+1)) then
+       write(*,*)"Error::DILU--Not found non zero in Diagonal element."
+       stop
+    endif
+
+    
     do k=n_startth,n_endth
        !       Row=k-1+istart_th
        Row=k-n_startth+istart_th
        !       write(*,*)"k=",k
-       D(k)=0.0d0
        jstart=-1
+       kk=-1
        do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
           if( crsMat%crsCol(j)<istart_th ) then
              cycle
@@ -2197,18 +2224,16 @@ contains
           ! -----
           !          if(k.eq.Col)then
           !          write(*,*)"k =",k,Col
-          if(k<=Col)then
+          if(k/=Col)then
+            cycle
+          endif
 
              ! -----
              !@ @! 行列の対称位置に対して値があれば総和を計算する
              ! 下側部分を探査する
 
              ! 対角要素による初期化
-             if(k.eq.Col)then
-                D(k)=crsMat%crsA(j) 
-             else
-                D(k)=0.0d0
-             endif
+             D(k)=crsMat%crsA(j)
              ! -----
              ! jは対角部分より大きいので -1
              ! 下側列の探査
@@ -2224,7 +2249,7 @@ contains
                       cycle
                    endif
                    if( iend_th<crsMat%crsCol(i) )then
-                      exit
+                      cycle
                    endif
                    ! -----
                    ! 対角ブロック
@@ -2233,41 +2258,28 @@ contains
                    if(ILU_method.eq.KSP_PRECONDITION_ILUD)then
                       ! 対角成分が一致
                       if(k.eq.rCol)then
-                         if(D(kr).eq.0.0d0)then
-                            D(k)=D(k)-crsMat%crsA(jr)*crsMat%crsA(i)/1.0d-300
-                         else
-                            D(k)=D(k)-crsMat%crsA(jr)*crsMat%crsA(i)/D(kr)
-                         endif
+                         D(k)=D(k)-crsMat%crsA(jr)*crsMat%crsA(i)/D(kr)
                          exit
                       endif
                    else
                       ! 行内の要素和が一致
                       if(kr<rCol)then
-                         if(D(kr).eq.0.0d0)then
-                            D(k)=D(k)-crsMat%crsA(jr)*crsMat%crsA(i)/1.0d-300
-                         else
                             D(k)=D(k)-crsMat%crsA(jr)*crsMat%crsA(i)/D(kr)
-                         endif
                       endif
                    endif
 
                 enddo
              enddo
              exit
-          endif
 
        enddo
     enddo
 
     ! endif
     do k=n_startth,n_endth
-       if(D(k).eq.0.0d0)then
-          Dinv(k)=1.0d0/1.0d-300
-       else
-          Dinv(k)=1.0d0/D(k)
-       endif
+      Dinv(k)=1.0d0/D(k)
     enddo
-
+    deallocate(D)
   end subroutine DILU_DInv_crs
 
   subroutine DILU_DInv_dia( &
@@ -2288,9 +2300,9 @@ contains
     integer(kind=intType) istart_th,iend_th
     real*8 Dinv(n_startth:n_endth)
     integer ILU_method
-    integer(kind=intType) n,nnd
+    integer(kind=intType) n,nnd,nnd_offset0,kk
 
-    real*8 D(n_startth:n_endth)
+    real*8,allocatable::D(:)
     integer(kind=intType) i,j,k
     integer(kind=intType) Row,Col,gCol
 
@@ -2307,10 +2319,32 @@ contains
     ! 条件2 行内の要素和が一致 :: D(i,i) = A(i,i) - Sum[j<i] Sum[k>j] A(i,j) D(j,j)^-1 A(j,k)
     ! -----
 
+    allocate(D(n_startth:n_endth))
+    nnd_offset0=-1
+    do j=1,nnd
+       if(diaMat%offset(j)==0) then
+          nnd_offset0=j
+       endif
+    enddo
+    
+    if (nnd_offset0==-1) then
+       write(*,*)"Error:: DILU--There is no diagonal element."
+       stop
+    endif
+    
+    kk=-1
+    do k=n_startth,n_endth
+       if(diaMat%diaA(k+(nnd_offset0-1)*n)==0.0) then
+         write(*,*)"Error:: DILU--It's lack of diagonal element."
+         stop
+       endif
+    enddo
+    
+
     do k=n_startth,n_endth
        Row=k-n_startth+istart_th
-       D(k)=0.0d0
        jstart=-1
+       D(k)=diaMat%diaA(k+(nnd_offset0-1)*n)
        do j=1,nnd
           gCol = k-1+istart + diaMat%offset(j)
           if( gCol<istart_th )then
@@ -2320,36 +2354,26 @@ contains
              cycle
           endif
           Col=k + diaMat%offset(j)  
-
-          if(jstart.eq.-1)then
              ! 対角ブロックの開始位置
              jstart=j
-          endif
-          if(k<=Col)then
              ! -----
              ! 行列の対称位置に対して値があれば総和を計算する
              ! 下側部分を探査する
 
-             if(k.eq.Col)then
-                ! 対角要素による初期化
-                D(k)=diaMat%diaA(k+(j-1)*n) 
-             else
-                D(k)=0.0d0
-             endif
 
              ! write(*,*)"Row = ",Row
              ! -----
              ! 下側列の探査
-             do jr=jstart,j-1
+             do jr=jstart,nnd_offset0-1
                 Col=diaMat%offset(jr)+k
                 kr=Col
                 !                write(*,*)"Lower -- > Row,Col = ",kr,Col
                 ! 上側行(kr行)の探査
-                do i=1,nnd
+                do i=nnd_offset0+1,nnd
                    grCol = kr-1+istart+diaMat%offset(i)
-                   if( grCol<istart_th ) then
-                      cycle
-                   endif
+                   !if( grCol<istart_th ) then
+                   !   cycle
+                   !endif
                    if( iend_th<grCol )then
                       !                      cycle
                       exit
@@ -2364,47 +2388,30 @@ contains
                          ! 行と列の転置位置を掛ける
                          ! kr行 k列
                          !  k行kr列
-                         if(D(kr).eq.0.0d0)then
-                            D(k)=D(k) - &
-                                 diaMat%diaA( kr + (i-1)  * n ) * &
-                                 diaMat%diaA( k  + (jr-1) * n )   / 1.0d-300
-                         else
                             D(k)=D(k) - &
                                  diaMat%diaA( kr + (i-1)  * n ) * &
                                  diaMat%diaA( k  + (jr-1) * n )   / D(kr)
-                         endif
                          exit
                       endif
                    else
                       ! 行内の要素和が一致
                       if(kr<rCol)then
-                         if(D(kr).eq.0.0d0)then
-                            D(k)=D(k) - &
-                                 diaMat%diaA( kr + (i-1)  * n ) * &
-                                 diaMat%diaA( k  + (jr-1) * n )   /1.0d-300
-                         else
                             D(k)=D(k) - &
                                  diaMat%diaA( kr + (i-1)  * n ) * &
                                  diaMat%diaA( k  + (jr-1) * n )   / D(kr)
-                         endif
                       endif
                    endif
 
                 enddo
              enddo
              exit
-          endif
        enddo
     enddo
 
-    ! endif
     do k=n_startth,n_endth
-       if(D(k).eq.0.0d0)then
-          Dinv(k)=1.0d0/1.0d0-300
-       else
-          Dinv(k)=1.0d0/D(k)
-       endif
+      Dinv(k)=1.0d0/D(k)
     enddo
+    deallocate(D)
     ! stop
   end subroutine DILU_DInv_dia
 
@@ -5230,6 +5237,74 @@ contains
 
   end subroutine get_nnd_crs
 
+  subroutine get_nnd_crs_without_sort(&
+           diaMat,n,nnz,crsCol,crsRow,istart,iend,nnd)
+    use matrix
+    implicit none
+    type(DIA_Mat) :: diaMat
+    integer(kind=intType) n
+    integer(kind=intType) nnz
+    integer(kind=intType) crsCol(nnz)
+    integer(kind=intType) crsRow(n+1)
+    integer(kind=intType) istart
+    integer(kind=intType) iend
+
+    integer(kind=intType) nnd
+  
+    integer(kind=intType) i, j, icol, irow, itmp
+    integer(kind=intType),allocatable::Flag(:)
+    integer(kind=intType) nnd_p
+
+    integer imn,imx
+  
+    imn = 0
+    imx = 0
+    do i=1,n
+      do j=crsRow(i),crsRow(i+1)-1
+        irow = i+istart-1
+        icol = crsCol(j)
+        if(irow>=istart .and. irow<=iend) then
+          itmp=icol-irow
+          if (imn>itmp) imn = itmp
+          if (imx<itmp) imx = itmp
+        endif
+      enddo
+    enddo
+    allocate(Flag(imn:imx))
+    Flag = 0
+
+    do i=1,n
+      do j=crsRow(i),crsRow(i+1)-1
+        irow = i+istart-1
+        icol = crsCol(j)
+        if(irow>=istart .and. irow<=iend) then
+          itmp = icol-irow
+          Flag(itmp) = 1
+        endif
+      enddo
+    enddo
+    nnd = 0
+
+    do i=imn,imx
+      if (Flag(i)==1) then
+        nnd=nnd+1
+      endif
+    enddo
+    call init_diaMat(diaMat,n,nnd)
+    nnd_p=0
+    do i=imn,imx
+      if(flag(i)==1) then
+        nnd_p=nnd_p+1
+        diaMat%offset(nnd_p)=i
+      endif
+    enddo
+    deallocate(Flag)
+
+  end subroutine get_nnd_crs_without_sort
+
+
+
+
   subroutine crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
     use sort_kernel
     use matrix
@@ -5324,6 +5399,53 @@ contains
 #endif
 
   end subroutine crs2dia
+
+  subroutine crs2dia_without_sort(&
+    crsMat,diaMat,&
+     nnd,n,nnz, &
+     istart)
+  use matrix
+
+  implicit none
+  type(CRS_Mat) :: crsMat
+  type(DIA_Mat) :: diaMat
+  integer(kind=intType) n,itmp
+  integer(kind=intType) nnz
+  integer(kind=intType) nnd
+
+  real*8 crsA(nnz)
+  integer(kind=intType) crsCol(nnz)
+  integer(kind=intType) crsRow_ptr(n+1)
+  
+  real*8 diaA(nnd*n)
+  integer(kind=intType) offset(nnd)
+
+  integer(kind=intType) istart
+
+  integer(kind=intType) i,j,k
+  integer(kind=intType) icol,irow
+  integer(kind=intType) off
+
+  
+  
+  do i=1,n
+    do j=crsMat%crsRow_ptr(i),crsMat%crsRow_ptr(i+1)-1
+      irow = i+istart-1
+      icol = crsMat%crsCol(j)
+      itmp = icol-irow
+      do k = 1,nnd
+         off =k 
+         if (diaMat%offset(k)==itmp) exit
+      enddo
+      diaMat%diaA(n*(off-1)+i) = crsMat%crsA(j)
+    enddo
+  enddo
+   
+    
+  end subroutine crs2dia_without_sort
+
+
+
 
   subroutine dia2crs(diaMat,crsMat,n,istart,nnd,nnz)
     use matrix
@@ -5712,9 +5834,10 @@ contains
     integer(kind=intType) ij,jk,kj,kk,ik
     integer(kind=intType) Col
     integer(kind=intType) kCol,jCol
+    integer,allocatable::D_ptr(:)
 
     call init_crsMat(crsMatLU,n,nnz) 
-
+    allocate(D_ptr(n))
     do i=1,nnz
        crsMatLU%crsA(i)   = crsA(i)
        crsMatLU%crsCol(i) = crsCol(i)
@@ -5723,6 +5846,23 @@ contains
        crsMatLU%crsRow_ptr(i)=crsRow_ptr(i)
     enddo
 
+    kk=0
+    do i=1,n
+      do kCol=crsMatLU%crsRow_ptr(i),crsMatLU%crsRow_ptr(i+1)-1
+         k=crsMatLU%crsCol(kCol)-istart+1
+         if(k==i) then
+           D_ptr(i)=kCol
+           kk=kk+1
+           exit
+         endif
+      enddo
+    enddo
+
+    if(kk/=n) then
+      write(*,*)"Error::ILU--found zero in Diagonal element."
+      stop
+    endif
+
     do i=2,n
        do kCol=crsMatLU%crsRow_ptr(i),crsMatLU%crsRow_ptr(i+1)-1 
           k=crsMatLU%crsCol(kCol)-istart+1
@@ -5730,7 +5870,7 @@ contains
              exit
           endif
 
-          kk=-1
+          kk=D_ptr(k)
           do j=crsMatLU%crsRow_ptr(k),crsMatLU%crsRow_ptr(k+1)-1
              Col=crsMatLU%crsCol(j) - istart+1
              if( Col.eq.k )then
@@ -5738,20 +5878,10 @@ contains
                 exit
              endif
           enddo
-          if(kk.eq.-1)then
-             write(*,*)"Error :: ILU -- 対角成分が存在しない"
-             stop
-          endif
 
           ! 下三角成分
           ! LU(i,k)=LU(i,k)/LU(k,k)
-          do j=crsMatLU%crsRow_ptr(i),crsMatLU%crsRow_ptr(i+1)-1
-             Col=crsMatLU%crsCol(j)-istart+1
-             if( Col.eq.k )then
-                crsMatLU%crsA(j) = crsMatLU%crsA(j) / crsMatLU%crsA(kk)
-                exit
-             endif
-          enddo
+          crsMatLU%crsA(kCol) = crsMatLU%crsA(kCol) / crsMatLU%crsA(kk)
 
           ! 上三角成分
           ! LU(i,j)=LU(i,j)-LU(i,k)*LU(k,j)
@@ -5761,29 +5891,15 @@ contains
                 cycle
              endif
 
-             do ij=crsMatLU%crsRow_ptr(i),crsMatLU%crsRow_ptr(i+1)-1
-                Col=crsMatLU%crsCol(ij)-istart+1
-                if( Col.eq.j )then
-                   ! (i,j)位置が存在する場合
-                   ! (i,k)位置の探査
-                   do ik=crsMatLU%crsRow_ptr(i),crsMatLU%crsRow_ptr(i+1)-1
-                      Col=crsMatLU%crsCol(ik)-istart+1
-                      if(Col.eq.k)then
-                         ! (k,j)位置の探査
-                         do kj=crsMatLU%crsRow_ptr(k),crsMatLU%crsRow_ptr(k+1)-1
-                            Col=crsMatLU%crsCol(kj)-istart+1
-                            if(Col.eq.j)then
-                               crsMatLU%crsA(ij) = crsMatLU%crsA(ij) - crsMatLU%crsA(ik) * crsMatLU%crsA(kj) 
-                               exit
-                            endif
-                         enddo
-                         exit
-                      endif
-                   enddo
+             ! (i,j)位置が存在する場合
+             ! (k,j)位置の探査
+             do kj=kk,crsMatLU%crsRow_ptr(k+1)-1
+                Col=crsMatLU%crsCol(kj)-istart+1
+                if(Col.eq.j)then
+                   crsMatLU%crsA(jCol) = crsMatLU%crsA(jCol) - crsMatLU%crsA(kCol) * crsMatLU%crsA(kj) 
+                   exit
                 endif
-
              enddo
-
           enddo
 
        enddo
@@ -5831,6 +5947,17 @@ contains
        endif
     enddo
 
+    if(nnd_ofset0==-1) then
+       write(*,*)"error ::ILU -- There is no diagonal element."
+       stop
+    endif
+    do i=1,n
+       if (diaMatLU%diaA(i+n*(nnd_ofset0-1)).eq.0.0d0) then
+         write(*,*)"error::ILU-- It's lack of diagonal element."
+         stop
+       endif
+    enddo
+
     do i=2,n
        !        write(*,*)"---------------------"
        !        write(*,*)"  i = ",i
@@ -5838,16 +5965,10 @@ contains
        do k=1,nnd
           kCol = i + diaMatLU%offset(k) ! ローカル列番号
           if(kCol>i-1)then
-             exit
+             cycle
           endif
           if((kCol<1).or.(n<kCol))then
              cycle
-          endif
-
-          kk=nnd_ofset0
-          if(kk.eq.-1)then
-             write(*,*)"Error :: ILU -- 対角成分が存在しない"
-             stop
           endif
 
           ! 下三角成分
@@ -5855,11 +5976,11 @@ contains
           !           write(*,*)"i,k",i   ,i    + diaMatLU%offset(k)
           !           write(*,*)"k,k",kCol,kCol + diaMatLU%offset(nnd_ofset0)
 
-          if( diaMatLU%diaA(k+n*(nnd_ofset0-1)).ne.0.0d0 )then
-             diaMatLU%diaA(i+n*(k-1)) = &
-                  diaMatLU%diaA(i+n*(k-1)) / &
-                  diaMatLU%diaA(kCol+n*(nnd_ofset0-1))
-          endif
+          !if( diaMatLU%diaA(kCol+n*(nnd_ofset0-1)).ne.0.0d0 )then
+          diaMatLU%diaA(i+n*(k-1)) = &
+             diaMatLU%diaA(i+n*(k-1)) / &
+             diaMatLU%diaA(kCol+n*(nnd_ofset0-1))
+          !endif
           !          write(*,*)"-----"
           ! 上三角成分
           ! LU(i,j)=LU(i,j)-LU(i,k)*LU(k,j)
@@ -5877,7 +5998,7 @@ contains
                 cycle
              endif
              !             write(*,*)"i,j",i,i+diaMatLU%offset(j)
-             do kj=1,nnd
+             do kj=nnd_ofset0+1,nnd
                 if(jCol.eq.(kCol+diaMatLU%offset(kj)))then
                    !                    write(*,*)"i,k",i,i+diaMatLU%offset(k)
                    !                    write(*,*)"k,j",i+diaMatLU%offset(k),i+diaMatLU%offset(j)            

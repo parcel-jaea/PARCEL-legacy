@@ -230,6 +230,114 @@ subroutine make_poisson2D_CRS_int8( &
 
 end subroutine make_poisson2D_CRS_int8
 
+subroutine make_poisson2D_matrix_DIA_get_nnd(&
+           diaMat,gn,n,nnz,crsCol,crsRow,istart,iend,nnd)
+  use matrix
+  use matrix_kernel, only: &
+      init_diamat
+  implicit none
+  integer(kind=8) gn
+  integer(kind=8) n
+  integer(kind=8) nnz
+  integer(kind=8) crsCol(nnz)
+  integer(kind=8) crsRow(n+1)
+  integer(kind=8) istart
+  integer(kind=8) iend
+  type(DIA_Mat) :: diaMat
+
+  integer(kind=8) nnd
+  
+  integer(kind=8) i, j, icol, irow, itmp
+  integer(kind=8),allocatable::Flag(:)
+  integer(kind=8) nnd_p
+
+  integer(kind=8) imn,imx
+  
+  imn = 0
+  imx = 0
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp=icol-irow
+        if (imn>itmp) imn = itmp
+        if (imx<itmp) imx = itmp
+      endif
+    enddo
+  enddo
+  allocate(Flag(imn:imx))
+  Flag = 0
+
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp = icol-irow
+        Flag(itmp) = 1
+      endif
+    enddo
+  enddo
+  nnd = 0
+
+  do i=imn,imx
+    if (Flag(i)==1) then
+      nnd=nnd+1
+    endif
+  enddo
+  call init_diaMat(diaMat,n,nnd)
+  nnd_p=0
+  do i=imn,imx
+    if (flag(i)==1) then
+      nnd_p=nnd_p+1
+      diaMat%offset(nnd_p)=i
+    endif
+  enddo
+  
+end subroutine make_poisson2D_matrix_DIA_get_nnd
+
+subroutine make_poisson2D_matrix_DIA_from_CRS( &
+     crsMat, &
+     diaA,offset,nnd,n,nnz, &
+     istart)
+  use matrix
+
+  implicit none
+  type(CRS_Mat) :: crsMat
+  type(DIA_Mat) :: diaMat
+  integer(kind=8) nnz
+  real*8 crsA(nnz)
+
+  integer(kind=8) istart
+  !  real*8 A( (nx*ny) * (gnx*gny) ) ! nx*ny :: 行
+
+  integer(kind=8) i,j,k
+  integer(kind=8) n,itmp
+  integer(kind=8) icol,irow
+  integer(kind=8) off
+
+  integer(kind=8) nnd
+  integer(kind=8) offset(nnd)
+  
+  real*8  diaA(n*nnd)
+  
+  do i=1,n
+    do j=crsMat%crsRow_ptr(i),crsMat%crsRow_ptr(i+1)-1
+      irow = i+istart-1
+      icol = crsMat%crsCol(j)
+      itmp = icol-irow
+      do k = 1,nnd
+         off =k 
+         if (offset(k)==itmp) exit
+      enddo
+      diaA(n*(off-1)+i) = crsMat%crsA(j)
+    enddo
+  enddo
+end subroutine make_poisson2D_matrix_DIA_from_CRS
+
+
+
 subroutine make_poisson3D_CRS_int8( &
      nx,ny,nz,   &
      nx0,ny0,nz0,&
@@ -498,5 +606,65 @@ subroutine make_poisson3D_CRS_get_nnz_int8( &
 enddo
 
 end subroutine make_poisson3D_CRS_get_nnz_int8
+
+subroutine make_vecb_int8(&
+  mmx,mmy,mmz,vecB,x,istart,iend&
+  )
+integer(kind=8) ix,iy,iz
+integer(kind=8) i
+integer(kind=8),intent(in) :: istart,iend
+integer(kind=8) mmx,mmy,mmz
+real*8 h,z,ctmp1,ctmp2,ctmp3
+real*8, intent(inout) :: x(istart:iend)
+real*8, intent(out) :: vecB(istart:iend)
+
+
+! --------------
+! set (global) rhs vector
+! --------------
+  h = 1.0D0 / ((mmx+mmy+mmz)/3+1);   z = 2.0d0*h**6
+  do iz=1, mmz
+     do iy=1, mmy
+        do ix=1, mmx
+           i = mmz**2*(iz-1) +mmy*(iy-1) + ix
+           ctmp1 = real(ix) **2;    ctmp2 = real(iy) **2;  ctmp3 = real(iz)**2
+           if (i < istart .or. iend < i) cycle ! lm
+           vecB(i) = z *( ctmp1*ctmp2 +ctmp2*ctmp3 +ctmp3*ctmp1 )
+        end do
+     end do
+  end do
+
+! --------------
+! boundary conditions 
+! --------------
+  ix = mmx
+  do iz=1, mmz
+     do iy=1, mmy
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) -(h*iy)**2 *(h*iz)**2
+     end do
+  end do
+
+  iy = mmy
+  do iz=1, mmz
+     do ix=1, mmx
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) - (h*ix)**2 * (h*iz)**2
+     end do
+  end do
+
+  iz = mmz
+  do iy=1, mmy
+     do ix=1, mmx
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) - (h*ix)**2 * (h*iy)**2
+     end do
+  end do
+
+
+end subroutine make_vecb_int8
 
 end module problem_int8

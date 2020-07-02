@@ -14,7 +14,8 @@ program main
   integer ityp_eq
   integer gnx,gny
   integer gnz
-  integer itrmax
+  integer MAX_NITER
+  integer restart
   integer nx,ny
   integer nx0,ny0
   integer n,gn
@@ -24,13 +25,14 @@ program main
   integer nnd
   integer npes,myrank
   integer ierr
+  integer matA_format
   integer i
   integer ipreflag
   integer addL
   integer iflagAS
   real*8  rtolmax
   real*8  abstolmax
-  integer solver
+  integer ityp_solver
   integer iret
   real*8,allocatable  :: reshistory_CRS(:)
   real*8,allocatable  :: reshistory_DIA(:)
@@ -54,28 +56,54 @@ program main
   integer PRECISION_b
   integer PRECISION_x
   integer PRECISION_PRECONDITION
+  
+  character(len=10) :: argc
+  character(len=10) :: set_file_num
+  character(len=70) :: file_name
+  integer imode_flg,input_num
+  integer err
+
+  !call getarg(1,argc)
+  !set_file_num=trim(argc)
+
 
   namelist/input/ &
        ityp_eq, &
        gnx,&
        gny, &
-       itrmax, &
+       MAX_NITER, &
        abstolmax, &
        rtolmax, &
        ipreflag, &
        ILU_method, &
        iovlflag, &
-       solver, &
+       matA_format,&
+       ityp_solver,&
        addL, &
        iflagAS, &
+       restart,&
+       GMRES_GSflag, &
        CAGMRES_sstep, &
        CAGMRES_tstep, &
        CAGMRES_basis, &
        CAGMRES_QRflag
-  open(33,file='input_namelist')
+
+
+  !read(set_file_num,*,iostat=imode_flg) input_num
+  !if (imode_flg==0) then
+  !  if ((input_num>=1).and.(input_num<=35)) then
+  !    file_name='./templete/templete_input/input_namelist'//set_file_num
+  !  else
+  !    print *,"invalid input file number"
+  !    stop
+  !  endif
+  !else
+    file_name='./input_namelist'
+  !endif
+
+  open(33,file=file_name)
   read(33,nml=input)
   close(33)
-  solver=4
 
   ! -----
   call MPI_Init(ierr)
@@ -126,67 +154,176 @@ program main
   endif
   ! ----
   ! CRS --> DIA
-  call get_nnd_crs(crsMat,n,istart,nnz,nnd)
+!  call get_nnd_crs(crsMat,n,istart,nnz,nnd)
+!  call init_diaMat(diaMat,n,nnd)
+!  call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+  call make_poisson2D_matrix_DIA_get_nnd( &
+       n,nnz,crsMat%crsCol,crsMat%crsRow_ptr,istart,iend,nnd)
   call init_diaMat(diaMat,n,nnd)
-  call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+  call make_poisson2D_matrix_DIA_get_offset(&
+       diaMat%offset,n,nnz,crsMat%crsCol,crsMat%crsRow_ptr,istart,iend,nnd)
+  call make_poisson2D_matrix_DIA_from_CRS( &
+      crsMat%crsA,crsMat%crsCol,crsMat%crsRow_ptr,diaMat%diaA,diaMat%offset,nnd,n,nnz,istart)
+
   allocate(vecb(n))
   allocate(vecX(n))
   vecb    = -1.0d0
   vecX    = 0.0d0
-  allocate(reshistory_CRS(itrmax))
-  allocate(reshistory_DIA(itrmax))
+  call make_vecB(gnx,gny,vecb,vecx,istart,iend)
+  allocate(reshistory_CRS(MAX_NITER))
+  allocate(reshistory_DIA(MAX_NITER))
   reshistory_CRS=0.0d0
   reshistory_DIA=0.0d0
   ! ------
+  if ((addL.eq.0).and.(ipreflag.eq.3)) then
+    ipreflag=2
+  endif
 
-  vecX    = 0.0d0
-  call parcel_dcagmres( &
-       MPI_COMM_WORLD, &
-       vecx, &
-       vecb, &
-       n,gn,nnz,istart, &
-       crsMat%crsA, &
-       crsMat%crsRow_ptr, &
-       crsMat%crsCol, &
-       ipreflag, &
-       ILU_method, &
-       addL, &
-       iflagAS, &
-       itrmax, &
-       rtolmax, &
-       reshistory_CRS, &
-       iovlflag, &
-       iret, &
-       CAGMRES_sstep, &
-       CAGMRES_tstep, &
-       CAGMRES_basis, &
-       CAGMRES_QRflag )
+  if ((ipreflag.eq.3).and.(ILU_method.eq.0))then
+    write(*,*)'The combination of additive schwarz and ILU decomposition are not executable. '
+    stop
+  endif
 
-  vecx=0.0d0
-  call parcel_dcagmres_dia( &
-       MPI_COMM_WORLD, &
-       vecx, &
-       vecb, &
-       n,gn,istart, &
-       diaMat%diaA, &
-       diaMat%offset, &
-       nnd, &
-       ipreflag, &
-       ILU_method, &
-       addL, &
-       iflagAS, &
-       itrmax, &
-       rtolmax, &
-       reshistory_DIA, &
-       iovlflag, &
-       iret, &
-       CAGMRES_sstep, &
-       CAGMRES_tstep, &
-       CAGMRES_basis, &
-       CAGMRES_QRflag )
+  select case(ityp_solver)
+  case(2)
+  !c----------
+  !c BI-CGSTAB
+  !c----------
+    call parcel_dbicgstab( &
+         MPI_COMM_WORLD, &
+         vecx, &
+         vecb,  &
+         n, &
+         gn, &
+         nnz, &
+         istart, &
+         crsMat%crsA, &
+         crsMat%crsRow_ptr, &
+         crsMat%crsCol, &
+         ipreflag, &
+         ILU_method, &
+         addL, &
+         iflagAS, &
+         MAX_NITER, &
+         rtolmax,&
+         reshistory_CRS,& 
+         iovlflag,  &
+         iret )
+    vecX    = 0.0d0
+    call parcel_dbicgstab_dia( &
+         MPI_COMM_WORLD,&
+         vecx, &
+         vecb,  &
+         n, &
+         gn, &
+         istart, &
+         diaMat%diaA, & 
+         diaMat%offset, & 
+         nnd, &
+         ipreflag, &
+         ILU_method, &
+         addL, &
+         iflagAS, &
+         MAX_NITER, &
+         rtolmax,&
+         reshistory_DIA,&
+         iovlflag, &
+         iret )
+
+  case(3)
+    call parcel_dgmres( &
+         MPI_COMM_WORLD, &
+         vecx, &
+         vecb,  &
+         n, &
+         gn, &
+         nnz, &
+         istart, &
+         crsMat%crsA, &
+         crsMat%crsRow_ptr, &
+         crsMat%crsCol, &
+         ipreflag, &
+         ILU_method, &
+         addL, &
+         iflagAS, &
+         MAX_NITER,rtolmax,&
+         reshistory_CRS,&
+         iovlflag,  &
+         iret,&
+         restart, &
+         GMRES_GSflag)
+    vecX    = 0.0d0
+    call parcel_dgmres_dia( &
+         MPI_COMM_WORLD,&
+         vecx, &
+         vecb,  &
+         n, &
+         gn,  &
+         istart, &
+         diaMat%diaA, & 
+         diaMat%offset,  &
+         nnd, &
+         ipreflag, &
+         ILU_method, &
+         addL, &
+         iflagAS, &
+         MAX_NITER, &
+         rtolmax,&
+         reshistory_DIA,&
+         iovlflag, &
+         iret,&
+         restart, &
+         GMRES_GSflag)
+
+  case(4)
+     call parcel_dcagmres( &
+          MPI_COMM_WORLD, &
+          vecx, &
+          vecb, &
+          n,gn,nnz,istart, &
+          crsMat%crsA, &
+          crsMat%crsRow_ptr, &
+          crsMat%crsCol, &
+          ipreflag, &
+          ILU_method, &
+          addL, &
+          iflagAS, &
+          MAX_NITER, &
+          rtolmax, &
+          reshistory_CRS, &
+          iovlflag, &
+          iret, &
+          CAGMRES_sstep, &
+          CAGMRES_tstep, &
+          CAGMRES_basis, &
+          CAGMRES_QRflag )
+
+     vecx=0.0d0
+     call parcel_dcagmres_dia( &
+          MPI_COMM_WORLD, &
+          vecx, &
+          vecb, &
+          n,gn,istart, &
+          diaMat%diaA, &
+          diaMat%offset, &
+          nnd, &
+          ipreflag, &
+          ILU_method, &
+          addL, &
+          iflagAS, &
+          MAX_NITER, &
+          rtolmax, &
+          reshistory_DIA, &
+          iovlflag, &
+          iret, &
+          CAGMRES_sstep, &
+          CAGMRES_tstep, &
+          CAGMRES_basis, &
+          CAGMRES_QRflag )
+  end select
   ! ------
   if(myrank.eq.0)then
-     do i=1,itrmax
+     do i=1,MAX_NITER
         write(*,*)"@ res @",&
              i,reshistory_CRS(i),reshistory_DIA(i)
      enddo

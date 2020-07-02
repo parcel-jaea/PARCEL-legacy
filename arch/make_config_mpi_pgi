@@ -1,0 +1,18 @@
+CC     = pgcc
+FC     = mpif90
+
+# load the intel-mkl module and the PGI
+# compiler will automatically read $MKLROOT if -Mmkl is passed
+# Adjust the -tp=XXX flag to match the CPU
+CFLAGS  = -fast 
+FFLAGS  = -fast -mcmodel=medium -mp -tp=skylake -m64 -fastsse -cpp -Mmkl
+FP_MODE = -Kieee
+
+
+INCLUDEDIR =
+LD_MPI     = 
+#MKLROOT    =/home/app/intel/compilers_and_libraries_2017/linux/mkl
+LD_LAPACK  = \
+ -L${MKLROOT}/lib/intel64 \
+  -lmkl_intel_lp64 -lmkl_sequential -lmkl_core 
+# FDEFINE = -DPARCEL_INT8

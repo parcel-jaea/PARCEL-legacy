@@ -20,30 +20,35 @@
 <body>
 <nav id="TOC">
 <ul>
-<li><a href="#krylov-subspace-methods"><span class="toc-section-number">1</span> Krylov subspace methods</a><ul>
+<li><a href="#krylov-subspace-methods"><span class="toc-section-number">1</span> Krylov subspace methods</a>
+<ul>
 <li><a href="#the-preconditioned-conjugate-gradient-method"><span class="toc-section-number">1.1</span> The Preconditioned Conjugate Gradient Method</a></li>
 <li><a href="#the-preconditioned-biconjugate-gradient-stabilized-method"><span class="toc-section-number">1.2</span> The Preconditioned Biconjugate Gradient Stabilized Method</a></li>
 <li><a href="#the-preconditioned-generalized-minimum-residual-method"><span class="toc-section-number">1.3</span> The Preconditioned Generalized Minimum Residual Method</a></li>
 <li><a href="#the-preconditioned-communication-avoiding-generalized-minimum-residual-method"><span class="toc-section-number">1.4</span> The Preconditioned Communication Avoiding Generalized Minimum Residual Method</a></li>
 <li><a href="#the-preconditioned-chebyshev-basis-conjugate-gradient-method"><span class="toc-section-number">1.5</span> The Preconditioned Chebyshev basis Conjugate Gradient Method</a></li>
 </ul></li>
-<li><a href="#preconditioning"><span class="toc-section-number">2</span> Preconditioning</a><ul>
+<li><a href="#preconditioning"><span class="toc-section-number">2</span> Preconditioning</a>
+<ul>
 <li><a href="#point-jacobi-preconditioner"><span class="toc-section-number">2.1</span> Point Jacobi Preconditioner</a></li>
 <li><a href="#zero-fill-in-incomplete-lu-factorization-preconditioners-ilu0"><span class="toc-section-number">2.2</span> Zero Fill-in Incomplete LU Factorization Preconditioners (ILU(0))</a></li>
 <li><a href="#diagonal-incomplete-lu-factorization-preconditioners-d-ilu"><span class="toc-section-number">2.3</span> Diagonal Incomplete LU Factorization Preconditioners (D-ILU)</a></li>
 <li><a href="#block-jacobi-preconditioner"><span class="toc-section-number">2.4</span> Block Jacobi Preconditioner</a></li>
 <li><a href="#additive-schwarz-preconditioner"><span class="toc-section-number">2.5</span> Additive Schwarz Preconditioner</a></li>
 </ul></li>
-<li><a href="#sparse-matrix-data-formats"><span class="toc-section-number">3</span> Sparse Matrix Data Formats</a><ul>
+<li><a href="#sparse-matrix-data-formats"><span class="toc-section-number">3</span> Sparse Matrix Data Formats</a>
+<ul>
 <li><a href="#compressed-row-storage-crs-format"><span class="toc-section-number">3.1</span> Compressed Row Storage (CRS) Format</a></li>
 <li><a href="#diagonal-format"><span class="toc-section-number">3.2</span> Diagonal Format</a></li>
 </ul></li>
-<li><a href="#the-structure-of-parcel"><span class="toc-section-number">4</span> The structure of PARCEL</a><ul>
+<li><a href="#the-structure-of-parcel"><span class="toc-section-number">4</span> The structure of PARCEL</a>
+<ul>
 <li><a href="#directory-structure"><span class="toc-section-number">4.1</span> Directory Structure</a></li>
 <li><a href="#compiling-the-parcel-library"><span class="toc-section-number">4.2</span> Compiling the PARCEL library</a></li>
 <li><a href="#usage-of-the-parcel-library"><span class="toc-section-number">4.3</span> Usage of the PARCEL library</a></li>
 </ul></li>
-<li><a href="#parcel-routines-direct-interface"><span class="toc-section-number">5</span> PARCEL routines (direct interface)</a><ul>
+<li><a href="#parcel-routines-direct-interface"><span class="toc-section-number">5</span> PARCEL routines (direct interface)</a>
+<ul>
 <li><a href="#parcel_dcg"><span class="toc-section-number">5.1</span> parcel_dcg</a></li>
 <li><a href="#parcel_dcg_dia"><span class="toc-section-number">5.2</span> parcel_dcg_dia</a></li>
 <li><a href="#parcel_ddcg"><span class="toc-section-number">5.3</span> parcel_ddcg</a></li>
@@ -61,7 +66,8 @@
 <li><a href="#parcel_dcagmres"><span class="toc-section-number">5.15</span> parcel_dcagmres</a></li>
 <li><a href="#parcel_dcagmres_dia"><span class="toc-section-number">5.16</span> parcel_dcagmres_dia</a></li>
 </ul></li>
-<li><a href="#parcel-routines-indirect-interface"><span class="toc-section-number">6</span> PARCEL routines (indirect interface)</a><ul>
+<li><a href="#parcel-routines-indirect-interface"><span class="toc-section-number">6</span> PARCEL routines (indirect interface)</a>
+<ul>
 <li><a href="#parcel_ksp_default_setting"><span class="toc-section-number">6.1</span> PARCEL_KSP_Default_Setting</a></li>
 <li><a href="#set_ksp_crs"><span class="toc-section-number">6.2</span> set_KSP_CRS</a></li>
 <li><a href="#set_ksp_dia"><span class="toc-section-number">6.3</span> set_KSP_DIA</a></li>
@@ -90,15 +96,16 @@
 <li><a href="#set_ksp_power_method_itrmax"><span class="toc-section-number">6.26</span> set_KSP_power_method_itrmax</a></li>
 <li><a href="#start_ksp_solver"><span class="toc-section-number">6.27</span> START_KSP_SOLVER</a></li>
 </ul></li>
-<li><a href="#how-to-use"><span class="toc-section-number">7</span> How to use</a><ul>
+<li><a href="#how-to-use"><span class="toc-section-number">7</span> How to use</a>
+<ul>
 <li><a href="#compressed-row-storage-crs-format-1"><span class="toc-section-number">7.1</span> Compressed Row Storage (CRS) Format</a></li>
 <li><a href="#diagonal-format-1"><span class="toc-section-number">7.2</span> Diagonal Format</a></li>
 </ul></li>
 </ul>
 </nav>
-<h1 id="krylov-subspace-methods"><span class="header-section-number">1</span> Krylov subspace methods</h1>
+<h1 data-number="1" id="krylov-subspace-methods"><span class="header-section-number">1</span> Krylov subspace methods</h1>
 <p>This chapter describes the iterative methods contained in this library. The following notation is used, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">Ax = b</annotation></semantics></math> represents the linear system which will be solved, with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> being an n<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math>n sparse matrix and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mn>0</mn></msub><annotation encoding="application/x-tex">x_0</annotation></semantics></math> representing the initial vector. <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> represents an appropriate preconditioner.</p>
-<h2 id="the-preconditioned-conjugate-gradient-method"><span class="header-section-number">1.1</span> The Preconditioned Conjugate Gradient Method</h2>
+<h2 data-number="1.1" id="the-preconditioned-conjugate-gradient-method"><span class="header-section-number">1.1</span> The Preconditioned Conjugate Gradient Method</h2>
 <p>The Conjugate Gradient (CG) method is an iterative Krylov subspace algorithm for solving symmetric matrices.</p>
 <ul>
 <li>Algorithm description</li>
@@ -126,7 +133,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝛃</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝛒</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>/</mi><mspace width="0.222em"></mspace></mstyle><msub><mstyle mathvariant="bold"><mi>𝛒</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub></mrow><annotation encoding="application/x-tex">\mathbf{\beta}_{\mathbf{i}}\mathbf{=}\mathbf{\rho}_{\mathbf{i + 1}}\mathbf{\ /\ }\mathbf{\rho}_{\mathbf{i}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>𝐞</mi><mi>𝐧</mi></mstyle><mstyle mathvariant="bold"><mi>𝐝</mi></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{{\ en}}\mathbf{d}</annotation></semantics></math></li>
 </ol>
-<h2 id="the-preconditioned-biconjugate-gradient-stabilized-method"><span class="header-section-number">1.2</span> The Preconditioned Biconjugate Gradient Stabilized Method</h2>
+<h2 data-number="1.2" id="the-preconditioned-biconjugate-gradient-stabilized-method"><span class="header-section-number">1.2</span> The Preconditioned Biconjugate Gradient Stabilized Method</h2>
 <p>The Biconjugate Gradient Stabilized (Bi-CGSTAB) method is an iterative Krylov subspace algorithm for solving nonsymmetric matrices.</p>
 <ul>
 <li>Algorithm description</li>
@@ -154,7 +161,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐩</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐫</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo><mi>𝛃</mi></mstyle><mrow><mo stretchy="true" form="prefix">(</mo><msub><mstyle mathvariant="bold"><mi>𝐩</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub><mstyle mathvariant="bold"><mo>−</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐜</mi></mstyle><mstyle mathvariant="bold"><mn>3</mn></mstyle></msub><mstyle mathvariant="bold"><mi>𝐪</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf{p}_{\mathbf{i + 1}}\mathbf{=}\mathbf{r}_{\mathbf{i + 1}}\mathbf{+ \beta}\left( \mathbf{p}_{\mathbf{i}}\mathbf{-}\mathbf{c}_{\mathbf{3}}\mathbf{q} \right)</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="bold"><mi>𝐞</mi><mi>𝐧</mi><mi>𝐝</mi></mstyle><annotation encoding="application/x-tex">\mathbf{{end}}</annotation></semantics></math></li>
 </ol>
-<h2 id="the-preconditioned-generalized-minimum-residual-method"><span class="header-section-number">1.3</span> The Preconditioned Generalized Minimum Residual Method</h2>
+<h2 data-number="1.3" id="the-preconditioned-generalized-minimum-residual-method"><span class="header-section-number">1.3</span> The Preconditioned Generalized Minimum Residual Method</h2>
 <p>The Generalized Minimum Residual (GMRES(m)) method is an iterative Krylov subspace algorithm for solving nonsymmetric matrices. GMRES(m) is restarted periodically after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> iterations if it did not converge within <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> iterations, the solution obtained until <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> iterations will be used as an input for the new restart cycle. PARCEL provides variants of GMRES with the Classical Gram-Schmidt (sometimes referred to as standard Gram-Schmidt) and Modified Gram-Schmidt (MGS) orthogonalization methods.</p>
 <ul>
 <li>Algorithm description</li>
@@ -194,7 +201,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mi>𝐧</mi></mstyle></msub></mrow><annotation encoding="application/x-tex">\mathbf{x}_{\mathbf{0}}\mathbf{=}\mathbf{x}_{\mathbf{n}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="bold"><mi>𝐞</mi><mi>𝐧</mi><mi>𝐝</mi></mstyle><annotation encoding="application/x-tex">\mathbf{{end}}</annotation></semantics></math></li>
 </ol>
-<h2 id="the-preconditioned-communication-avoiding-generalized-minimum-residual-method"><span class="header-section-number">1.4</span> The Preconditioned Communication Avoiding Generalized Minimum Residual Method</h2>
+<h2 data-number="1.4" id="the-preconditioned-communication-avoiding-generalized-minimum-residual-method"><span class="header-section-number">1.4</span> The Preconditioned Communication Avoiding Generalized Minimum Residual Method</h2>
 <p>The Communication Avoiding Generalized Minimum Residual (CA-GMRES(s,t)) method is an iterative Krylov subspace algorithm for solving nonsymmetric matrices. The calculation which is done in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> iterations in the GMRES(m) method is equivalent to one iteration of the CA-GMRES method. CA-GMRES(s,t) is restarted periodically after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math> iterations if it did not converge within <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math> iterations, the solution obtained until <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> iterations will be used as an input for the new restart cycle. CA-GMRES(s,t) is equivalent to GMRES(m) if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math> are chosen so that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>=</mo><mi>t</mi><mo>×</mo><mi>s</mi></mrow><annotation encoding="application/x-tex">m = t \times s</annotation></semantics></math>. The convergence property of CA-GMRES(s,t) is the same as GMRES(m) in exact arithmetic. In addition, the number of global collective communication calls is reduced by communication avoiding QR factorization. As CA-GMRES(s,t) produces <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> basis vectors at once, when <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> is too large, the linear independency of the basic vectors may become worse because of round off errors, leading to worse convergence property than GMRES(m). In order to improve the orthogonality of the basic vectors, the PARCEL implementation of CA-GMRES(s,t) provides an option to use the Newton basis in addition to the monomial basis.</p>
 <ul>
 <li>Algorithm description</li>
@@ -308,7 +315,7 @@
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐨</mi><mi>𝐥</mi><mi>𝐯</mi><mi>𝐞</mi><mspace width="0.222em"></mspace></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>𝐟</mi><mi>𝐫</mi><mi>𝐨</mi><mi>𝐦</mi><mspace width="0.222em"></mspace><mi>𝐊</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover><mstyle mathvariant="bold"><mo>=</mo></mstyle><msubsup><mo>∑</mo><mstyle mathvariant="bold"><mi>𝐤</mi><mo>=</mo><mn>0</mn></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mstyle mathvariant="bold"><mi>𝐦</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mn>1</mn></mstyle></mrow></msubsup><msub><mstyle mathvariant="bold"><mi>𝐐</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub><msub><mstyle mathvariant="bold"><mi>𝐲</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo></mstyle><msubsup><mo>∑</mo><mrow><mstyle mathvariant="bold"><mi>𝐥</mi><mo>=</mo></mstyle><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mi>𝐧</mi><mo>−</mo><mn>1</mn></mstyle></msubsup><msub><mstyle mathvariant="bold"><mi>𝐕</mi></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐥</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow></msub><msubsup><mo>∑</mo><mrow><mstyle mathvariant="bold"><mi>𝐤</mi><mo>=</mo></mstyle><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mi>𝐧</mi><mo>−</mo><mn>1</mn></mstyle></msubsup><mrow><msubsup><mstyle mathvariant="bold"><mi>𝐑</mi></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐥</mi><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle><mstyle mathvariant="bold"><mo>,</mo></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mo>−</mo><mn>1</mn></mstyle></msubsup><msub><mstyle mathvariant="bold"><mi>𝐲</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub></mrow></mrow><annotation encoding="application/x-tex">\mathbf{{solve\ }}\widehat{\mathbf{x}}\mathbf{{\ from\ K}}\widehat{\mathbf{x}}\mathbf{=}\sum_{\mathbf{k = 0}}^{\mathbf{s}\mathbf{m}\mathbf{- 1}}\mathbf{Q}_{\mathbf{k}}\mathbf{y}_{\mathbf{k}}\mathbf{+}\sum_{\mathbf{l =}\mathbf{{sm}}}^{\mathbf{n - 1}}\mathbf{V}_{\mathbf{l}\mathbf{- sm}}\sum_{\mathbf{k =}\mathbf{{sm}}}^{\mathbf{n - 1}}{\mathbf{R}_{\mathbf{l - sm}\mathbf{,}\mathbf{k}\mathbf{- sm}}^{\mathbf{- 1}}\mathbf{y}_{\mathbf{k}}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover></mrow><annotation encoding="application/x-tex">\mathbf{x}_{\mathbf{0}}\mathbf{=}\mathbf{x}_{\mathbf{0}}\mathbf{+}\widehat{\mathbf{x}}</annotation></semantics></math></li>
 </ol>
-<h2 id="the-preconditioned-chebyshev-basis-conjugate-gradient-method"><span class="header-section-number">1.5</span> The Preconditioned Chebyshev basis Conjugate Gradient Method</h2>
+<h2 data-number="1.5" id="the-preconditioned-chebyshev-basis-conjugate-gradient-method"><span class="header-section-number">1.5</span> The Preconditioned Chebyshev basis Conjugate Gradient Method</h2>
 <p>The Chebyshev basis Conjugate Gradient (CBCG) method is an iterative Krylov subspace algorithm for solving symmetric matrices. The CBCG method calculates <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> iterations of the CG method in one iteration. By this approach, the CBCG method reduces the global collective communication calls. In order to use the Chebyshev basis the largest and smallest eigenvalues are needed. PARCEL provides two methods to obtain these eigenvalues, the so called power method and the communication avoiding Arnoldi method.</p>
 <ul>
 <li>Algorithm</li>
@@ -349,13 +356,13 @@
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐒</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo><mi>…</mi><mo>,</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mi>𝐤</mi><mo>−</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo stretchy="false" form="postfix">)</mo></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{S = (}{\widetilde{\mathbf{s}}}_{\mathbf{0}}\mathbf{,}{\widetilde{\mathbf{s}}}_{\mathbf{1}}\mathbf{,\ldots,}{\widetilde{\mathbf{s}}}_{\mathbf{k - 1}}\mathbf{)}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐀</mi><mi>𝐒</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>𝐀</mi></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo></mstyle><msub><mrow><mstyle mathvariant="bold"><mi>𝐀</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover></mrow><mstyle mathvariant="bold"><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo><mi>…</mi><mo>,</mo></mstyle><msub><mrow><mstyle mathvariant="bold"><mi>𝐀</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover></mrow><mstyle mathvariant="bold"><mi>𝐤</mi><mo>−</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo stretchy="false" form="postfix">)</mo></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{AS = (A}{\widetilde{\mathbf{s}}}_{\mathbf{0}}\mathbf{,}{\mathbf{A}\widetilde{\mathbf{s}}}_{\mathbf{1}}\mathbf{,\ldots,}{\mathbf{A}\widetilde{\mathbf{s}}}_{\mathbf{k - 1}}\mathbf{)}</annotation></semantics></math></li>
 </ol>
-<h1 id="preconditioning"><span class="header-section-number">2</span> Preconditioning</h1>
+<h1 data-number="2" id="preconditioning"><span class="header-section-number">2</span> Preconditioning</h1>
 <p>In iterative algorithms, the application of a preconditioner of the form <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>≈</mo><mi>A</mi></mrow><annotation encoding="application/x-tex">K \approx A</annotation></semantics></math> can help to reduce the number of iterations until convergence. The notation [<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>o</mi><mi>l</mi><mi>v</mi><mi>e</mi><mspace width="0.222em"></mspace></mrow><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mspace width="0.222em"></mspace><mi>f</mi><mi>r</mi><mi>o</mi><mi>m</mi><mspace width="0.222em"></mspace><mi>K</mi></mrow><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mo>=</mo><mspace width="0.222em"></mspace></mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">{{solve\ }}\widehat{{p}}{{\ from\ K}}\widehat{{p}}{= \ }{p}</annotation></semantics></math>] means [<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>p</mi><mi>p</mi><mi>r</mi><mi>o</mi><mi>x</mi><mi>i</mi><mi>m</mi><mi>a</mi><mi>t</mi><mi>e</mi><mi>l</mi><mi>y</mi><mi>s</mi><mi>o</mi><mi>l</mi><mi>v</mi><mi>e</mi><mi>A</mi><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mo>=</mo><mspace width="0.222em"></mspace></mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">approximately solve {A}\widehat{p}{= \ }{p}</annotation></semantics></math> with respect to the vector <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>p</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\widehat{p}</annotation></semantics></math>]. Although the more accurate approximation leads to the less number of iterations until convergence, the cost of preconditioner is normally increased. In non-parallel computing, one of the most common preconditioners is the incomplete LU factorization (ILU). However, in parallel computing, parallel preconditioners are needed. PARCEL provides the following parallel preconditioners: Point Jacobi, Block Jacobi and Additive Schwarz.</p>
-<h2 id="point-jacobi-preconditioner"><span class="header-section-number">2.1</span> Point Jacobi Preconditioner</h2>
+<h2 data-number="2.1" id="point-jacobi-preconditioner"><span class="header-section-number">2.1</span> Point Jacobi Preconditioner</h2>
 <p>The point Jacobi preconditioner is one of the most simplest preconditioners. <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> only consists of the diagonal elements of the matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>. Compared to other preconditioners the efficiency of the point Jacobi preconditioner is very low. However, it can be easily applied in parallel and it does not require any additional communication between processors.</p>
-<h2 id="zero-fill-in-incomplete-lu-factorization-preconditioners-ilu0"><span class="header-section-number">2.2</span> Zero Fill-in Incomplete LU Factorization Preconditioners (ILU(0))</h2>
+<h2 data-number="2.2" id="zero-fill-in-incomplete-lu-factorization-preconditioners-ilu0"><span class="header-section-number">2.2</span> Zero Fill-in Incomplete LU Factorization Preconditioners (ILU(0))</h2>
 <p>LU factorization decompose a square matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> into a lower triangular matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> and an upper triangular matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>. For a typical sparse matrix, the LU factors can be much less sparse than the original matrix, which is called as fill-in. This increases the memory and computational requirements. In order to avoid this issue, PARCEL provides the zero fill-in incomplete LU factorization (ILU(0)).</p>
-<h2 id="diagonal-incomplete-lu-factorization-preconditioners-d-ilu"><span class="header-section-number">2.3</span> Diagonal Incomplete LU Factorization Preconditioners (D-ILU)</h2>
+<h2 data-number="2.3" id="diagonal-incomplete-lu-factorization-preconditioners-d-ilu"><span class="header-section-number">2.3</span> Diagonal Incomplete LU Factorization Preconditioners (D-ILU)</h2>
 <p>The diagonal incomplete LU factorization (D-ILU) computes a diagonal matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>, a lower triangular matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> and an upper triangular matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math> for the input matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>. <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><msub><mi>L</mi><mi>A</mi></msub><mo>+</mo><msub><mi>D</mi><mi>A</mi></msub><mo>+</mo><msub><mi>U</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">A = L_{A} + D_{A} + U_{A}</annotation></semantics></math> The preconditioner <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> is constructed with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>L</mi><mi>A</mi></msub><annotation encoding="application/x-tex">L_{A}</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>U</mi><mi>A</mi></msub><annotation encoding="application/x-tex">U_{A}</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>≠</mo><msub><mi>D</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">D \neq D_{A}</annotation></semantics></math>) with: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>D</mi><mo>+</mo><msub><mi>L</mi><mi>A</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><msup><mi>D</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>D</mi><mo>+</mo><msub><mi>U</mi><mi>A</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">K = \left( D + L_{A} \right)D^{- 1}\left( D + U_{A} \right)</annotation></semantics></math> Two different conditions exist in order to construct the diagonal matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>:</p>
 <ul>
 <li><p>Condition 1: The diagonal elements of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> equal those of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>=</mo><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">A_{{ii}} = K_{{ii}}\ \ (i = 1,\ldots,n)</annotation></semantics></math></p></li>
@@ -366,9 +373,9 @@
 <li><p>If condition 1 should be fullfilled the following computation is used: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>−</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>&lt;</mo><mi>i</mi></mrow><mrow></mrow></munderover><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msubsup><mi>D</mi><mrow><mi>j</mi><mi>j</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi>A</mi><mrow><mi>j</mi><mi>i</mi></mrow></msub></mrow><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">D_{{ii}} = A_{{ii}} - \sum_{j &lt; i}^{}{A_{{ij}}D_{jj}^{-1}A_{{ji}}}\ \ (i = 1,\ldots,n)</annotation></semantics></math></p></li>
 <li><p>If condition 2 should be fullfilled the following computation is used: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>−</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>&lt;</mo><mi>i</mi></mrow><mrow></mrow></munderover><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>&gt;</mo><mi>j</mi></mrow><mrow></mrow></munderover><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msubsup><mi>D</mi><mrow><mi>j</mi><mi>j</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi>A</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub></mrow></mrow><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">D_{{ii}} = A_{{ii}} - \sum_{j &lt; i}^{}{\sum_{k &gt; j}^{}{A_{{ij}}D_{{jj}}^{-1}A_{jk}}}\ \ (i = 1,\ldots,n)</annotation></semantics></math></p></li>
 </ul>
-<h2 id="block-jacobi-preconditioner"><span class="header-section-number">2.4</span> Block Jacobi Preconditioner</h2>
+<h2 data-number="2.4" id="block-jacobi-preconditioner"><span class="header-section-number">2.4</span> Block Jacobi Preconditioner</h2>
 <p>The Block Jacobi Preconditioner constructs <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> out of the diagonal blocks of the matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>. For each block, the incomplete ILU factorization is computed. When the preconditioner is applied, each block can be processed independently, resulting in a high level of parallelism. In addition, no communication is needed when each block is defined within a sub-matrix on each processor.</p>
-<h2 id="additive-schwarz-preconditioner"><span class="header-section-number">2.5</span> Additive Schwarz Preconditioner</h2>
+<h2 data-number="2.5" id="additive-schwarz-preconditioner"><span class="header-section-number">2.5</span> Additive Schwarz Preconditioner</h2>
 <p>The Additive Schwarz Preconditioner constructs <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> out of the overlapping diagonal blocks of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>. For each block the incomplete LU factorization is computed. Compared to the Block Jacobi Preconditioner, the Additive Schwarz Preconditioner may require additional communication. PARCEL provides four different overlapping methods, BASIC, RESTRICT, INTERPOLATE and NONE.</p>
 <table style="width:75%;">
 <colgroup>
@@ -381,7 +388,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="basic" class="unnumbered">BASIC</h3>
+<h3 class="unnumbered" data-number id="basic">BASIC</h3>
 <p>Solve <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math> with an extended <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> including an overlapping region with the neighboring process, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> in the overlapping region is determined by summing up the results between the neighboring region.</p>
 <table style="width:38%;">
 <colgroup>
@@ -394,7 +401,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="restrict" class="unnumbered">RESTRICT</h3>
+<h3 class="unnumbered" data-number id="restrict">RESTRICT</h3>
 <p>　 Solve <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math> with an extended <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> including an overlapping region with the neighboring process, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> in the overlapping region is determined without taking account of the result in the neighboring region.</p>
 <table style="width:46%;">
 <colgroup>
@@ -407,7 +414,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="interpolate" class="unnumbered">INTERPOLATE</h3>
+<h3 class="unnumbered" data-number id="interpolate">INTERPOLATE</h3>
 <p>Solve <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math> with an extended <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> without an overlapping region with the neighboring process, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> in the overlapping region is determined by summing up the results between the neighboring regions.　</p>
 <table style="width:54%;">
 <colgroup>
@@ -420,7 +427,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="none" class="unnumbered">NONE</h3>
+<h3 class="unnumbered" data-number id="none">NONE</h3>
 <p>Solve <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math> with an extended <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> without an overlapping region with the neighboring process, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> in the overlapping region is determined without taking account of the result in the neighboring regions.　</p>
 <table style="width:38%;">
 <colgroup>
@@ -433,10 +440,10 @@
 </tr>
 </tbody>
 </table>
-<h1 id="sparse-matrix-data-formats"><span class="header-section-number">3</span> Sparse Matrix Data Formats</h1>
+<h1 data-number="3" id="sparse-matrix-data-formats"><span class="header-section-number">3</span> Sparse Matrix Data Formats</h1>
 <p>In order to save memory in sparse matrix computation, only the non-zero elements and their locations are stored. PARCEL supports different sparse matrix formats.</p>
-<h2 id="compressed-row-storage-crs-format"><span class="header-section-number">3.1</span> Compressed Row Storage (CRS) Format</h2>
-<p>　The CRS format compresses the row indices of the non-zero elements of the sparse matrix. Together with the compressed rows, the column index and the value for each non-zero element are stored in one dimensional arrays.</p>
+<h2 data-number="3.1" id="compressed-row-storage-crs-format"><span class="header-section-number">3.1</span> Compressed Row Storage (CRS) Format</h2>
+<p>　The CRS format compresses the row indices of the non-zero elements of the sparse matrix. Together with the compressed rows, the column index and the value for each non-zero element are stored in one dimensional arrays. Compresed row indeces are stored in an incremental order.</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mi>a</mi></mtd><mtd columnalign="center"><mi>b</mi></mtd><mtd columnalign="center"><mi>c</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>d</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mi>e</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>f</mi></mtd><mtd columnalign="center"><mi>g</mi></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>h</mi></mtd><mtd columnalign="center"><mi>i</mi></mtd><mtd columnalign="center"><mi>j</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 A = \left(
 \begin{array}{ccc}
@@ -448,7 +455,7 @@ e &amp; 0 &amp; f &amp; g\\
 \right)
 </annotation></semantics></math></p>
 <hr />
-<h3 id="one-process-case" class="unnumbered">One process case</h3>
+<h3 class="unnumbered" data-number id="one-process-case">One process case</h3>
 <ul>
 <li>In case a single process processes the whole matrix from above</li>
 </ul>
@@ -456,7 +463,7 @@ e &amp; 0 &amp; f &amp; g\\
 <p>Compressed row indices :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>R</mi><mi>o</mi><mi>w</mi><mi>_</mi><mi>p</mi><mi>t</mi><mi>r</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>5</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>11</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsRow\_ptr=\{1,4,5,8,11\}</annotation></semantics></math></p>
 <p>Column indices of non-zero elements :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>C</mi><mi>o</mi><mi>l</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsCol=\{1,2,3,2,1,3,4,2,3,4\}</annotation></semantics></math></p>
 <hr />
-<h3 id="two-process-case" class="unnumbered">Two process case</h3>
+<h3 class="unnumbered" data-number id="two-process-case">Two process case</h3>
 <ul>
 <li>Rank 0 process</li>
 </ul>
@@ -470,8 +477,8 @@ e &amp; 0 &amp; f &amp; g\\
 <p>Compressed row indices :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>R</mi><mi>o</mi><mi>w</mi><mi>_</mi><mi>p</mi><mi>t</mi><mi>r</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>7</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsRow\_ptr=\{1,4,7\}</annotation></semantics></math></p>
 <p>Column indices of non-zero elements :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>C</mi><mi>o</mi><mi>l</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsCol=\{1,3,4,2,3,4\}</annotation></semantics></math></p>
 <hr />
-<h2 id="diagonal-format"><span class="header-section-number">3.2</span> Diagonal Format</h2>
-<p>　The Diagonal Format stores the non-zero elements of a matrix as diagonals. This format provides high performance for band block diagonal matrices. In addition to the element values, an offset value for each diagonal of the matrix needs to be stored inside an one dimensional array. A negative offset indicates that the diagonal is below the main diagonal of the matrix, a positive offset indicates that the diagonal is above the main diagonal. The main diagonal has the offset zero.</p>
+<h2 data-number="3.2" id="diagonal-format"><span class="header-section-number">3.2</span> Diagonal Format</h2>
+<p>　The Diagonal Format stores the non-zero elements of a matrix as diagonals. This format provides high performance for band block diagonal matrices. In addition to the element values, an offset value for each diagonal of the matrix needs to be stored inside an one dimensional array. A negative offset indicates that the diagonal is below the main diagonal of the matrix, a positive offset indicates that the diagonal is above the main diagonal. The main diagonal has the offset zero. Offset values are stored in an incremental order.</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mi>a</mi></mtd><mtd columnalign="center"><mi>b</mi></mtd><mtd columnalign="center"><mi>c</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>d</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mi>e</mi></mtd><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>f</mi></mtd><mtd columnalign="center"><mi>g</mi></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mi>h</mi></mtd><mtd columnalign="center"><mi>i</mi></mtd><mtd columnalign="center"><mi>j</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 A = \left(
 \begin{array}{ccc}
@@ -483,7 +490,7 @@ e &amp; 0 &amp; f &amp; g\\
 \right)
 </annotation></semantics></math></p>
 <hr />
-<h3 id="single-process-case" class="unnumbered">Single process case</h3>
+<h3 class="unnumbered" data-number id="single-process-case">Single process case</h3>
 <ul>
 <li>In case the matrix above is processed by a single process</li>
 </ul>
@@ -491,7 +498,7 @@ e &amp; 0 &amp; f &amp; g\\
 <p>Offsets :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>o</mi><mi>f</mi><mi>f</mi><mi>s</mi><mi>e</mi><mi>t</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo>−</mo><mn>2</mn><mo>,</mo><mo>−</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">offset=\{-2,-1,0,1,2\}</annotation></semantics></math></p>
 <p>Number of diagonals :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>n</mi><mi>d</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">nnd=5</annotation></semantics></math></p>
 <hr />
-<h3 id="two-process-case-1" class="unnumbered">Two process case</h3>
+<h3 class="unnumbered" data-number id="two-process-case-1">Two process case</h3>
 <ul>
 <li>Rank 0 process</li>
 </ul>
@@ -505,9 +512,9 @@ e &amp; 0 &amp; f &amp; g\\
 <p>Offsets :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>o</mi><mi>f</mi><mi>f</mi><mi>s</mi><mi>e</mi><mi>t</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo>−</mo><mn>2</mn><mo>,</mo><mo>−</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">offset=\{-2,-1,0,1\}</annotation></semantics></math></p>
 <p>Number of diagonals :: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>n</mi><mi>d</mi><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">nnd=4</annotation></semantics></math></p>
 <hr />
-<h1 id="the-structure-of-parcel"><span class="header-section-number">4</span> The structure of PARCEL</h1>
+<h1 data-number="4" id="the-structure-of-parcel"><span class="header-section-number">4</span> The structure of PARCEL</h1>
 <p>　This chapter explains how to compile and install the PARCEL library.</p>
-<h2 id="directory-structure"><span class="header-section-number">4.1</span> Directory Structure</h2>
+<h2 data-number="4.1" id="directory-structure"><span class="header-section-number">4.1</span> Directory Structure</h2>
 <p>　After extracting the PARCEL library, the directory structure should be the same as in Fig.6.</p>
 <table style="width:75%;">
 <colgroup>
@@ -520,8 +527,8 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="compiling-the-parcel-library"><span class="header-section-number">4.2</span> Compiling the PARCEL library</h2>
-<p>PARCEL requires a C compiler, a FORTRAN compiler, which supports preprocessor, MPI, LAPACK, and OpenMP. When compiling with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mi>f</mi><mi>o</mi><mi>r</mi><mi>t</mi><mi>r</mi><mi>a</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">gfortran</annotation></semantics></math>, the option <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mi>c</mi><mi>p</mi><mi>p</mi></mrow><annotation encoding="application/x-tex">-cpp</annotation></semantics></math> has to be specified to to activate preprocessor. Compiler options can be changed inside the file arch/make_config. An example of a make_config file is shown in Fig.7. The make command should be executed from the top directory of the extracted file. In order to re-compile, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi><mspace width="0.222em"></mspace><mi>c</mi><mi>l</mi><mi>e</mi><mi>a</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">make\ clean</annotation></semantics></math> followed by <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">make</annotation></semantics></math> should be executed. If the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">make</annotation></semantics></math> command was successful, each <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>x</mi><mi>a</mi><mi>m</mi><mi>p</mi><mi>l</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">example</annotation></semantics></math> directory should contain an executable file. 64-bit integer is only needed when working with over roughly 2 billion unknowns.</p>
+<h2 data-number="4.2" id="compiling-the-parcel-library"><span class="header-section-number">4.2</span> Compiling the PARCEL library</h2>
+<p>PARCEL requires a C compiler, a FORTRAN compiler, which supports preprocessor, MPI, LAPACK, and OpenMP. When compiling with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mi>f</mi><mi>o</mi><mi>r</mi><mi>t</mi><mi>r</mi><mi>a</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">gfortran</annotation></semantics></math>, the option <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mi>c</mi><mi>p</mi><mi>p</mi></mrow><annotation encoding="application/x-tex">-cpp</annotation></semantics></math> has to be specified to to activate preprocessor. Compiler options can be changed inside the file arch/make_config. An example of a make_config file is shown in Fig.7. The make command should be executed from the top directory of the extracted file. In order to re-compile, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi><mspace width="0.222em"></mspace><mi>c</mi><mi>l</mi><mi>e</mi><mi>a</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">make\ clean</annotation></semantics></math> followed by <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">make</annotation></semantics></math> should be executed. If the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>k</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">make</annotation></semantics></math> command was successful, each <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>x</mi><mi>a</mi><mi>m</mi><mi>p</mi><mi>l</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">example</annotation></semantics></math> directory should contain an executable file. 64-bit integer is needed when working with over roughly 2 billion unknowns. For example, FDEFINE has to be specified for a large scale test, example5, in this package.</p>
 <table>
 <colgroup>
 <col style="width: 100%"></col>
@@ -585,11 +592,11 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="usage-of-the-parcel-library"><span class="header-section-number">4.3</span> Usage of the PARCEL library</h2>
+<h2 data-number="4.3" id="usage-of-the-parcel-library"><span class="header-section-number">4.3</span> Usage of the PARCEL library</h2>
 <p>In order to call PARCEL library, programs need to be linked against the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mi>.</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">*.a</annotation></semantics></math> library files inside the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>r</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">src</annotation></semantics></math> directory.</p>
-<h1 id="parcel-routines-direct-interface"><span class="header-section-number">5</span> PARCEL routines (direct interface)</h1>
+<h1 data-number="5" id="parcel-routines-direct-interface"><span class="header-section-number">5</span> PARCEL routines (direct interface)</h1>
 <p>　The PARCEL routines with direct call interfaces are shown below.</p>
-<h2 id="parcel_dcg"><span class="header-section-number">5.1</span> parcel_dcg</h2>
+<h2 data-number="5.1" id="parcel_dcg"><span class="header-section-number">5.1</span> parcel_dcg</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -686,7 +693,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -732,7 +739,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcg_dia"><span class="header-section-number">5.2</span> parcel_dcg_dia</h2>
+<h2 data-number="5.2" id="parcel_dcg_dia"><span class="header-section-number">5.2</span> parcel_dcg_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -823,7 +830,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -869,7 +876,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddcg"><span class="header-section-number">5.3</span> parcel_ddcg</h2>
+<h2 data-number="5.3" id="parcel_ddcg"><span class="header-section-number">5.3</span> parcel_ddcg</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -984,7 +991,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1054,7 +1061,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddcg_dia"><span class="header-section-number">5.4</span> parcel_ddcg_dia</h2>
+<h2 data-number="5.4" id="parcel_ddcg_dia"><span class="header-section-number">5.4</span> parcel_ddcg_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1163,7 +1170,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1233,7 +1240,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dbicgstab"><span class="header-section-number">5.5</span> parcel_dbicgstab</h2>
+<h2 data-number="5.5" id="parcel_dbicgstab"><span class="header-section-number">5.5</span> parcel_dbicgstab</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1330,7 +1337,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1376,7 +1383,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dbicgstab_dia"><span class="header-section-number">5.6</span> parcel_dbicgstab_dia</h2>
+<h2 data-number="5.6" id="parcel_dbicgstab_dia"><span class="header-section-number">5.6</span> parcel_dbicgstab_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1467,7 +1474,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1513,7 +1520,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddbicgstab"><span class="header-section-number">5.7</span> parcel_ddbicgstab</h2>
+<h2 data-number="5.7" id="parcel_ddbicgstab"><span class="header-section-number">5.7</span> parcel_ddbicgstab</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1628,7 +1635,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1698,7 +1705,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddbicgstab_dia"><span class="header-section-number">5.8</span> parcel_ddbicgstab_dia</h2>
+<h2 data-number="5.8" id="parcel_ddbicgstab_dia"><span class="header-section-number">5.8</span> parcel_ddbicgstab_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1807,7 +1814,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1877,7 +1884,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dgmres"><span class="header-section-number">5.9</span> parcel_dgmres</h2>
+<h2 data-number="5.9" id="parcel_dgmres"><span class="header-section-number">5.9</span> parcel_dgmres</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -1974,7 +1981,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2032,7 +2039,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dgmres_dia"><span class="header-section-number">5.10</span> parcel_dgmres_dia</h2>
+<h2 data-number="5.10" id="parcel_dgmres_dia"><span class="header-section-number">5.10</span> parcel_dgmres_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -2123,7 +2130,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2181,7 +2188,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddgmres"><span class="header-section-number">5.11</span> parcel_ddgmres</h2>
+<h2 data-number="5.11" id="parcel_ddgmres"><span class="header-section-number">5.11</span> parcel_ddgmres</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -2296,7 +2303,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2378,7 +2385,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddgmres_dia"><span class="header-section-number">5.12</span> parcel_ddgmres_dia</h2>
+<h2 data-number="5.12" id="parcel_ddgmres_dia"><span class="header-section-number">5.12</span> parcel_ddgmres_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -2487,7 +2494,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2569,7 +2576,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcbcg"><span class="header-section-number">5.13</span> parcel_dcbcg</h2>
+<h2 data-number="5.13" id="parcel_dcbcg"><span class="header-section-number">5.13</span> parcel_dcbcg</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -2666,7 +2673,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2754,7 +2761,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcbcg_dia"><span class="header-section-number">5.14</span> parcel_dcbcg_dia</h2>
+<h2 data-number="5.14" id="parcel_dcbcg_dia"><span class="header-section-number">5.14</span> parcel_dcbcg_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -2845,7 +2852,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2933,7 +2940,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcagmres"><span class="header-section-number">5.15</span> parcel_dcagmres</h2>
+<h2 data-number="5.15" id="parcel_dcagmres"><span class="header-section-number">5.15</span> parcel_dcagmres</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3030,7 +3037,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -3100,7 +3107,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcagmres_dia"><span class="header-section-number">5.16</span> parcel_dcagmres_dia</h2>
+<h2 data-number="5.16" id="parcel_dcagmres_dia"><span class="header-section-number">5.16</span> parcel_dcagmres_dia</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3191,7 +3198,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -3261,9 +3268,9 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h1 id="parcel-routines-indirect-interface"><span class="header-section-number">6</span> PARCEL routines (indirect interface)</h1>
+<h1 data-number="6" id="parcel-routines-indirect-interface"><span class="header-section-number">6</span> PARCEL routines (indirect interface)</h1>
 <p>　The PARCEL routines with indirect call interfaces are shown below.</p>
-<h2 id="parcel_ksp_default_setting"><span class="header-section-number">6.1</span> PARCEL_KSP_Default_Setting</h2>
+<h2 data-number="6.1" id="parcel_ksp_default_setting"><span class="header-section-number">6.1</span> PARCEL_KSP_Default_Setting</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3292,7 +3299,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_crs"><span class="header-section-number">6.2</span> set_KSP_CRS</h2>
+<h2 data-number="6.2" id="set_ksp_crs"><span class="header-section-number">6.2</span> set_KSP_CRS</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3395,7 +3402,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -3411,7 +3418,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_dia"><span class="header-section-number">6.3</span> set_KSP_DIA</h2>
+<h2 data-number="6.3" id="set_ksp_dia"><span class="header-section-number">6.3</span> set_KSP_DIA</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3508,7 +3515,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match)</td>
+<td style="text-align: left;">Flag for incomplete LU factorization(0:ILU(0),1:D-ILU(Diagonal components match),2:D-ILU(Element sums in a row match),Only 1 and 2 are available for additive Schwartz)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -3524,7 +3531,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_vecx_ksp"><span class="header-section-number">6.4</span> set_vecx_KSP</h2>
+<h2 data-number="6.4" id="set_vecx_ksp"><span class="header-section-number">6.4</span> set_vecx_KSP</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3565,7 +3572,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_vecb_ksp"><span class="header-section-number">6.5</span> set_vecb_KSP</h2>
+<h2 data-number="6.5" id="set_vecb_ksp"><span class="header-section-number">6.5</span> set_vecb_KSP</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3606,7 +3613,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="get_vecx_ksp"><span class="header-section-number">6.6</span> get_vecx_KSP</h2>
+<h2 data-number="6.6" id="get_vecx_ksp"><span class="header-section-number">6.6</span> get_vecx_KSP</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3647,7 +3654,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="get_reshistory_ksp"><span class="header-section-number">6.7</span> get_reshistory_KSP</h2>
+<h2 data-number="6.7" id="get_reshistory_ksp"><span class="header-section-number">6.7</span> get_reshistory_KSP</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3688,7 +3695,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="reset_crs_mat"><span class="header-section-number">6.8</span> reset_CRS_Mat</h2>
+<h2 data-number="6.8" id="reset_crs_mat"><span class="header-section-number">6.8</span> reset_CRS_Mat</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3753,7 +3760,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="reset_dia_mat"><span class="header-section-number">6.9</span> reset_DIA_Mat</h2>
+<h2 data-number="6.9" id="reset_dia_mat"><span class="header-section-number">6.9</span> reset_DIA_Mat</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3818,7 +3825,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_solver"><span class="header-section-number">6.10</span> set_KSP_solver</h2>
+<h2 data-number="6.10" id="set_ksp_solver"><span class="header-section-number">6.10</span> set_KSP_solver</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3859,7 +3866,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_abstolmaxmethodabstolmax"><span class="header-section-number">6.11</span> set_KSP_abstolmax(method,abstolmax)</h2>
+<h2 data-number="6.11" id="set_ksp_abstolmaxmethodabstolmax"><span class="header-section-number">6.11</span> set_KSP_abstolmax(method,abstolmax)</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3900,7 +3907,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_rtolmax"><span class="header-section-number">6.12</span> set_KSP_rtolmax</h2>
+<h2 data-number="6.12" id="set_ksp_rtolmax"><span class="header-section-number">6.12</span> set_KSP_rtolmax</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3941,7 +3948,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_iovlflag"><span class="header-section-number">6.13</span> set_KSP_iovlflag</h2>
+<h2 data-number="6.13" id="set_ksp_iovlflag"><span class="header-section-number">6.13</span> set_KSP_iovlflag</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -3982,7 +3989,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_gmres_mmethodgmres_m"><span class="header-section-number">6.14</span> set_KSP_GMRES_m(method,GMRES_m)</h2>
+<h2 data-number="6.14" id="set_ksp_gmres_mmethodgmres_m"><span class="header-section-number">6.14</span> set_KSP_GMRES_m(method,GMRES_m)</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4017,7 +4024,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_gmres_gsflag"><span class="header-section-number">6.15</span> set_KSP_GMRES_GSflag</h2>
+<h2 data-number="6.15" id="set_ksp_gmres_gsflag"><span class="header-section-number">6.15</span> set_KSP_GMRES_GSflag</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4058,7 +4065,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_sstep"><span class="header-section-number">6.16</span> set_KSP_CAGMRES_sstep</h2>
+<h2 data-number="6.16" id="set_ksp_cagmres_sstep"><span class="header-section-number">6.16</span> set_KSP_CAGMRES_sstep</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4099,7 +4106,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_tstep"><span class="header-section-number">6.17</span> set_KSP_CAGMRES_tstep</h2>
+<h2 data-number="6.17" id="set_ksp_cagmres_tstep"><span class="header-section-number">6.17</span> set_KSP_CAGMRES_tstep</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4140,7 +4147,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_basis"><span class="header-section-number">6.18</span> set_KSP_CAGMRES_basis</h2>
+<h2 data-number="6.18" id="set_ksp_cagmres_basis"><span class="header-section-number">6.18</span> set_KSP_CAGMRES_basis</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4181,7 +4188,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_qrflag"><span class="header-section-number">6.19</span> set_KSP_CAGMRES_QRflag</h2>
+<h2 data-number="6.19" id="set_ksp_cagmres_qrflag"><span class="header-section-number">6.19</span> set_KSP_CAGMRES_QRflag</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4222,7 +4229,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cbcg_kstep"><span class="header-section-number">6.20</span> set_KSP_CBCG_kstep</h2>
+<h2 data-number="6.20" id="set_ksp_cbcg_kstep"><span class="header-section-number">6.20</span> set_KSP_CBCG_kstep</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4257,7 +4264,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cbcg_eigenflag"><span class="header-section-number">6.21</span> set_KSP_CBCG_Eigenflag</h2>
+<h2 data-number="6.21" id="set_ksp_cbcg_eigenflag"><span class="header-section-number">6.21</span> set_KSP_CBCG_Eigenflag</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4298,7 +4305,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_sstep"><span class="header-section-number">6.22</span> set_KSP_CAARNOLDI_sstep</h2>
+<h2 data-number="6.22" id="set_ksp_caarnoldi_sstep"><span class="header-section-number">6.22</span> set_KSP_CAARNOLDI_sstep</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4339,7 +4346,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_tstep"><span class="header-section-number">6.23</span> set_KSP_CAARNOLDI_tstep</h2>
+<h2 data-number="6.23" id="set_ksp_caarnoldi_tstep"><span class="header-section-number">6.23</span> set_KSP_CAARNOLDI_tstep</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4380,7 +4387,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_basis"><span class="header-section-number">6.24</span> set_KSP_CAARNOLDI_basis</h2>
+<h2 data-number="6.24" id="set_ksp_caarnoldi_basis"><span class="header-section-number">6.24</span> set_KSP_CAARNOLDI_basis</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4421,7 +4428,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_qrflag"><span class="header-section-number">6.25</span> set_KSP_CAARNOLDI_QRflag</h2>
+<h2 data-number="6.25" id="set_ksp_caarnoldi_qrflag"><span class="header-section-number">6.25</span> set_KSP_CAARNOLDI_QRflag</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4462,7 +4469,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_power_method_itrmax"><span class="header-section-number">6.26</span> set_KSP_power_method_itrmax</h2>
+<h2 data-number="6.26" id="set_ksp_power_method_itrmax"><span class="header-section-number">6.26</span> set_KSP_power_method_itrmax</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4503,7 +4510,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="start_ksp_solver"><span class="header-section-number">6.27</span> START_KSP_SOLVER</h2>
+<h2 data-number="6.27" id="start_ksp_solver"><span class="header-section-number">6.27</span> START_KSP_SOLVER</h2>
 <ul>
 <li>Interface</li>
 </ul>
@@ -4532,9 +4539,9 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h1 id="how-to-use"><span class="header-section-number">7</span> How to use</h1>
+<h1 data-number="7" id="how-to-use"><span class="header-section-number">7</span> How to use</h1>
 <p>　The use of the PARCEL routines is explained by FORTRAN sample programs of a CG solver. Details of the usage of the PARCEL in C programs can be found in C sample programs stored in SPARSE/example_C in the archive. The PARCEL can be called also from C programs in the same manner, provided that a MPI communicator is prepared for FORTRAN routines. In the C sample programs, a MPI communicator created in C is converted to FORTRAN via MPI_Comm_c2f in the MPI library. In the C sample program for the indirect interface, a struct in the PARCEL format is generated in FORTRAN, and then, it is used in C programs.</p>
-<h2 id="compressed-row-storage-crs-format-1"><span class="header-section-number">7.1</span> Compressed Row Storage (CRS) Format</h2>
+<h2 data-number="7.1" id="compressed-row-storage-crs-format-1"><span class="header-section-number">7.1</span> Compressed Row Storage (CRS) Format</h2>
 <p>　Sample codes in the CRS format are shown in Fig.8 and Fig.9. Here, make_matrix_CRS denotes an arbitrary routine, which generates a matrix in the CRS format in PARCEL. Fig.8 and Fig.9 show examples with the direct and indirect interfaces, respectively. In Fig.9, a compiling option to include SPARSE/src is needed. When only values of matrix elements in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>, elements in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>, and the initial values in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math> are changed with the same matrix structure or the non-zero element positions, in Fig.8, parcel_dcg requires overhead for the initialization such as generating list of processes which exchange data with each other.</p>
 <ul>
 <li>Sample code 1 in the CRS format</li>
@@ -4695,7 +4702,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="diagonal-format-1"><span class="header-section-number">7.2</span> Diagonal Format</h2>
+<h2 data-number="7.2" id="diagonal-format-1"><span class="header-section-number">7.2</span> Diagonal Format</h2>
 <p>　Sample codes in the Diagonal format are shown in Fig.10 and Fig.11. Here, make_matrix_DIA denotes an arbitrary routine, which generates a matrix in the Diagonal format in PARCEL. Fig.10 and Fig.11 show examples with the direct and indirect interfaces, respectively. In Fig.11, a compiling option to include SPARSE/src is needed. When only values of matrix elements in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>, elements in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>, and the initial values in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math> are changed with the same matrix structure or the non-zero element positions, in Fig.10, parcel_dcg requires overhead for the initialization such as generating list of processes which exchange data with each other.</p>
 <ul>
 <li>Sample code 1 in the Diagonal format</li>

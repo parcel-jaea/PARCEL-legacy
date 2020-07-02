@@ -1,0 +1,26 @@
+&input
+  ityp_eq             = 1     ! Matrix :: (1:2D Poisson,6:3D Poisson)
+  npoints_along_x     = 256    ! Problem size
+  MAX_NITER           = 65536  ! Maximum number of iterations
+  rtolmax             = 1.0-9 ! Convergence criterion
+  ipreflag            = 0     ! Preconditioner :: (0:None,1:Point Jacobi,2:Block Jacobi,3:Additive Schwarz)
+  ILU_method          = 0     ! Incomplete LU factorization :: (0:ILU(0),1:D-ILU1,2:D-ILU2)
+  iovlflag            = 0     ! Communication overlap in SpMV :: (0:None,1:Single step,2:Multiple steps)
+  matA_format         = 1     ! Matrix format (1:CRS,2:DIA)
+  ityp_solver         = 3     ! Algorithm :: Double precision (1:CG,2:BiCG,3:GMRES,:4:CAGMRES,:5:CBCG)
+  addL                = -9     ! Overlapping width in Additive Schwarz
+  iflagAS             = -9     ! Averaging method in Additive Schwarz :: (1:BASIC,2:RESTRICT,3:INTERPOLATE,4:NONE)
+  GMRES_GSflag        = 1    ! Orthogonalization method in GMRES(m) :: (1:MGS,2:CGS)
+  restart             = 50    ! Restart length in GMRES(m)
+  CBCG_kstep          = -9    ! Communication avoiding steps in CBCG
+  CBCG_Eigenflag      = -9    ! Eigenvalue solver in CBCG :: (1:Power method,2:CA-ARNOLDI)
+  power_method_itrmax = -9    ! Number of iterations in power method
+  CAARNOLDI_sstep     = -9    ! Communication avoiding steps in CA-ARNOLDI
+  CAARNOLDI_tstep     = -9    ! Number of outer iterations in CA-ARNOLDI
+  CAARNOLDI_basis     = -9    ! Basis vector in CA-ARNOLDI :: (0:Monomial basis,1:Newton basis)
+  CAARNOLDI_QRflag    = -9    ! QR factorization in CA-ARNOLDI :: (1:MGS,2:CGS,3:TSQR,4:Cholesky QR,5:Cholesky QR2)
+  CAGMRES_sstep       = -9    ! Communication avoiding steps in CA-GMRES
+  CAGMRES_tstep       = -9    ! Number of outer iterations in CA-GMRES
+  CAGMRES_basis       = -9    ! Basis vector in CA-GMRES :: (0:Monomial basis,1:Newton basis)
+  CAGMRES_QRflag      = -9    ! QR factorization in CA-GMRES :: (1:MGS,2:CGS,3:TSQR,4:Cholesky QR,5:Cholesky QR2)
+/

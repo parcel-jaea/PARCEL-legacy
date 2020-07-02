@@ -715,6 +715,47 @@ subroutine make_poisson2D_matrix_asym_CRS( &
 
 end subroutine make_poisson2D_matrix_asym_CRS
 
+subroutine make_poisson2D_matrix_DIA_from_CRS( &
+     crsMat, &
+     diaA,offset,nnd,n,nnz, &
+     istart)
+  use matrix
+
+  implicit none
+  type(CRS_Mat) :: crsMat
+  type(DIA_Mat) :: diaMat
+  real*8 crsA(nnz)
+
+  integer istart
+  !  real*8 A( (nx*ny) * (gnx*gny) ) ! nx*ny :: 行
+
+  integer i,j,k
+  integer n,itmp
+  integer icol,irow
+  integer off
+
+  integer offset(nnd)
+  
+  integer nnz
+  integer nnd
+  real*8  diaA(n*nnd)
+  
+  do i=1,n
+    do j=crsMat%crsRow_ptr(i),crsMat%crsRow_ptr(i+1)-1
+      irow = i+istart-1
+      icol = crsMat%crsCol(j)
+      itmp = icol-irow
+      do k = 1,nnd
+         off =k 
+         if (offset(k)==itmp) exit
+      enddo
+      diaA(n*(off-1)+i) = crsMat%crsA(j)
+    enddo
+  enddo
+end subroutine make_poisson2D_matrix_DIA_from_CRS
+
+
+
 subroutine make_random_matrix(n,gn,A)
   implicit none
   integer i,j
@@ -1110,3 +1151,61 @@ subroutine make_poisson2D_matrix_DMDA( &
   enddo
 
 end subroutine make_poisson2D_matrix_DMDA
+
+subroutine make_vecb(&
+  mmx,mmy,mmz,vecB,x,istart,iend&
+  )
+integer ix,iy,iz
+integer i
+integer,intent(in) :: istart,iend
+real*8 h,z,ctmp1,ctmp2,ctmp3
+real*8, intent(inout) :: x(istart:iend)
+real*8, intent(out) :: vecB(istart:iend)
+
+! --------------
+! set (global) rhs vector
+! --------------
+  h = 1.0D0 / ((mmx+mmy+mmz)/3+1);   z = 2.0d0*h**6
+  do iz=1, mmz
+     do iy=1, mmy
+        do ix=1, mmx
+           i = mmz**2*(iz-1) +mmy*(iy-1) + ix
+           ctmp1 = real(ix) **2;    ctmp2 = real(iy) **2;  ctmp3 = real(iz)**2
+           if (i < istart .or. iend < i) cycle ! lm
+           vecB(i) = z *( ctmp1*ctmp2 +ctmp2*ctmp3 +ctmp3*ctmp1 )
+        end do
+     end do
+  end do
+
+! --------------
+! boundary conditions 
+! --------------
+  ix = mmx
+  do iz=1, mmz
+     do iy=1, mmy
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) -(h*iy)**2 *(h*iz)**2
+     end do
+  end do
+
+  iy = mmy
+  do iz=1, mmz
+     do ix=1, mmx
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) - (h*ix)**2 * (h*iz)**2
+     end do
+  end do
+
+  iz = mmz
+  do iy=1, mmy
+     do ix=1, mmx
+        i = mmz**2 *(iz-1) +mmy*(iy-1) +ix
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = vecB(i) - (h*ix)**2 * (h*iy)**2
+     end do
+  end do
+
+
+end subroutine make_vecb

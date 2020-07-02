@@ -2,8 +2,7 @@ confdir=../../
 include ${confdir}/arch/make_config
 
 INC = -I../src/
-LDFLAGS = ${LD_LAPACK} ${LD_MPI} ../src/parcel_sparse.a  ../src/dd_MPI/lib/libMpifdd1.a \
-	<path-to>/libjaeri_ilesf77.a
+LDFLAGS = ${LD_LAPACK} ${LD_MPI} ../src/parcel_sparse.a  ../src/dd_MPI/lib/libMpifdd1.a
 
 # PROG1    = run_int8
 # PROG2    = run_int4

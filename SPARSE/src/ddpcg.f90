@@ -352,11 +352,14 @@ subroutine ddKSP_pCG( pcg&
   ! ------
   ! 真の残差を確認
 #if 0
-  call calc_res(pcg,x,pcg%b,r)
-  call calc_dot(n,icomm,r,r,rnorm)
-  rnorm=sqrt(rnorm)
+  !call calc_res(pcg,x,pcg%b,r)
+  !call calc_dot(n,icomm,r,r,rnorm)
+  call ddcalc_res(pcg,x_hi,x_lo,b_hi,b_lo,r_hi,r_lo)
+  call ddcalc_dot(n,icomm,r_hi,r_lo,r_hi,r_lo,rnorm_hi,rnorm_lo)
+  call dd_sqrt(rnorm_hi,rnorm_lo,rnorm_hi,rnorm_lo)
+
   if(myrank.eq.0)then
-     write(*,*)"@ true res @",rnorm,rnorm/bnorm
+     write(*,*)"@ true res @",rnorm_hi,rnorm_hi/bnorm_hi
   endif
 #endif
 

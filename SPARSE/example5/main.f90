@@ -16,7 +16,7 @@ program main
 
   integer ityp_eq
   integer(kind=8) gnx,gny,gnz
-  integer itrmax
+  integer MAX_NITER
   integer(kind=8) nx,ny,nz
   integer(kind=8) nx0,ny0,nz0
   integer(kind=8) n,gn
@@ -32,7 +32,7 @@ program main
   integer iflagAS
   real*8  rtolmax
   real*8  abstolmax
-  integer solver
+  integer ityp_solver
   integer iret
   real*8,allocatable  :: reshistory_CRS(:)
   real*8,allocatable  :: reshistory_DIA(:)
@@ -59,13 +59,22 @@ program main
   real*8 stime,etime
   real*8 init_time_CRS,solve_time_CRS
   integer niter,restart
+  character(len=10) ::argc
+  character(len=10) :: set_file_num
+  character(len=70) :: file_name
+  integer imode_flg,input_num
+
+
+  !call getarg(1,argc)
+  !set_file_num=trim(argc)
+
 
   namelist/input/ &
        ityp_eq, &
        gnx, &
        gny, &
        gnz, &
-       itrmax, &
+       MAX_NITER, &
        rtolmax, &
        abstolmax, &
        ipreflag, &
@@ -73,7 +82,7 @@ program main
        iflagAS, &
        ILU_method, &
        iovlflag, &
-       solver, &
+       ityp_solver, &
        restart, &
        GMRES_GSflag, &
        CBCG_kstep, &
@@ -87,11 +96,29 @@ program main
        CAGMRES_tstep, &
        CAGMRES_basis, &
        CAGMRES_QRflag
+  !read(set_file_num,*,iostat=imode_flg) input_num
+  !if (imode_flg==0) then
+  !  if ((input_num>=1).and.(input_num<=35)) then
+  !    file_name='./templete/templete_input/input_namelist'//set_file_num
+  !  else
+  !    print *,"invalid input file number"
+  !    stop
+  !  endif
+  !else
+    file_name='./input_namelist'
+  !endif
 
-  open(33,file='input_namelist')
+  open(33,file=file_name)
   read(33,nml=input)
   close(33)
 
+  if ((ipreflag==3) .and.(ILU_method==0)) then
+    write(*,*)"Additive schwartz doesn't support ILU precondition. Switch ILU to DILU condition 1."
+    ILU_method=1
+  endif
+  if ((ipreflag==3).and.(addL==0)) then
+    ipreflag=2
+  endif
 
   ! -----
   call MPI_Init(ierr)
@@ -141,8 +168,9 @@ program main
   allocate(vecX(n))
   vecb    = -1.0d0
   vecX    = 0.0d0
-  allocate(reshistory_CRS(itrmax))
-  allocate(reshistory_DIA(itrmax))
+  call make_vecb_int8(gnx,gny,gnz,vecb,vecx,istart,iend)
+  allocate(reshistory_CRS(MAX_NITER))
+  allocate(reshistory_DIA(MAX_NITER))
   reshistory_CRS=0.0d0
   reshistory_DIA=0.0d0
 
@@ -151,7 +179,7 @@ program main
   call PARCEL_KSP_Default_Setting(method_CRS)
   call set_KSP_rtolmax(method_CRS,rtolmax)
   call set_KSP_abstolmax(method_CRS,abstolmax)
-  call set_KSP_solver(method_CRS,solver)
+  call set_KSP_solver(method_CRS,ityp_solver)
   call set_KSP_iovlflag(method_CRS,iovlflag)
   call set_KSP_iflagAS(method_CRS,iflagAS)
   call set_KSP_GMRES_GSflag(method_CRS,GMRES_GSflag)
@@ -172,7 +200,7 @@ program main
   call PARCEL_KSP_Default_Setting(method_DIA)
   call set_KSP_rtolmax(method_DIA,rtolmax)
   call set_KSP_abstolmax(method_DIA,abstolmax)
-  call set_KSP_solver(method_DIA,solver)
+  call set_KSP_solver(method_DIA,ityp_solver)
   call set_KSP_iovlflag(method_DIA,iovlflag)
   call set_KSP_iflagAS(method_DIA,iflagAS)
   call set_KSP_GMRES_GSflag(method_DIA,GMRES_GSflag)
@@ -199,7 +227,7 @@ program main
        crsMat%crsA, &
        crsMat%crsRow_ptr, &
        crsMat%crsCol, &
-       itrmax, &
+       MAX_NITER, &
        ipreflag, &
        ILU_method, &
        addL, &
@@ -222,9 +250,15 @@ program main
   ! ------
 
 #if 0
-  call get_nnd_crs(crsMat,n,istart,nnz,nnd)
-  call init_diaMat(diaMat,n,nnd)
-  call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+!  call get_nnd_crs(crsMat,n,istart,nnz,nnd)
+!  call init_diaMat(diaMat,n,nnd)
+!  call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+  call make_poisson2D_matrix_DIA_get_nnd( &
+       diaMat,gn,n,nnz,crsMat%crsCol,crsMat%crsRow_ptr,istart,iend,nnd)
+  call make_poisson2D_matrix_DIA_from_CRS( &
+       crsMat,diaMat%diaA,diaMat%offset,nnd,n,nnz,istart)
+
+
   write(*,*)myrank,"crs -- nnz = ",nnz, "dia -- nnd",nnd
 
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
@@ -235,7 +269,7 @@ program main
        n,gn,istart, &
        diaMat%diaA, &
        diaMat%offset,nnd, &
-       itrmax, &
+       MAX_NITER, &
        ipreflag, &
        ILU_method, &
        addL, &

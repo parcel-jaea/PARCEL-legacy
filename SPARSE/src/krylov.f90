@@ -669,6 +669,7 @@ contains
        call get_DILU_DInv_AS_crs(method,method%crsMat)
 
        if(method%addL.ne.0)then
+#if 0
           call get_nnd_crs( &
                method%precon_crsMatAS, &
                method%prm_AS%n, &
@@ -685,6 +686,25 @@ contains
                method%prm_AS%istart, &
                method%prm_AS%nnd, &
                method%prm_AS%nnz)
+#else
+          call get_nnd_crs_without_sort(&
+               method%precon_diaMatAS, &
+               method%prm_AS%n,&
+               method%prm_AS%nnz,&
+               method%precon_crsMatAS%crsCol,&
+               method%precon_crsMatAS%crsRow_ptr,&
+               method%prm_AS%istart,&
+               method%prm_AS%iend,&
+               method%prm_AS%nnd &
+               )
+          call crs2dia_without_sort( &
+               method%precon_crsMatAS, &
+               method%precon_diaMatAS, &
+               method%prm_AS%nnd, &
+               method%prm_AS%n, &
+               method%prm_AS%nnz,&
+               method%prm_AS%istart)
+#endif
           ! addLが0の場合はブロックヤコビ前処理なので加法シュヴァルツ前処理用の行列は作成しない
           call free_crsMat(method%precon_crsMatAS)
        endif

@@ -184,6 +184,120 @@ subroutine make_poisson2D_matrix_CRS_get_nnz( &
   !$OMP END PARALLEL DO 
 end subroutine make_poisson2D_matrix_CRS_get_nnz
 
+subroutine make_poisson2D_matrix_DIA_get_nnd(&
+           n,nnz,crsCol,crsRow,istart,iend,nnd)
+  use matrix 
+  use matrix_kernel, only: &
+       init_diamat
+
+  implicit none
+  type(DIA_MAT) :: diaMat
+  integer n
+  integer nnz
+  integer crsCol(nnz)
+  integer crsRow(n+1)
+  integer istart
+  integer iend
+
+  integer nnd
+  
+  integer i, j, icol, irow, itmp
+  integer,allocatable::Flag(:)
+  integer nnd_p
+
+  integer imn,imx
+  
+  imn = 0
+  imx = 0
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp=icol-irow
+        if (imn>itmp) imn = itmp
+        if (imx<itmp) imx = itmp
+      endif
+    enddo
+  enddo
+  allocate(Flag(imn:imx))
+  Flag = 0
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp = icol-irow
+        Flag(itmp) = 1
+      endif
+    enddo
+  enddo
+  nnd = 0
+  do i=imn,imx
+    if (Flag(i)==1) then
+      nnd=nnd+1
+    endif
+  enddo
+  deallocate(Flag)
+  
+end subroutine make_poisson2D_matrix_DIA_get_nnd
+
+subroutine make_poisson2D_matrix_DIA_get_offset(&
+  offset,n,nnz,crsCol,crsRow,istart,iend,nnd)
+  use matrix
+  use PARCEL_integer
+  implicit none
+  integer n
+  integer nnz
+  integer nnd
+  integer crsCol(nnz)
+  integer crsRow(n+1)
+  integer istart
+  integer iend
+
+  integer i, j, icol, irow, itmp
+  integer offset(nnd)
+  
+  integer,allocatable::Flag(:)
+  integer nnd_p
+
+  integer imn,imx
+  imn = 0
+  imx = 0
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp=icol-irow
+        if (imn>itmp) imn = itmp
+        if (imx<itmp) imx = itmp
+      endif
+    enddo
+  enddo
+  allocate(Flag(imn:imx))
+  Flag = 0
+
+  do i=1,n
+    do j=crsRow(i),crsRow(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      if(irow>=istart .and. irow<=iend) then
+        itmp = icol-irow
+        Flag(itmp) = 1
+      endif
+    enddo
+  enddo
+  nnd_p = 0
+  do i=imn,imx
+    if (Flag(i)==1) then
+      nnd_p=nnd_p+1
+      offset(nnd_p)=i
+    endif
+  enddo
+  deallocate(Flag)
+end subroutine make_poisson2D_matrix_DIA_get_offset
+
 subroutine make_poisson2D_matrix_CRS( &
      nx,ny,nx0,ny0,gny,gnx,&
      crsA,crsCol,crsRow_ptr,n,nnz0, &
@@ -444,6 +558,92 @@ subroutine make_poisson2D_matrix_asym_CRS( &
   crsRow_ptr(n+1)=nnz
 
 end subroutine make_poisson2D_matrix_asym_CRS
+
+subroutine make_vecb(&
+  mmx,mmy,vecB,x,istart,iend&
+  )
+  integer ix,iy
+  integer i
+  integer, intent(in) :: istart,iend
+  real*8 h,z,ctmp1,ctmp2
+  real*8, intent(out) :: x(istart:iend)
+  real*8, intent(out) :: vecB(istart:iend)
+  
+! --------------
+! set (global) rhs vector
+! --------------
+  h = 1.0D0 / ((mmx+mmy)/2+1);   z = 2.0d0 * h**4
+  do iy=1, mmy
+     do ix=1, mmx
+        i = mmy*(iy-1) + ix
+        ctmp1 = real(ix) **2;    ctmp2 = real(iy) **2
+        if (i < istart .or. iend < i) cycle ! lm
+        vecB(i) = z *( ctmp1 +ctmp2 )
+     end do
+  end do
+
+! --------------
+! boundary conditions 
+! --------------
+  ix = mmx
+  do iy=1, mmy
+     i = mmy*(iy-1) +ix
+     if (i < istart .or. iend < i) cycle ! lm
+     vecB(i) = vecB(i) -(h*iy)**2
+  end do
+  iy = mmy
+  do ix=1, mmx
+     i = mmy*(iy-1) +ix
+     if (i < istart .or. iend < i) cycle ! lm
+     vecB(i) = vecB(i) - (h*ix)**2
+  end do
+! --------------
+! set itital guess
+! --------------
+  x = 0.0d0
+  if (1 >= istart .and. iend >= 1) then
+     X(1) = 1.0
+  end if
+
+end subroutine make_vecB
+
+
+
+subroutine make_poisson2D_matrix_DIA_from_CRS( &
+     crsA,crsCol,crsRow_ptr,&
+     diaA,offset,nnd,n,nnz, &
+     istart)
+  use matrix
+!crsA,crsCol,crsRow_ptr, &
+  implicit none
+  integer nnz
+  integer nnd
+  integer n,itmp
+
+  real*8 crsA(nnz)
+  integer crsCol(nnz),crsRow_ptr(n+1)
+  real*8 diaA(nnd*n)
+  integer offset(nnd)
+  integer istart
+  !  real*8 A( (nx*ny) * (gnx*gny) ) ! nx*ny :: 行
+
+  integer i,j,k
+  integer icol,irow
+  integer off
+
+  do i=1,n
+    do j=crsRow_ptr(i),crsRow_ptr(i+1)-1
+      irow = i+istart-1
+      icol = crsCol(j)
+      itmp = icol-irow
+      do k = 1,nnd
+         off =k 
+         if (offset(k)==itmp) exit
+      enddo
+      diaA(n*(off-1)+i) = crsA(j)
+    enddo
+  enddo
+end subroutine make_poisson2D_matrix_DIA_from_CRS
 
 subroutine make_random_matrix(n,gn,A)
   implicit none

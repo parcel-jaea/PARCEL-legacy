@@ -20,30 +20,35 @@
 <body>
 <nav id="TOC">
 <ul>
-<li><a href="#クリロフ部分空間法"><span class="toc-section-number">1</span> クリロフ部分空間法</a><ul>
+<li><a href="#クリロフ部分空間法"><span class="toc-section-number">1</span> クリロフ部分空間法</a>
+<ul>
 <li><a href="#前処理付共役勾配法"><span class="toc-section-number">1.1</span> 前処理付共役勾配法</a></li>
 <li><a href="#前処理付安定化双共役勾配法"><span class="toc-section-number">1.2</span> 前処理付安定化双共役勾配法</a></li>
 <li><a href="#前処理付一般化最小残差法"><span class="toc-section-number">1.3</span> 前処理付一般化最小残差法</a></li>
 <li><a href="#前処理付通信削減型一般化最小残差法"><span class="toc-section-number">1.4</span> 前処理付通信削減型一般化最小残差法</a></li>
 <li><a href="#前処理付チェビシェフ基底共役勾配法法"><span class="toc-section-number">1.5</span> 前処理付チェビシェフ基底共役勾配法法</a></li>
 </ul></li>
-<li><a href="#前処理"><span class="toc-section-number">2</span> 前処理</a><ul>
+<li><a href="#前処理"><span class="toc-section-number">2</span> 前処理</a>
+<ul>
 <li><a href="#ポイントヤコビ前処理"><span class="toc-section-number">2.1</span> ポイントヤコビ前処理</a></li>
 <li><a href="#フィルイン無し不完全lu分解ilu0"><span class="toc-section-number">2.2</span> フィルイン無し不完全LU分解(ILU(0))</a></li>
 <li><a href="#修正不完全lu分解d-ilu"><span class="toc-section-number">2.3</span> 修正不完全LU分解(D-ILU)</a></li>
 <li><a href="#ブロックヤコビ前処理"><span class="toc-section-number">2.4</span> ブロックヤコビ前処理</a></li>
 <li><a href="#加法的シュワルツ前処理"><span class="toc-section-number">2.5</span> 加法的シュワルツ前処理</a></li>
 </ul></li>
-<li><a href="#データ構造"><span class="toc-section-number">3</span> データ構造</a><ul>
+<li><a href="#データ構造"><span class="toc-section-number">3</span> データ構造</a>
+<ul>
 <li><a href="#compressed-row-形式"><span class="toc-section-number">3.1</span> Compressed Row 形式</a></li>
 <li><a href="#diagonal形式"><span class="toc-section-number">3.2</span> Diagonal形式</a></li>
 </ul></li>
-<li><a href="#parcelの構成"><span class="toc-section-number">4</span> PARCELの構成</a><ul>
+<li><a href="#parcelの構成"><span class="toc-section-number">4</span> PARCELの構成</a>
+<ul>
 <li><a href="#ディレクトリ構成"><span class="toc-section-number">4.1</span> ディレクトリ構成</a></li>
 <li><a href="#コンパイル方法"><span class="toc-section-number">4.2</span> コンパイル方法</a></li>
 <li><a href="#使用方法"><span class="toc-section-number">4.3</span> 使用方法</a></li>
 </ul></li>
-<li><a href="#parcelサブルーチン直接インターフェース"><span class="toc-section-number">5</span> PARCELサブルーチン（直接インターフェース）</a><ul>
+<li><a href="#parcelサブルーチン直接インターフェース"><span class="toc-section-number">5</span> PARCELサブルーチン（直接インターフェース）</a>
+<ul>
 <li><a href="#parcel_dcg"><span class="toc-section-number">5.1</span> parcel_dcg</a></li>
 <li><a href="#parcel_dcg_dia"><span class="toc-section-number">5.2</span> parcel_dcg_dia</a></li>
 <li><a href="#parcel_ddcg"><span class="toc-section-number">5.3</span> parcel_ddcg</a></li>
@@ -61,7 +66,8 @@
 <li><a href="#parcel_dcagmres"><span class="toc-section-number">5.15</span> parcel_dcagmres</a></li>
 <li><a href="#parcel_dcagmres_dia"><span class="toc-section-number">5.16</span> parcel_dcagmres_dia</a></li>
 </ul></li>
-<li><a href="#parcelサブルーチン間接インターフェース"><span class="toc-section-number">6</span> PARCELサブルーチン（間接インターフェース）</a><ul>
+<li><a href="#parcelサブルーチン間接インターフェース"><span class="toc-section-number">6</span> PARCELサブルーチン（間接インターフェース）</a>
+<ul>
 <li><a href="#parcel_ksp_default_setting"><span class="toc-section-number">6.1</span> PARCEL_KSP_Default_Setting</a></li>
 <li><a href="#set_ksp_crs"><span class="toc-section-number">6.2</span> set_KSP_CRS</a></li>
 <li><a href="#set_ksp_dia"><span class="toc-section-number">6.3</span> set_KSP_DIA</a></li>
@@ -90,15 +96,16 @@
 <li><a href="#set_ksp_power_method_itrmax"><span class="toc-section-number">6.26</span> set_KSP_power_method_itrmax</a></li>
 <li><a href="#start_ksp_solver"><span class="toc-section-number">6.27</span> START_KSP_SOLVER</a></li>
 </ul></li>
-<li><a href="#サブルーチン使用方法"><span class="toc-section-number">7</span> サブルーチン使用方法</a><ul>
+<li><a href="#サブルーチン使用方法"><span class="toc-section-number">7</span> サブルーチン使用方法</a>
+<ul>
 <li><a href="#compressed-row形式"><span class="toc-section-number">7.1</span> Compressed Row形式</a></li>
 <li><a href="#diagonal形式-1"><span class="toc-section-number">7.2</span> Diagonal形式</a></li>
 </ul></li>
 </ul>
 </nav>
-<h1 id="クリロフ部分空間法"><span class="header-section-number">1</span> クリロフ部分空間法</h1>
+<h1 data-number="1" id="クリロフ部分空間法"><span class="header-section-number">1</span> クリロフ部分空間法</h1>
 <p>　本ライブラリルーチンで用いた各反復法アルゴリズムについて紹介する. 以下では,n<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math>nの実行列Aを係数行列に持つ連立一次方程式 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">Ax = b</annotation></semantics></math> を解くものとする.ここでは,適当な前処理行列を<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>,初期値ベクトルを<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mn>0</mn></msub><annotation encoding="application/x-tex">x_0</annotation></semantics></math>とする.</p>
-<h2 id="前処理付共役勾配法"><span class="header-section-number">1.1</span> 前処理付共役勾配法</h2>
+<h2 data-number="1.1" id="前処理付共役勾配法"><span class="header-section-number">1.1</span> 前処理付共役勾配法</h2>
 <p>　共役勾配法(CG法)は対称行列向けのクリロフ部分空間法である.</p>
 <ul>
 <li>アルゴリズム</li>
@@ -126,7 +133,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝛃</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝛒</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>/</mi><mspace width="0.222em"></mspace></mstyle><msub><mstyle mathvariant="bold"><mi>𝛒</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub></mrow><annotation encoding="application/x-tex">\mathbf{\beta}_{\mathbf{i}}\mathbf{=}\mathbf{\rho}_{\mathbf{i + 1}}\mathbf{\ /\ }\mathbf{\rho}_{\mathbf{i}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>𝐞</mi><mi>𝐧</mi></mstyle><mstyle mathvariant="bold"><mi>𝐝</mi></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{{\ en}}\mathbf{d}</annotation></semantics></math></li>
 </ol>
-<h2 id="前処理付安定化双共役勾配法"><span class="header-section-number">1.2</span> 前処理付安定化双共役勾配法</h2>
+<h2 data-number="1.2" id="前処理付安定化双共役勾配法"><span class="header-section-number">1.2</span> 前処理付安定化双共役勾配法</h2>
 <p>　安定化双共役勾配法(Bi-CGSTAB)は非対称行列向けのクリロフ部分空間法である.</p>
 <ul>
 <li>アルゴリズム</li>
@@ -154,7 +161,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐩</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐫</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi><mo>+</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo><mi>𝛃</mi></mstyle><mrow><mo stretchy="true" form="prefix">(</mo><msub><mstyle mathvariant="bold"><mi>𝐩</mi></mstyle><mstyle mathvariant="bold"><mi>𝐢</mi></mstyle></msub><mstyle mathvariant="bold"><mo>−</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐜</mi></mstyle><mstyle mathvariant="bold"><mn>3</mn></mstyle></msub><mstyle mathvariant="bold"><mi>𝐪</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbf{p}_{\mathbf{i + 1}}\mathbf{=}\mathbf{r}_{\mathbf{i + 1}}\mathbf{+ \beta}\left( \mathbf{p}_{\mathbf{i}}\mathbf{-}\mathbf{c}_{\mathbf{3}}\mathbf{q} \right)</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="bold"><mi>𝐞</mi><mi>𝐧</mi><mi>𝐝</mi></mstyle><annotation encoding="application/x-tex">\mathbf{{end}}</annotation></semantics></math></li>
 </ol>
-<h2 id="前処理付一般化最小残差法"><span class="header-section-number">1.3</span> 前処理付一般化最小残差法</h2>
+<h2 data-number="1.3" id="前処理付一般化最小残差法"><span class="header-section-number">1.3</span> 前処理付一般化最小残差法</h2>
 <p>　一般化最小残差法(GMRES(m))は非対称行列向けのクリロフ部分空間法である.リスタート周期m回の反復計算で解が収束しない場合はm回の反復で得られた解を初期値として反復を再開する.PARCELでは直交化手法として古典グラムシュミット法と修正グラムシュミット法が整備されている.</p>
 <ul>
 <li>アルゴリズム</li>
@@ -194,7 +201,7 @@
 <li>　　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mi>𝐧</mi></mstyle></msub></mrow><annotation encoding="application/x-tex">\mathbf{x}_{\mathbf{0}}\mathbf{=}\mathbf{x}_{\mathbf{n}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="bold"><mi>𝐞</mi><mi>𝐧</mi><mi>𝐝</mi></mstyle><annotation encoding="application/x-tex">\mathbf{{end}}</annotation></semantics></math></li>
 </ol>
-<h2 id="前処理付通信削減型一般化最小残差法"><span class="header-section-number">1.4</span> 前処理付通信削減型一般化最小残差法</h2>
+<h2 data-number="1.4" id="前処理付通信削減型一般化最小残差法"><span class="header-section-number">1.4</span> 前処理付通信削減型一般化最小残差法</h2>
 <p>　通信削減型一般化最小残差法(CA-GMRES(s,t))は非対称行列向けのクリロフ部分空間法である. GMRES(m)のs回反復に相当する計算を1反復で行う. t回の反復で収束しない場合はt回の反復で得られた近似解を初期解として反復を再開する. m = t <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math> sがGMRES(m)のリスタート周期に相当する. 数学的にはCA-GMRES(s,t)とGMRES(m)の収束性は同等であり,通信削減型のQR分解を適用することでGMRES(m)よりも集団通信の回数を削減する. ただし,一度にs本の基底ベクトルを生成するため,sが過大な場合には,丸め誤差によって基底ベクトルの直交性が崩れることでGMRESよりも収束性が悪くなる.PARCELでは基底ベクトルの直交性改善のために単基底に加えてNewton基底が整備されている.</p>
 <ul>
 <li>アルゴリズム</li>
@@ -308,7 +315,7 @@
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐨</mi><mi>𝐥</mi><mi>𝐯</mi><mi>𝐞</mi><mspace width="0.222em"></mspace></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover><mstyle mathvariant="bold"><mspace width="0.222em"></mspace><mi>𝐟</mi><mi>𝐫</mi><mi>𝐨</mi><mi>𝐦</mi><mspace width="0.222em"></mspace><mi>𝐊</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover><mstyle mathvariant="bold"><mo>=</mo></mstyle><msubsup><mo>∑</mo><mstyle mathvariant="bold"><mi>𝐤</mi><mo>=</mo><mn>0</mn></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mstyle mathvariant="bold"><mi>𝐦</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mn>1</mn></mstyle></mrow></msubsup><msub><mstyle mathvariant="bold"><mi>𝐐</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub><msub><mstyle mathvariant="bold"><mi>𝐲</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo></mstyle><msubsup><mo>∑</mo><mrow><mstyle mathvariant="bold"><mi>𝐥</mi><mo>=</mo></mstyle><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mi>𝐧</mi><mo>−</mo><mn>1</mn></mstyle></msubsup><msub><mstyle mathvariant="bold"><mi>𝐕</mi></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐥</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow></msub><msubsup><mo>∑</mo><mrow><mstyle mathvariant="bold"><mi>𝐤</mi><mo>=</mo></mstyle><mstyle mathvariant="bold"><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mi>𝐧</mi><mo>−</mo><mn>1</mn></mstyle></msubsup><mrow><msubsup><mstyle mathvariant="bold"><mi>𝐑</mi></mstyle><mrow><mstyle mathvariant="bold"><mi>𝐥</mi><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle><mstyle mathvariant="bold"><mo>,</mo></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle><mstyle mathvariant="bold"><mo>−</mo><mi>𝐬</mi><mi>𝐦</mi></mstyle></mrow><mstyle mathvariant="bold"><mo>−</mo><mn>1</mn></mstyle></msubsup><msub><mstyle mathvariant="bold"><mi>𝐲</mi></mstyle><mstyle mathvariant="bold"><mi>𝐤</mi></mstyle></msub></mrow></mrow><annotation encoding="application/x-tex">\mathbf{{solve\ }}\widehat{\mathbf{x}}\mathbf{{\ from\ K}}\widehat{\mathbf{x}}\mathbf{=}\sum_{\mathbf{k = 0}}^{\mathbf{s}\mathbf{m}\mathbf{- 1}}\mathbf{Q}_{\mathbf{k}}\mathbf{y}_{\mathbf{k}}\mathbf{+}\sum_{\mathbf{l =}\mathbf{{sm}}}^{\mathbf{n - 1}}\mathbf{V}_{\mathbf{l}\mathbf{- sm}}\sum_{\mathbf{k =}\mathbf{{sm}}}^{\mathbf{n - 1}}{\mathbf{R}_{\mathbf{l - sm}\mathbf{,}\mathbf{k}\mathbf{- sm}}^{\mathbf{- 1}}\mathbf{y}_{\mathbf{k}}}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>=</mo></mstyle><msub><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>+</mo></mstyle><mover><mstyle mathvariant="bold"><mi>𝐱</mi></mstyle><mo accent="true">̂</mo></mover></mrow><annotation encoding="application/x-tex">\mathbf{x}_{\mathbf{0}}\mathbf{=}\mathbf{x}_{\mathbf{0}}\mathbf{+}\widehat{\mathbf{x}}</annotation></semantics></math></li>
 </ol>
-<h2 id="前処理付チェビシェフ基底共役勾配法法"><span class="header-section-number">1.5</span> 前処理付チェビシェフ基底共役勾配法法</h2>
+<h2 data-number="1.5" id="前処理付チェビシェフ基底共役勾配法法"><span class="header-section-number">1.5</span> 前処理付チェビシェフ基底共役勾配法法</h2>
 <p>　チェビシェフ基底共役勾配法(CBCG)は対称行列向けのクリロフ部分空間法である.CG法のk反復に相当する計算を1反復で行うことで集団通信の回数を削減する.チェビシェフ基底を用いて基底ベクトルを生成するため行列の最大・最小固有値を必要とする.PARCELでは固有値計算法としてべき乗法と通信削減型アーノルディ法が整備されている.</p>
 <ul>
 <li>アルゴリズム</li>
@@ -349,13 +356,13 @@
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐒</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo><mi>…</mi><mo>,</mo></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mi>𝐤</mi><mo>−</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo stretchy="false" form="postfix">)</mo></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{S = (}{\widetilde{\mathbf{s}}}_{\mathbf{0}}\mathbf{,}{\widetilde{\mathbf{s}}}_{\mathbf{1}}\mathbf{,\ldots,}{\widetilde{\mathbf{s}}}_{\mathbf{k - 1}}\mathbf{)}</annotation></semantics></math></li>
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="bold"><mi>𝐀</mi><mi>𝐒</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>𝐀</mi></mstyle><msub><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover><mstyle mathvariant="bold"><mn>0</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo></mstyle><msub><mrow><mstyle mathvariant="bold"><mi>𝐀</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover></mrow><mstyle mathvariant="bold"><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo>,</mo><mi>…</mi><mo>,</mo></mstyle><msub><mrow><mstyle mathvariant="bold"><mi>𝐀</mi></mstyle><mover><mstyle mathvariant="bold"><mi>𝐬</mi></mstyle><mo accent="true">̃</mo></mover></mrow><mstyle mathvariant="bold"><mi>𝐤</mi><mo>−</mo><mn>1</mn></mstyle></msub><mstyle mathvariant="bold"><mo stretchy="false" form="postfix">)</mo></mstyle></mrow><annotation encoding="application/x-tex">\mathbf{AS = (A}{\widetilde{\mathbf{s}}}_{\mathbf{0}}\mathbf{,}{\mathbf{A}\widetilde{\mathbf{s}}}_{\mathbf{1}}\mathbf{,\ldots,}{\mathbf{A}\widetilde{\mathbf{s}}}_{\mathbf{k - 1}}\mathbf{)}</annotation></semantics></math></li>
 </ol>
-<h1 id="前処理"><span class="header-section-number">2</span> 前処理</h1>
+<h1 data-number="2" id="前処理"><span class="header-section-number">2</span> 前処理</h1>
 <p>　一般に反復解法では,<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>≈</mo><mi>A</mi></mrow><annotation encoding="application/x-tex">K \approx A</annotation></semantics></math>となるように前処理行列を選ぶと,収束に必要な反復回数が減少する. アルゴリズムに見られる 「<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>o</mi><mi>l</mi><mi>v</mi><mi>e</mi><mspace width="0.222em"></mspace></mrow><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mspace width="0.222em"></mspace><mi>f</mi><mi>r</mi><mi>o</mi><mi>m</mi><mspace width="0.222em"></mspace><mi>K</mi></mrow><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mo>=</mo><mspace width="0.222em"></mspace></mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">{{solve\ }}\widehat{{p}}{{\ from\ K}}\widehat{{p}}{= \ }{p}</annotation></semantics></math>」型の計算は 「<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mover><mi>p</mi><mo accent="true">̂</mo></mover><mrow><mo>=</mo><mspace width="0.222em"></mspace></mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">{A}\widehat{p}{= \ }{p}</annotation></semantics></math> を<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>p</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\widehat{p}</annotation></semantics></math> について近似的に解く」ことに相当する. この近似の精度を上げれば反復回数が減少するが,逆にこの部分の計算のオーバーヘッドが増加する. 並列計算でない場合には,この近似計算に不完全LU 分解を用いることが多いが,並列計算の場合には,前処理計算の並列処理手法が必要となる. 本ライブラリルーチンでは並列前処理法として点ヤコビ法,ブロックヤコビ法,加法的シュワルツ法を採用している.</p>
-<h2 id="ポイントヤコビ前処理"><span class="header-section-number">2.1</span> ポイントヤコビ前処理</h2>
+<h2 data-number="2.1" id="ポイントヤコビ前処理"><span class="header-section-number">2.1</span> ポイントヤコビ前処理</h2>
 <p>　前処理行列Kとして係数行列Aの対角成分のみを用いる.不完全LU分解など他の前処理法と比べると効果は小さいが, 点ヤコビ法は並列に処理され,プロセッサ間通信も不要である.</p>
-<h2 id="フィルイン無し不完全lu分解ilu0"><span class="header-section-number">2.2</span> フィルイン無し不完全LU分解(ILU(0))</h2>
+<h2 data-number="2.2" id="フィルイン無し不完全lu分解ilu0"><span class="header-section-number">2.2</span> フィルイン無し不完全LU分解(ILU(0))</h2>
 <p>　正方行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>を下三角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>と上三角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>の積の形に分解することをLU分解と呼ぶ. LU分解は元の行列が疎行列であっても,分解後の行列の零要素位置に値が入る.これはフィルインと呼ばれる. フィルインが発生することでLU分解後の行列が密行列になるためメモリ使用量が増大する問題がある. PARCELではフィルインを考慮しない不完全LU分解(ILU(0))を前処理として採用することでメモリ使用量の増大を防いでいる.</p>
-<h2 id="修正不完全lu分解d-ilu"><span class="header-section-number">2.3</span> 修正不完全LU分解(D-ILU)</h2>
+<h2 data-number="2.3" id="修正不完全lu分解d-ilu"><span class="header-section-number">2.3</span> 修正不完全LU分解(D-ILU)</h2>
 <p>　係数行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>をその対角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>,下三角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>,上三角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>を用いて <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><msub><mi>L</mi><mi>A</mi></msub><mo>+</mo><msub><mi>D</mi><mi>A</mi></msub><mo>+</mo><msub><mi>U</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">A = L_{A} + D_{A} + U_{A}</annotation></semantics></math> と分解する.この<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>L</mi><mi>A</mi></msub><annotation encoding="application/x-tex">L_{A}</annotation></semantics></math>,<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>U</mi><mi>A</mi></msub><annotation encoding="application/x-tex">U_{A}</annotation></semantics></math>および対角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>≠</mo><msub><mi>D</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">D \neq D_{A}</annotation></semantics></math>)を用いて,前処理行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>を <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>D</mi><mo>+</mo><msub><mi>L</mi><mi>A</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><msup><mi>D</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>D</mi><mo>+</mo><msub><mi>U</mi><mi>A</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">K = \left( D + L_{A} \right)D^{- 1}\left( D + U_{A} \right)</annotation></semantics></math> の形に決定する.ここでは,対角行列<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>の決定方法として,次の2とおりの条件のどちらを選択する.</p>
 <ul>
 <li><p>条件1 対角成分が一致 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>=</mo><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">A_{{ii}} = K_{{ii}}\ \ (i = 1,\ldots,n)</annotation></semantics></math></p></li>
@@ -367,9 +374,9 @@
 <li><p>条件2 行内の要素和が一致 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><mo>−</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>&lt;</mo><mi>i</mi></mrow><mrow></mrow></munderover><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>&gt;</mo><mi>j</mi></mrow><mrow></mrow></munderover><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msubsup><mi>D</mi><mrow><mi>j</mi><mi>j</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi>A</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub></mrow></mrow><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">D_{{ii}} = A_{{ii}} - \sum_{j &lt; i}^{}{\sum_{k &gt; j}^{}{A_{{ij}}D_{{jj}}^{-1}A_{jk}}}\ \ (i = 1,\ldots,n)</annotation></semantics></math></p></li>
 </ul>
 <p>となる.</p>
-<h2 id="ブロックヤコビ前処理"><span class="header-section-number">2.4</span> ブロックヤコビ前処理</h2>
+<h2 data-number="2.4" id="ブロックヤコビ前処理"><span class="header-section-number">2.4</span> ブロックヤコビ前処理</h2>
 <p>　前処理行列K として係数行列A のブロック対角成分をとり,ブロック内で不完全LU 分解を用いる. 各ブロックの境界を係数行列の各PE への分割と一致させることにより,通信が不要となり,完全に並列に処理できる.</p>
-<h2 id="加法的シュワルツ前処理"><span class="header-section-number">2.5</span> 加法的シュワルツ前処理</h2>
+<h2 data-number="2.5" id="加法的シュワルツ前処理"><span class="header-section-number">2.5</span> 加法的シュワルツ前処理</h2>
 <p>　前処理行列K として重なりのあるブロック対角行列を用いる.ブロック内で不完全LU 分解を用いる. 通信は必要となるが,計算は並列に行なわれる. PARCELでは加法的シュワルツ前処理の手法としてBASIC,RESTRICT,INTERPOLATE,NONEを選択できる.</p>
 <table style="width:75%;">
 <colgroup>
@@ -382,7 +389,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="basic" class="unnumbered">BASIC</h3>
+<h3 class="unnumbered" data-number id="basic">BASIC</h3>
 <p>　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>を重なりのある領域まで拡張させた<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math>を解き,重なりのある領域の<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>を加算した結果を採用する.</p>
 <table style="width:38%;">
 <colgroup>
@@ -395,7 +402,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="restrict" class="unnumbered">RESTRICT</h3>
+<h3 class="unnumbered" data-number id="restrict">RESTRICT</h3>
 <p>　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>を重なりのある領域まで拡張させた<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math>を解き,重なりのある領域の<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>を考慮しない結果を採用する.</p>
 <table style="width:46%;">
 <colgroup>
@@ -408,7 +415,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="interpolate" class="unnumbered">INTERPOLATE</h3>
+<h3 class="unnumbered" data-number id="interpolate">INTERPOLATE</h3>
 <p>　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>を重なりのある領域まで拡張させないで<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math>を解き,重なりのある領域の<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>を加算した結果を採用する.</p>
 <table style="width:54%;">
 <colgroup>
@@ -421,7 +428,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="none" class="unnumbered">NONE</h3>
+<h3 class="unnumbered" data-number id="none">NONE</h3>
 <p>　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>を重なりのある領域まで拡張させないで<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mi>s</mi><mo>=</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">Ks=r</annotation></semantics></math>を解き,重なりのある領域の<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>を考慮しない結果を採用する.</p>
 <table style="width:38%;">
 <colgroup>
@@ -434,10 +441,10 @@
 </tr>
 </tbody>
 </table>
-<h1 id="データ構造"><span class="header-section-number">3</span> データ構造</h1>
+<h1 data-number="3" id="データ構造"><span class="header-section-number">3</span> データ構造</h1>
 <p>　一般に疎行列反復解法のプログラムでは,メモリ節約のため,非零要素についての情報(値,行位置,列位置) のみを格納するデータ構造を採用する.ここでは,本ライブラリルーチンで用いている疎行列格納法について説明する.</p>
-<h2 id="compressed-row-形式"><span class="header-section-number">3.1</span> Compressed Row 形式</h2>
-<p>　Compressed Row 形式(圧縮行形式)は,非ゼロ要素を行方向に圧縮した後,列方向にデータを並べて格納する方法である. 非ゼロ要素の列位置・値ともに全体を1 次元配列に格納する.そのため.1次元配列中での各行の開始位置を記録したポインタテーブルを用いる. 並列処理の場合には列方向に行列を分割して格納する.</p>
+<h2 data-number="3.1" id="compressed-row-形式"><span class="header-section-number">3.1</span> Compressed Row 形式</h2>
+<p>　Compressed Row 形式(圧縮行形式)は,非ゼロ要素を行方向に圧縮した後,列方向にデータを並べて格納する方法である. 非ゼロ要素の列位置・値ともに全体を1 次元配列に格納する.そのため.1次元配列中での各行の開始位置を記録したポインタテーブルを用いる. 並列処理の場合には列方向に行列を分割して格納する. 列方向のポインターの並びは昇順を想定している.</p>
 <hr />
 <ul>
 <li>行列構造</li>
@@ -453,7 +460,7 @@ e &amp; 0 &amp; f &amp; g\\
 \right)
 </annotation></semantics></math></p>
 <hr />
-<h3 id="プロセスの場合" class="unnumbered">1プロセスの場合</h3>
+<h3 class="unnumbered" data-number id="プロセスの場合">1プロセスの場合</h3>
 <ul>
 <li>ランク0プロセス</li>
 </ul>
@@ -461,7 +468,7 @@ e &amp; 0 &amp; f &amp; g\\
 <p>ポインタテーブル　　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>R</mi><mi>o</mi><mi>w</mi><mi>_</mi><mi>p</mi><mi>t</mi><mi>r</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>5</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>11</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsRow\_ptr=\{1,4,5,8,11\}</annotation></semantics></math></p>
 <p>非ゼロ要素の列番号　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>C</mi><mi>o</mi><mi>l</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsCol=\{1,2,3,2,1,3,4,2,3,4\}</annotation></semantics></math></p>
 <hr />
-<h3 id="プロセスの場合-1" class="unnumbered">2プロセスの場合</h3>
+<h3 class="unnumbered" data-number id="プロセスの場合-1">2プロセスの場合</h3>
 <ul>
 <li>ランク0プロセス</li>
 </ul>
@@ -475,8 +482,8 @@ e &amp; 0 &amp; f &amp; g\\
 <p>ポインタテーブル　　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>R</mi><mi>o</mi><mi>w</mi><mi>_</mi><mi>p</mi><mi>t</mi><mi>r</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>7</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsRow\_ptr=\{1,4,7\}</annotation></semantics></math></p>
 <p>非ゼロ要素の列番号　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mi>r</mi><mi>s</mi><mi>C</mi><mi>o</mi><mi>l</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">crsCol=\{1,3,4,2,3,4\}</annotation></semantics></math></p>
 <hr />
-<h2 id="diagonal形式"><span class="header-section-number">3.2</span> Diagonal形式</h2>
-<p>　Diagonal 形式(圧縮対角形式)は,対角行単位に格納する方法である.対角行の値と対角からのオフセットを1次元配列に格納する. 並列処理の場合には列方向に行列を分割して格納する.</p>
+<h2 data-number="3.2" id="diagonal形式"><span class="header-section-number">3.2</span> Diagonal形式</h2>
+<p>　Diagonal 形式(圧縮対角形式)は,対角行単位に格納する方法である.対角行の値と対角からのオフセットを1次元配列に格納する. 並列処理の場合には列方向に行列を分割して格納する. 対角からのオフセットの並びは昇順を想定している.</p>
 <hr />
 <ul>
 <li>行列構造</li>
@@ -492,7 +499,7 @@ e &amp; 0 &amp; f &amp; g\\
 \right)
 </annotation></semantics></math></p>
 <hr />
-<h3 id="プロセスの場合-2" class="unnumbered">1プロセスの場合</h3>
+<h3 class="unnumbered" data-number id="プロセスの場合-2">1プロセスの場合</h3>
 <ul>
 <li>ランク0プロセス</li>
 </ul>
@@ -500,7 +507,7 @@ e &amp; 0 &amp; f &amp; g\\
 <p>オフセット　　　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>o</mi><mi>f</mi><mi>f</mi><mi>s</mi><mi>e</mi><mi>t</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo>−</mo><mn>2</mn><mo>,</mo><mo>−</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">offset=\{-2,-1,0,1,2\}</annotation></semantics></math></p>
 <p>対角要素の本数　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>n</mi><mi>d</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">nnd=5</annotation></semantics></math></p>
 <hr />
-<h3 id="プロセスの場合-3" class="unnumbered">2プロセスの場合</h3>
+<h3 class="unnumbered" data-number id="プロセスの場合-3">2プロセスの場合</h3>
 <ul>
 <li>ランク0プロセス</li>
 </ul>
@@ -514,9 +521,9 @@ e &amp; 0 &amp; f &amp; g\\
 <p>オフセット　　　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>o</mi><mi>f</mi><mi>f</mi><mi>s</mi><mi>e</mi><mi>t</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo>−</mo><mn>2</mn><mo>,</mo><mo>−</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">offset=\{-2,-1,0,1\}</annotation></semantics></math></p>
 <p>対角要素の本数　::　<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>n</mi><mi>d</mi><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">nnd=4</annotation></semantics></math></p>
 <hr />
-<h1 id="parcelの構成"><span class="header-section-number">4</span> PARCELの構成</h1>
+<h1 data-number="4" id="parcelの構成"><span class="header-section-number">4</span> PARCELの構成</h1>
 <p>　PARCELの導入方法について説明する.</p>
-<h2 id="ディレクトリ構成"><span class="header-section-number">4.1</span> ディレクトリ構成</h2>
+<h2 data-number="4.1" id="ディレクトリ構成"><span class="header-section-number">4.1</span> ディレクトリ構成</h2>
 <p>　展開したアーカイブの内容を図6に示す.</p>
 <table style="width:75%;">
 <colgroup>
@@ -529,8 +536,8 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="コンパイル方法"><span class="header-section-number">4.2</span> コンパイル方法</h2>
-<p>　PARCELのコンパイルにはCコンパイラ及びプリプロセッサ対応のFORTRANコンパイラ. MPI,LAPACK,OpenMPライブラリを必要とする. gfortranでコンパイルする場合はコンパイルオプションに-cppを追加することでプリプロセッサが適用される. コンパイルオプションはarch/make_configを編集することで変更する. make_configの記述例を図7に示す. コンパイル方法は展開したアーカイブのトップディレクトリでmakeコマンドを実行する. 再コンパイルする場合はmake cleanを実行後にmakeコマンドを実行する. 各ディレクトリのexampleファイルに実行ファイルが生成されていればコンパイル成功である. 20億次元以上の大規模問題では64ビット整数が必要となる.</p>
+<h2 data-number="4.2" id="コンパイル方法"><span class="header-section-number">4.2</span> コンパイル方法</h2>
+<p>　PARCELのコンパイルにはCコンパイラ及びプリプロセッサ対応のFORTRANコンパイラ. MPI,LAPACK,OpenMPライブラリを必要とする. gfortranでコンパイルする場合はコンパイルオプションに-cppを追加することでプリプロセッサが適用される. コンパイルオプションはarch/make_configを編集することで変更する. make_configの記述例を図7に示す. コンパイル方法は展開したアーカイブのトップディレクトリでmakeコマンドを実行する. 再コンパイルする場合はmake cleanを実行後にmakeコマンドを実行する. 各ディレクトリのexampleファイルに実行ファイルが生成されていればコンパイル成功である. 20億次元以上の大規模問題では64ビット整数が必要となる. 例えば,本パッケージに格納されている大規模テストexample5のコンパイルにはFDEFINEの指定が必要である。</p>
 <table>
 <colgroup>
 <col style="width: 100%"></col>
@@ -590,11 +597,11 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="使用方法"><span class="header-section-number">4.3</span> 使用方法</h2>
+<h2 data-number="4.3" id="使用方法"><span class="header-section-number">4.3</span> 使用方法</h2>
 <p>　srcディレクトリに生成される*.aファイルをリンクすることで PARCELのサブルーチンを使用することが可能となる.</p>
-<h1 id="parcelサブルーチン直接インターフェース"><span class="header-section-number">5</span> PARCELサブルーチン（直接インターフェース）</h1>
+<h1 data-number="5" id="parcelサブルーチン直接インターフェース"><span class="header-section-number">5</span> PARCELサブルーチン（直接インターフェース）</h1>
 <p>　PARCELに整備されているサブルーチンの直接呼び出しインターフェースについて説明する.</p>
-<h2 id="parcel_dcg"><span class="header-section-number">5.1</span> parcel_dcg</h2>
+<h2 data-number="5.1" id="parcel_dcg"><span class="header-section-number">5.1</span> parcel_dcg</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -691,7 +698,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -737,7 +744,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcg_dia"><span class="header-section-number">5.2</span> parcel_dcg_dia</h2>
+<h2 data-number="5.2" id="parcel_dcg_dia"><span class="header-section-number">5.2</span> parcel_dcg_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -828,7 +835,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -874,7 +881,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddcg"><span class="header-section-number">5.3</span> parcel_ddcg</h2>
+<h2 data-number="5.3" id="parcel_ddcg"><span class="header-section-number">5.3</span> parcel_ddcg</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -989,7 +996,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1059,7 +1066,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddcg_dia"><span class="header-section-number">5.4</span> parcel_ddcg_dia</h2>
+<h2 data-number="5.4" id="parcel_ddcg_dia"><span class="header-section-number">5.4</span> parcel_ddcg_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1168,7 +1175,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1238,7 +1245,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dbicgstab"><span class="header-section-number">5.5</span> parcel_dbicgstab</h2>
+<h2 data-number="5.5" id="parcel_dbicgstab"><span class="header-section-number">5.5</span> parcel_dbicgstab</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1249,6 +1256,7 @@ e &amp; 0 &amp; f &amp; g\\
 <li>機能</li>
 </ul>
 <p>　安定化双共役勾配法(Bi-CGSTAB法)により,連立一次方程式Ax=bを解く.非零要素の値をCompressed Row形式で格納.</p>
+<p><br>*加法シュワルツを使用する際はILU分解の手法をD-ILUから選択する必要がある。＊</p>
 <table>
 <colgroup>
 <col style="width: 15%"></col>
@@ -1335,7 +1343,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1381,7 +1389,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dbicgstab_dia"><span class="header-section-number">5.6</span> parcel_dbicgstab_dia</h2>
+<h2 data-number="5.6" id="parcel_dbicgstab_dia"><span class="header-section-number">5.6</span> parcel_dbicgstab_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1472,7 +1480,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1518,7 +1526,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddbicgstab"><span class="header-section-number">5.7</span> parcel_ddbicgstab</h2>
+<h2 data-number="5.7" id="parcel_ddbicgstab"><span class="header-section-number">5.7</span> parcel_ddbicgstab</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1633,7 +1641,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -1703,7 +1711,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddbicgstab_dia"><span class="header-section-number">5.8</span> parcel_ddbicgstab_dia</h2>
+<h2 data-number="5.8" id="parcel_ddbicgstab_dia"><span class="header-section-number">5.8</span> parcel_ddbicgstab_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1812,7 +1820,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -1882,7 +1890,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dgmres"><span class="header-section-number">5.9</span> parcel_dgmres</h2>
+<h2 data-number="5.9" id="parcel_dgmres"><span class="header-section-number">5.9</span> parcel_dgmres</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -1979,7 +1987,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2037,7 +2045,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dgmres_dia"><span class="header-section-number">5.10</span> parcel_dgmres_dia</h2>
+<h2 data-number="5.10" id="parcel_dgmres_dia"><span class="header-section-number">5.10</span> parcel_dgmres_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -2128,7 +2136,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2186,7 +2194,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddgmres"><span class="header-section-number">5.11</span> parcel_ddgmres</h2>
+<h2 data-number="5.11" id="parcel_ddgmres"><span class="header-section-number">5.11</span> parcel_ddgmres</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -2301,7 +2309,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2383,7 +2391,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_ddgmres_dia"><span class="header-section-number">5.12</span> parcel_ddgmres_dia</h2>
+<h2 data-number="5.12" id="parcel_ddgmres_dia"><span class="header-section-number">5.12</span> parcel_ddgmres_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -2492,7 +2500,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2574,7 +2582,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcbcg"><span class="header-section-number">5.13</span> parcel_dcbcg</h2>
+<h2 data-number="5.13" id="parcel_dcbcg"><span class="header-section-number">5.13</span> parcel_dcbcg</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -2671,7 +2679,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -2759,7 +2767,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcbcg_dia"><span class="header-section-number">5.14</span> parcel_dcbcg_dia</h2>
+<h2 data-number="5.14" id="parcel_dcbcg_dia"><span class="header-section-number">5.14</span> parcel_dcbcg_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -2850,7 +2858,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -2938,7 +2946,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcagmres"><span class="header-section-number">5.15</span> parcel_dcagmres</h2>
+<h2 data-number="5.15" id="parcel_dcagmres"><span class="header-section-number">5.15</span> parcel_dcagmres</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3035,7 +3043,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -3105,7 +3113,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="parcel_dcagmres_dia"><span class="header-section-number">5.16</span> parcel_dcagmres_dia</h2>
+<h2 data-number="5.16" id="parcel_dcagmres_dia"><span class="header-section-number">5.16</span> parcel_dcagmres_dia</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3196,7 +3204,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -3266,9 +3274,9 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h1 id="parcelサブルーチン間接インターフェース"><span class="header-section-number">6</span> PARCELサブルーチン（間接インターフェース）</h1>
+<h1 data-number="6" id="parcelサブルーチン間接インターフェース"><span class="header-section-number">6</span> PARCELサブルーチン（間接インターフェース）</h1>
 <p>　PARCELに整備されているサブルーチンの間接呼び出しインターフェースについて説明する.</p>
-<h2 id="parcel_ksp_default_setting"><span class="header-section-number">6.1</span> PARCEL_KSP_Default_Setting</h2>
+<h2 data-number="6.1" id="parcel_ksp_default_setting"><span class="header-section-number">6.1</span> PARCEL_KSP_Default_Setting</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3297,7 +3305,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_crs"><span class="header-section-number">6.2</span> set_KSP_CRS</h2>
+<h2 data-number="6.2" id="set_ksp_crs"><span class="header-section-number">6.2</span> set_KSP_CRS</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3400,7 +3408,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">addL</td>
@@ -3416,7 +3424,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_dia"><span class="header-section-number">6.3</span> set_KSP_DIA</h2>
+<h2 data-number="6.3" id="set_ksp_dia"><span class="header-section-number">6.3</span> set_KSP_DIA</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3513,7 +3521,7 @@ e &amp; 0 &amp; f &amp; g\\
 <td style="text-align: center;">ILU_method</td>
 <td style="text-align: center;">integer</td>
 <td style="text-align: center;">in</td>
-<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致)</td>
+<td style="text-align: left;">不完全LU分解指定フラグ(0:ILU(0),1:D-ILU(対角成分が一致),2:D-ILU(行内の要素和が一致),加法シュワルツは1,2のみ利用可能)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">addL</td>
@@ -3529,7 +3537,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_vecx_ksp"><span class="header-section-number">6.4</span> set_vecx_KSP</h2>
+<h2 data-number="6.4" id="set_vecx_ksp"><span class="header-section-number">6.4</span> set_vecx_KSP</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3570,7 +3578,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_vecb_ksp"><span class="header-section-number">6.5</span> set_vecb_KSP</h2>
+<h2 data-number="6.5" id="set_vecb_ksp"><span class="header-section-number">6.5</span> set_vecb_KSP</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3611,7 +3619,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="get_vecx_ksp"><span class="header-section-number">6.6</span> get_vecx_KSP</h2>
+<h2 data-number="6.6" id="get_vecx_ksp"><span class="header-section-number">6.6</span> get_vecx_KSP</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3652,7 +3660,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="get_reshistory_ksp"><span class="header-section-number">6.7</span> get_reshistory_KSP</h2>
+<h2 data-number="6.7" id="get_reshistory_ksp"><span class="header-section-number">6.7</span> get_reshistory_KSP</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3693,7 +3701,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="reset_crs_mat"><span class="header-section-number">6.8</span> reset_CRS_Mat</h2>
+<h2 data-number="6.8" id="reset_crs_mat"><span class="header-section-number">6.8</span> reset_CRS_Mat</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3758,7 +3766,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="reset_dia_mat"><span class="header-section-number">6.9</span> reset_DIA_Mat</h2>
+<h2 data-number="6.9" id="reset_dia_mat"><span class="header-section-number">6.9</span> reset_DIA_Mat</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3823,7 +3831,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_solver"><span class="header-section-number">6.10</span> set_KSP_solver</h2>
+<h2 data-number="6.10" id="set_ksp_solver"><span class="header-section-number">6.10</span> set_KSP_solver</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3864,7 +3872,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_abstolmaxmethodabstolmax"><span class="header-section-number">6.11</span> set_KSP_abstolmax(method,abstolmax)</h2>
+<h2 data-number="6.11" id="set_ksp_abstolmaxmethodabstolmax"><span class="header-section-number">6.11</span> set_KSP_abstolmax(method,abstolmax)</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3899,7 +3907,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_rtolmax"><span class="header-section-number">6.12</span> set_KSP_rtolmax</h2>
+<h2 data-number="6.12" id="set_ksp_rtolmax"><span class="header-section-number">6.12</span> set_KSP_rtolmax</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3934,7 +3942,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_iovlflag"><span class="header-section-number">6.13</span> set_KSP_iovlflag</h2>
+<h2 data-number="6.13" id="set_ksp_iovlflag"><span class="header-section-number">6.13</span> set_KSP_iovlflag</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -3969,7 +3977,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_gmres_mmethodgmres_m"><span class="header-section-number">6.14</span> set_KSP_GMRES_m(method,GMRES_m)</h2>
+<h2 data-number="6.14" id="set_ksp_gmres_mmethodgmres_m"><span class="header-section-number">6.14</span> set_KSP_GMRES_m(method,GMRES_m)</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4004,7 +4012,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_gmres_gsflag"><span class="header-section-number">6.15</span> set_KSP_GMRES_GSflag</h2>
+<h2 data-number="6.15" id="set_ksp_gmres_gsflag"><span class="header-section-number">6.15</span> set_KSP_GMRES_GSflag</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4039,7 +4047,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_sstep"><span class="header-section-number">6.16</span> set_KSP_CAGMRES_sstep</h2>
+<h2 data-number="6.16" id="set_ksp_cagmres_sstep"><span class="header-section-number">6.16</span> set_KSP_CAGMRES_sstep</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4074,7 +4082,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_tstep"><span class="header-section-number">6.17</span> set_KSP_CAGMRES_tstep</h2>
+<h2 data-number="6.17" id="set_ksp_cagmres_tstep"><span class="header-section-number">6.17</span> set_KSP_CAGMRES_tstep</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4109,7 +4117,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_basis"><span class="header-section-number">6.18</span> set_KSP_CAGMRES_basis</h2>
+<h2 data-number="6.18" id="set_ksp_cagmres_basis"><span class="header-section-number">6.18</span> set_KSP_CAGMRES_basis</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4144,7 +4152,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cagmres_qrflag"><span class="header-section-number">6.19</span> set_KSP_CAGMRES_QRflag</h2>
+<h2 data-number="6.19" id="set_ksp_cagmres_qrflag"><span class="header-section-number">6.19</span> set_KSP_CAGMRES_QRflag</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4185,7 +4193,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cbcg_kstep"><span class="header-section-number">6.20</span> set_KSP_CBCG_kstep</h2>
+<h2 data-number="6.20" id="set_ksp_cbcg_kstep"><span class="header-section-number">6.20</span> set_KSP_CBCG_kstep</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4220,7 +4228,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_cbcg_eigenflag"><span class="header-section-number">6.21</span> set_KSP_CBCG_Eigenflag</h2>
+<h2 data-number="6.21" id="set_ksp_cbcg_eigenflag"><span class="header-section-number">6.21</span> set_KSP_CBCG_Eigenflag</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4255,7 +4263,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_sstep"><span class="header-section-number">6.22</span> set_KSP_CAARNOLDI_sstep</h2>
+<h2 data-number="6.22" id="set_ksp_caarnoldi_sstep"><span class="header-section-number">6.22</span> set_KSP_CAARNOLDI_sstep</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4290,7 +4298,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_tstep"><span class="header-section-number">6.23</span> set_KSP_CAARNOLDI_tstep</h2>
+<h2 data-number="6.23" id="set_ksp_caarnoldi_tstep"><span class="header-section-number">6.23</span> set_KSP_CAARNOLDI_tstep</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4325,7 +4333,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_basis"><span class="header-section-number">6.24</span> set_KSP_CAARNOLDI_basis</h2>
+<h2 data-number="6.24" id="set_ksp_caarnoldi_basis"><span class="header-section-number">6.24</span> set_KSP_CAARNOLDI_basis</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4360,7 +4368,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_caarnoldi_qrflag"><span class="header-section-number">6.25</span> set_KSP_CAARNOLDI_QRflag</h2>
+<h2 data-number="6.25" id="set_ksp_caarnoldi_qrflag"><span class="header-section-number">6.25</span> set_KSP_CAARNOLDI_QRflag</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4401,7 +4409,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="set_ksp_power_method_itrmax"><span class="header-section-number">6.26</span> set_KSP_power_method_itrmax</h2>
+<h2 data-number="6.26" id="set_ksp_power_method_itrmax"><span class="header-section-number">6.26</span> set_KSP_power_method_itrmax</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4436,7 +4444,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="start_ksp_solver"><span class="header-section-number">6.27</span> START_KSP_SOLVER</h2>
+<h2 data-number="6.27" id="start_ksp_solver"><span class="header-section-number">6.27</span> START_KSP_SOLVER</h2>
 <ul>
 <li>呼び出し方法</li>
 </ul>
@@ -4465,9 +4473,9 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h1 id="サブルーチン使用方法"><span class="header-section-number">7</span> サブルーチン使用方法</h1>
+<h1 data-number="7" id="サブルーチン使用方法"><span class="header-section-number">7</span> サブルーチン使用方法</h1>
 <p>　PARCELのサブルーチン使用方法についてCG法のFORTRANサンプルコードを例にして説明する. Cプログラムにおける利用法の詳細についてはアーカイブのSPARCE/example_Cに格納されているCサンプルコードを参照のこと. Cの場合はFORTRAN用のMPIコミュニケータを用意すればFORTRANと同様の方法でPARCELを利用可能である. CサンプルコードではMPIライブラリの関数MPI_Comm_c2fを用いてCのMPIコミュニケータをFORTRAN用に変換している. 間接呼び出しインターフェースのCサンプルコードでは,FORTRAN側でPARCEL構造体を確保してからC側でそれを制御して利用している.</p>
-<h2 id="compressed-row形式"><span class="header-section-number">7.1</span> Compressed Row形式</h2>
+<h2 data-number="7.1" id="compressed-row形式"><span class="header-section-number">7.1</span> Compressed Row形式</h2>
 <p>　Compressed Row形式のサンプルコードを図8および図9に示す. make_matrix_CRSはPARCELの行列分割に対応したCompressed Row形式の行列を生成する任意のサブルーチンとする. 図8 は直接呼び出しインターフェースを用いた例,図9は間接呼び出しインターフェースを利用した例を示す. 図9ではkrylov,krylov_kernelのモジュールを利用するためSPARSE/srcをコンパイル時にインクルードする必要がある. 非零要素の位置を変更せずに値のみを変更する場合, 図8のコードでは再度parcel_dcgを呼ぶ必要があるため通信相手のリスト作成等の初期化コストが必要となる. 図9のコードではreset_CRS_Matを利用することで非零要素位置の変更がない場合は初期化コストは不要となる. 同様に右辺ベクトル及び反復の初期値を変更する場合も図8ではparcel_dcgを呼ぶため初期化のコストが必要となるが, 図9のコードではset_vecb_KSP,set_vecx_KSPを利用することで初期化コストは不要となる.</p>
 <ul>
 <li>Compressed Row形式サンプルコード1</li>
@@ -4624,7 +4632,7 @@ e &amp; 0 &amp; f &amp; g\\
 </tr>
 </tbody>
 </table>
-<h2 id="diagonal形式-1"><span class="header-section-number">7.2</span> Diagonal形式</h2>
+<h2 data-number="7.2" id="diagonal形式-1"><span class="header-section-number">7.2</span> Diagonal形式</h2>
 <p>　Diagonal形式のサンプルコードを図10に示す. make_matrix_DIAはPARCELのブロック分割に対応したDiagonal形式の行列を生成する任意のサブルーチンとする. 図10は直接呼び出しインターフェースを用いた例, 図11は間接呼び出しインターフェースを利用した例を示す. 図11の形式ではkrylov,krylov_kernelのモジュールを利用するためSPARSE/srcをコンパイル時にインクルードする必要がある. 非零要素の位置を変更せずに値のみを変更する場合, 図10のコードでは再度parcel_dcg_diaを呼ぶ必要があるため通信相手のリスト作成等の初期化コストが必要となる. 図11のコードではreset_DIA_Matを利用することで非零要素位置の変更がない場合は初期化コストは不要となる. 同様に右辺ベクトル及び反復の初期値を変更する場合も図10ではparcel_dcg_diaを呼ぶため初期化のコストが必要となるが, 図11のコードではset_vecb_KSP,set_vecx_KSPを利用することで初期化コストは不要となる.</p>
 <ul>
 <li>Diagonal形式サンプルコード1</li>

@@ -17,7 +17,7 @@ program main
   real*8,allocatable  :: vecx(:)
   real*8,allocatable  :: vecb(:)
   integer ityp_eq
-  integer itrmax
+  integer MAX_NITER
   integer n,gn
   integer istart,iend
 
@@ -31,7 +31,7 @@ program main
   integer iflagAS
   real*8  rtolmax
   real*8  abstolmax
-  integer solver
+  integer ityp_solver
   integer iret
   integer itmp
   real*8,allocatable  :: reshistory_CRS(:)
@@ -72,9 +72,18 @@ program main
 
   real*8 init_time_CRS,solve_time_CRS
   real*8 init_time_DIA,solve_time_DIA
+  character(len=10) ::argc
+  character(len=10) :: set_file_num
+  character(len=70) :: file_name
+  integer imode_flg,input_num
 
+  integer ch_mode
+ ! call getarg(1,argc)
+ ! set_file_num=trim(argc)
+
+  
   namelist/input/ &
-       itrmax, &
+       MAX_NITER, &
        rtolmax, &
        abstolmax, &
        ipreflag, &
@@ -82,7 +91,7 @@ program main
        iflagAS, &
        ILU_method, &
        iovlflag, &
-       solver, &
+       ityp_solver, &
        restart, &
        GMRES_GSflag, &
        CBCG_kstep, &
@@ -96,10 +105,33 @@ program main
        CAGMRES_tstep, &
        CAGMRES_basis, &
        CAGMRES_QRflag
+  
+  !read(set_file_num,*,iostat=imode_flg) input_num
+  !if (imode_flg==0) then
+  !  if ((input_num>=1).and.(input_num<=35)) then
+  !    file_name='./templete/templete_input/input_namelist'//set_file_num
+  !  else
+  !    print *,"invalid input file number"
+  !    stop
+  !  endif
+  !else
+    file_name='./input_namelist'
+  !endif
 
-  open(33,file='input_namelist')
+  open(33,file=file_name)
+  !open(33,file='input_sample_poisson_namelist')
   read(33,nml=input)
   close(33)
+
+  if ((ipreflag==3) .and.(ILU_method==0)) then
+    write(*,*)"Additive schwartz doesn't support ILU precondition. Switch ILU to DILU condition 1."
+    ILU_method=1
+  endif
+  if ((ipreflag==3).and.(addL==0)) then
+    ipreflag=2
+  endif
+
+
 
   coofilename="./Matrix.coo"
   ! -----
@@ -164,8 +196,8 @@ program main
 
   call init_crsMat(crsMat,n,nnz)
   call coo2crs(cooMat,crsMat,n,nnz,istart)
-  allocate(reshistory_CRS(itrmax))
-  allocate(reshistory_DIA(itrmax))
+  allocate(reshistory_CRS(MAX_NITER))
+  allocate(reshistory_DIA(MAX_NITER))
   reshistory_DIA=0.0d0
   reshistory_CRS=0.0d0
 
@@ -183,7 +215,7 @@ program main
   call PARCEL_KSP_Default_Setting(method_CRS)
   call set_KSP_rtolmax(method_CRS,rtolmax)
   call set_KSP_abstolmax(method_CRS,abstolmax)
-  call set_KSP_solver(method_CRS,solver)
+  call set_KSP_solver(method_CRS,ityp_solver)
   call set_KSP_iovlflag(method_CRS,iovlflag)
   call set_KSP_iflagAS(method_CRS,iflagAS)
   call set_KSP_GMRES_GSflag(method_CRS,GMRES_GSflag)
@@ -205,7 +237,7 @@ program main
   call PARCEL_KSP_Default_Setting(method_DIA)
   call set_KSP_rtolmax(method_DIA,rtolmax)
   call set_KSP_abstolmax(method_DIA,abstolmax)
-  call set_KSP_solver(method_DIA,solver)
+  call set_KSP_solver(method_DIA,ityp_solver)
   call set_KSP_iovlflag(method_DIA,iovlflag)
   call set_KSP_iflagAS(method_DIA,iflagAS)
   call set_KSP_GMRES_GSflag(method_DIA,GMRES_GSflag)
@@ -232,7 +264,7 @@ program main
        crsMat%crsA, &
        crsMat%crsRow_ptr, &
        crsMat%crsCol, &
-       itrmax, &
+       MAX_NITER, &
        ipreflag, &
        ILU_method, &
        addL, &
@@ -244,7 +276,7 @@ program main
 
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   stime=MPI_Wtime()
-  call START_KSP_SOLVER(method_CRS)
+  call START_KSP_solver(method_CRS)
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   etime=MPI_Wtime()  
   solve_time_CRS=etime-stime
@@ -253,9 +285,14 @@ program main
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
 
 #ifdef calc_diaMat
-  call get_nnd_crs(crsMat,n,istart,nnz,nnd)
-  call init_diaMat(diaMat,n,nnd)
-  call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+  !call get_nnd_crs(crsMat,n,istart,nnz,nnd)
+  !call init_diaMat(diaMat,n,nnd)
+  !call crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
+  call make_poisson2D_matrix_DIA_get_nnd( &
+       diaMat,gn,n,nnz,crsMat%crsCol,crsMat%crsRow_ptr,istart,iend,nnd)
+  call make_poisson2D_matrix_DIA_from_CRS( &
+       crsMat,diaMat%diaA,diaMat%offset,nnd,n,nnz,istart)
+
 
   write(*,*)myrank,"crs -- nnz = ",nnz, "dia -- nnd",nnd
 
@@ -268,7 +305,7 @@ program main
        n,gn,istart, &
        diaMat%diaA, &
        diaMat%offset,nnd, &
-       itrmax, &
+       MAX_NITER, &
        ipreflag, &
        ILU_method, &
        addL, &
@@ -279,7 +316,7 @@ program main
 
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   stime=MPI_Wtime()
-  call START_KSP_SOLVER(method_DIA)
+  call START_KSP_solver(method_DIA)
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   etime=MPI_Wtime()  
   solve_time_DIA=etime-stime
