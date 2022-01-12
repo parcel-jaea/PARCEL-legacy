@@ -1,0 +1,40 @@
+# CC=icc
+# FC=mpiifort
+# CFLAGS=-O3 
+# FFLAGS= -O3 -fpp -qopenmp -xHost -mkl  -fp-model precise -mcmodel=large -qopt-report 5
+confdir=../
+include ${confdir}/arch/make_config
+
+# PROG = parcel_sparse.a
+
+OBJS = \
+     define.o \
+     common.o  \
+     type.o  \
+     vec.o \
+     EigenProblem.o \
+     AdditiveSchwarz_ddm.o \
+     AS_util_ddm.o  \
+     matv_ddm.o \
+     underlap.o init_ddm_mod.o aslu_ddm.o \
+     ddm_kernel.o \
+     c_qsort.o LejaOrdering.o sort.o Moore_Penrose.o \
+     comm.o matrix.o  krylov.o TSQR.o QRDecomposition.o \
+     pcg.o pcbcg.o pcagmres.o pgmres.o  power_method.o pbicg.o  wrapper.o 
+# pcalanczos.o 
+     
+
+
+
+%.o : %.c
+	${CC} -c ${CFLAGS} ${FDEFINE} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${FDEFINE} $<
+
+# all : ${PROG}
+all :  ${OBJS}
+# ${PROG} : ${OBJS}
+# 	ar rc  $@ ${OBJS}
+clean :
+	rm  ${OBJS} 
+

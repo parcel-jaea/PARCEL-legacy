@@ -1,7 +1,11 @@
+confdir=./
+include ${confdir}/arch/make_config
+
 all : 
-	cd MPI    ; make ;cd ../
-	cd SPARSE ; make ;cd ../ 
+	cd src ; make ;cd ../ 
 clean :
-	cd MPI    ; make clean ;cd ../
-	cd SPARSE ; make clean ;cd ../ 
+	cd src ; make clean ;cd ../ 
 	rm *~
+install :
+	cd src; . ./install.sh ;cd -  &> /dev/null
+#	cd src; . ./install.sh ${INSTALLDIR} ;cd -  &> /dev/null

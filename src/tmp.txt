@@ -1,0 +1,91 @@
+  subroutine init_MatVec_dia(prm,diaMat,commVec)
+    use matrix
+    use comm
+    use comm_kernel
+    use vec_kernel
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(DIA_Mat) :: diaMat 
+    type(comm_Vec) :: commVec
+
+    integer(kind=intType) i,j,k,kk
+    integer(kind=intType) n,nnd,istart,iend
+    integer(kind=intType) offset
+    integer(kind=intType) Row,Col
+    integer(kind=intType) maxRow,minRow
+    integer(kind=intType) maxCol,minCol
+    integer(kind=intType) i0
+    integer myrank 
+    integer irank,irank_start
+    integer(kind=intType) kkmax,kmax,kmin
+    real*8 stime,etime
+    integer tmp,tmp_rank,pre_rank
+
+    n      = prm%n
+    nnd    = prm%nnd
+    istart = prm%istart
+    iend   = prm%iend
+    myrank = commVec%myrank
+
+    !$OMP PARALLEL PRIVATE( &
+    !$OMP kk,kkmax,j,irank,irank_start,&
+    !$OMP i0,i,k,Col,Row,offset,tmp,tmp_rank,pre_rank,&
+    !$OMP minCol,maxCol,minRow,maxRow,kmin,kmax &
+    !$OMP ) 
+
+    !$OMP DO SCHEDULE(dynamic,1)
+    do kk=1,n,nBlock
+       kkmax=min(n,kk+nBlock-1)
+       do k=kk,kkmax
+          tmp=1
+          tmp_rank=1
+          pre_rank=1
+          i0=0
+          do j=1,nnd
+            
+             Col = k + istart+diaMat%offset(j) - 1
+             diaMat%iLs(  k + (j-1)*n  ) = commVec%nrk_data +1
+             if (istart<=Col .and. Col<=iend) then
+               cycle
+             endif
+             do irank=tmp_rank,commVec%nrk_rank
+                if (pre_rank<irank) then
+                  tmp=1
+                endif
+                do i=pre_rank,irank-1
+                   i0=i0+commVec%nrk_prm(i)%ndata
+                enddo
+                pre_rank=irank
+                irank_start=commVec%istart( commVec%nrk_prm(irank)%rank+1 )
+                do i=tmp,commVec%nrk_prm(irank)%ndata
+                   Row = &
+                        irank_start + &
+                        commVec%nrk_prm(irank)%offset(i) 
+                   tmp=i
+                   tmp_rank=irank
+
+                   !if(Row>Col) then
+                   !   exit
+                   !endif
+                   if(Row.eq.Col)then
+                      diaMat%iLs(  k + (j-1)*n  )=i+i0
+                      exit
+                   endif
+                enddo
+                !if(Row>Col) then
+                !   exit
+                !endif
+                if(Row.eq.Col)then
+                   exit
+                endif
+             enddo
+
+          enddo
+       enddo
+
+    enddo
+    !$OMP END PARALLEL
+
+    !    stop
+  end subroutine init_MatVec_dia

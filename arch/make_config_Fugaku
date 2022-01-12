@@ -1,0 +1,13 @@
+CC     = mpifccpx
+FC     = mpifrtpx
+
+CFLAGS =-Kfast -Knoalias -Kopenmp 
+FFLAGS =-Kfast -Kopenmp -Kocl -Kmfunc=2 -Cpp  -Knoalias -Koptmsg=2  # -Dtimer 
+FP_MODE =-Knofp_relaxed -Kopenmp,noeval
+
+INCLUDEDIR =
+LD_MPI     = -lmpi_mpifh
+LD_LAPACK  = -SSL2
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.1

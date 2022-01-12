@@ -1,0 +1,20 @@
+ i = 1 
+QR decomposition : MGS 
+ || QtQ - I || / sqrt(n*s) =   1.838320543399387E-018
+ ||  A - QR || / sqrt(n*s) =   6.811048787601998E-017
+ i = 2 
+QR decomposition : CGS 
+ || QtQ - I || / sqrt(n*s) =   2.809328294408170E-018
+ ||  A - QR || / sqrt(n*s) =   6.793983016202697E-017
+ i = 3 
+QR decomposition : TSQR 
+ || QtQ - I || / sqrt(n*s) =   2.383714223491742E-018
+ ||  A - QR || / sqrt(n*s) =   7.801902222512180E-017
+ i = 4 
+QR decomposition : CHOLESKYQR  
+ || QtQ - I || / sqrt(n*s) =   4.454690833816394E-018
+ ||  A - QR || / sqrt(n*s) =   7.912541528629970E-017
+ i = 5 
+QR decomposition : CHOLESKYQR2 
+ || QtQ - I || / sqrt(n*s) =   2.034645721554064E-018
+ ||  A - QR || / sqrt(n*s) =   7.417295528037386E-017

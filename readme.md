@@ -1,9 +1,5 @@
-# Directories
-MPI    :: Quad precision MPI library
-SPARSE :: PARCEL
-
 # Compile
-Compile command    :: make
+Compile command    :: make ; make install
 Configuration file :: ./arch/make_config
   CC         = C compiler
   FC         = FORTRAN compiler
@@ -13,3 +9,5 @@ Configuration file :: ./arch/make_config
   INCLUDEDIR = Path of include files
   LD_MPI     = Path of MPI library
   LD_LAPACK  = Path of LAPACK library
+  INSTALLDIR = Path of PARCEL install directory
+

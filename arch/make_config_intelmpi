@@ -1,19 +1,17 @@
-# CC     = mpicc 
-# FC     = mpif90
 CC     = mpiicc 
 FC     = mpiifort 
 
 CFLAGS  = -O3 
-FFLAGS  = -O3 -fpp -qopenmp -xHost  -mcmodel=large 
+FFLAGS  = -O3 -fpp -qopenmp -xHost  -mcmodel=large # -Dtimer
 
 # CFLAGS  = -O0
-# FFLAGS  = -O0 -xHost -g -fpp -qopenmp -mcmodel=large  -CB -traceback -check all
-
+# FFLAGS  = -O0 -xHost -g -fpp -qopenmp -mcmodel=large  -CB -traceback -check all -Dtimer
  
 FP_MODE = -fp-model precise
 
 INCLUDEDIR =
-LD_MPI     =
+LD_MPI     = -lmpifort -lifcore
 LD_LAPACK  = -mkl 
 
-#FDEFINE = -DPARCEL_INT8
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.1

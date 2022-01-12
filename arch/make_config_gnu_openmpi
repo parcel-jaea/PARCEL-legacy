@@ -1,0 +1,13 @@
+CC     = mpicc
+FC     = mpif90
+
+CFLAGS = -O3 -march=native -mtune=native -fopenmp 
+FFLAGS = -O3 -cpp -fopenmp -ffree-line-length-none  -march=native -mtune=native 
+FP_MODE = 
+
+INCLUDEDIR =
+LD_MPI     = -lgfortran -lm -lmpi_mpifh
+LD_LAPACK  = -llapack -lopenblas
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.1

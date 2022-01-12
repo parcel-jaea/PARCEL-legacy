@@ -1,0 +1,21 @@
+# CC=icc
+# FC=mpiifort
+# CFLAGS=-O3 
+# FFLAGS= -O3 -fpp -qopenmp -xHost -mkl  -fp-model precise -mcmodel=large -qopt-report 5
+confdir=../
+include ${confdir}/arch/make_config
+
+# PROG = parcel_ddsparse.a
+ddOBJS = dd_func.o ddvec.o ddcomm.o  ddmatrix.o ddkrylov.o ddQRDecomposition.o ddpcg.o ddpbicg.o ddpgmres.o  ddwrapper.o 
+
+%.o : %.c
+	${CC} -c ${CFLAGS} ${FP_MODE} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${FP_MODE} $<
+
+# all : ${PROG}
+# ${PROG} : ${ddOBJS}
+# 	ar rc  $@ ${ddOBJS}
+all : ${ddOBJS}
+clean :
+	rm  ${ddOBJS} 
