@@ -1,4 +1,6 @@
 #include "ddfunc.h"
+! #define CUDA_AWARE 1
+
 module ddm_matv
   use PARCEL_define,only : KSP_DOUBLE_DOUBLE_PRECISION,KSP_DOUBLE_PRECISION
 contains
@@ -14,7 +16,8 @@ contains
     use ddmMat_wrap
     implicit none
     !
-    integer, intent(in) :: newcomm, nnd, mdist
+    integer(kind=intType), intent(in) :: mdist
+    integer, intent(in) :: newcomm, nnd
     integer, intent(in) :: npes, myrank
     integer, intent(in) :: ioff_a(nnd)
     real*8, intent(in) ::  A(nnd*mdist)
@@ -29,7 +32,7 @@ contains
     real*8,optional :: Q_lo(mdist)
 
     !
-    integer i
+    integer(kind=intType) i
     real*8, allocatable :: vec(:)
     real*8, allocatable :: vec_lo(:)
     logical wideSleeve
@@ -111,7 +114,7 @@ contains
        !
        ! 通信隠蔽（一括通信）
        !
-       write(*,*)"not support"
+       write(*,*)"not support : matv_ddm, ovl = ",commHide
 
        ! if( PRECISION.eq.KSP_DOUBLE_DOUBLE_PRECISION )then
        !    call spaxv_ddm_commhide_1( NND, mdist, A, IOFF_A, vec, Q, prm, myrank, newcomm ,&
@@ -127,7 +130,7 @@ contains
        !
        ! 通信隠蔽（小分け通信）
        !
-       write(*,*)"not support"
+       write(*,*)"not support : matv_ddm, ovl = ",commHide
        if( PRECISION.eq.KSP_DOUBLE_DOUBLE_PRECISION )then
           ! call spaxv_ddm_commhide_2( NND, mdist, A, IOFF_A, vec, Q, prm, myrank, newcomm, &
           !      PRECISION_CALC, &
@@ -145,6 +148,313 @@ contains
 
   end subroutine matv_ddm
 
+
+  subroutine matv_ddm_GPU( &
+       method,&
+       x, offset_x,&
+       y, offset_y)
+    ! use ddm_tmp
+    use krylov
+    use ddmMat_wrap
+    use cu_Matrix,only : Matvec_ddm_FP64_GPU
+    use PARCEL_VEC_kernel,only : PARCEL_VEC
+    implicit none
+    type(KSP) :: method
+!    type(PARCEL_VEC) :: x
+!    type(PARCEL_VEC) :: y
+    type(devicemem) :: x
+    type(devicemem) :: y
+    integer(kind=intType) offset_x
+    integer(kind=intType) offset_y
+
+    integer(kind=intType) m
+    integer(kind=intType) nx,ny,nz
+    integer(kind=intType) mx,my,mxy
+    integer(kind=intType) stmx,stmy,stmz
+    integer(kind=intType) nnd
+    integer(kind=intType) npe
+
+    m    = method%ddmMat%n
+    nx   = method%ddmMat%prm%nx
+    ny   = method%ddmMat%prm%ny
+    nz   = method%ddmMat%prm%nz
+  
+    mx   = method%ddmMat%prm%mx
+    my   = method%ddmMat%prm%my
+    mxy  = method%ddmMat%prm%mxy
+
+    stmx = method%ddmMat%prm%stmx
+    stmy = method%ddmMat%prm%stmy
+    stmz = method%ddmMat%prm%stmz
+
+    nnd = method%ddmMat%mat%nnd_dia
+    npe = method%ddmMat%ncpu
+
+    ! write(*,*) m
+    ! write(*,*) nx
+    ! write(*,*) ny
+    ! write(*,*) nz
+    ! write(*,*) mx
+    ! write(*,*) my
+    ! write(*,*) mxy
+    ! write(*,*) stmx
+    ! write(*,*) stmy
+    ! write(*,*) stmz
+    ! write(*,*) nnd
+    ! write(*,*) npe
+    ! write(*,*) " -------------- "
+    ! write(*,*) 
+
+    if ( npe .ne. 1 ) then
+#if 0
+       call cudaMemcpy_d2d_fp64( &
+            x, &
+            method%ddmMat%C_work,m)
+       call sleev_comm_GPU( method, method%ddmMat%C_work )
+       call Matvec_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd, &
+            method%ddmMat%mat%C_val_dia, &
+            method%ddmMat%C_work,&
+            y, &		
+            method%ddmMat%mat%C_ioff_dia &
+            )
+#else
+       call sleev_comm_GPU(method,x,offset_x)
+       call Matvec_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd, &
+            method%ddmMat%mat%C_val_dia, &
+            x, offset_x, &
+            y, offset_y, &
+            method%ddmMat%mat%C_ioff_dia &
+            )
+       call sleev_zero_GPU(method,x,offset_x)
+#endif
+    else
+       call Matvec_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd, &
+            method%ddmMat%mat%C_val_dia, &
+            x, offset_x, &
+            y, offset_y, &
+            method%ddmMat%mat%C_ioff_dia &
+            )
+    endif
+
+    return    
+  end subroutine matv_ddm_GPU
+
+  subroutine matv_Neumann_ddm_GPU( &
+       method,&
+       x, offset_x,&
+       y, offset_y,&
+       nocomm)
+    ! use ddm_tmp
+    use krylov
+    use ddmMat_wrap
+    use cu_Matrix,only : Matvec_ddm_FP64_GPU
+    use PARCEL_VEC_kernel,only : PARCEL_VEC
+    implicit none
+    type(KSP) :: method
+!    type(PARCEL_VEC) :: x
+!    type(PARCEL_VEC) :: y
+    type(devicemem) :: x
+    integer(kind=intType) offset_x
+    type(devicemem) :: y
+    integer(kind=intType) offset_y
+
+    integer(kind=intType) m
+    integer(kind=intType) nx,ny,nz
+    integer(kind=intType) mx,my,mxy
+    integer(kind=intType) stmx,stmy,stmz
+    integer(kind=intType) nnd
+    integer(kind=intType) npe
+    integer,optional :: nocomm
+
+    m    = method%ddmMat%n
+    nx   = method%ddmMat%C_DDMMat_Neumann%nx
+    ny   = method%ddmMat%C_DDMMat_Neumann%ny
+    nz   = method%ddmMat%C_DDMMat_Neumann%nz
+  
+    mx   = method%ddmMat%C_DDMMat_Neumann%mx
+    my   = method%ddmMat%C_DDMMat_Neumann%my
+    mxy  = method%ddmMat%C_DDMMat_Neumann%mxy
+
+    stmx = method%ddmMat%C_DDMMat_Neumann%stmx
+    stmy = method%ddmMat%C_DDMMat_Neumann%stmy
+    stmz = method%ddmMat%C_DDMMat_Neumann%stmz
+
+    nnd = method%ddmMat%C_DDMMat_Neumann%nnd
+    npe = method%ddmMat%ncpu
+
+    if ( npe .ne. 1 ) then
+       if(  present(nocomm)  )then
+          call sleev_zero_GPU(method,x,offset_x)
+       else
+          call sleev_comm_GPU(method,x,offset_x)
+       endif
+       call Matvec_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd, &
+            method%ddmMat%C_DDMMat_Neumann%ddmA, &
+            x, offset_x,&
+            y, offset_y,&
+            method%ddmMat%C_DDMMat_Neumann%offset &
+            )
+       call sleev_zero_GPU(method,x,offset_x)
+    else
+       call Matvec_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd, &
+            method%ddmMat%C_DDMMat_Neumann%ddmA, &
+            x, offset_x,&
+            y, offset_y,&		
+            method%ddmMat%C_DDMMat_Neumann%offset &
+            )
+    endif
+
+    return    
+  end subroutine matv_Neumann_ddm_GPU
+
+  subroutine jacobi_iter1_ddm_GPU( &
+       method,&
+       x, offset_x,&
+       y, offset_y, &
+       nocomm)
+    ! use ddm_tmp
+    use krylov
+    use ddmMat_wrap
+    use cu_Matrix,only : jacobi_iter1_ddm_FP64_GPU
+    use PARCEL_VEC_kernel,only : PARCEL_VEC
+    implicit none
+    type(KSP) :: method
+!    type(PARCEL_VEC) :: x
+!    type(PARCEL_VEC) :: y
+    type(devicemem) :: x
+    integer(kind=intType) offset_x
+    type(devicemem) :: y
+    integer(kind=intType) offset_y
+    integer,optional :: nocomm
+
+    integer(kind=intType) m
+    integer(kind=intType) nx,ny,nz
+    integer(kind=intType) mx,my,mxy
+    integer(kind=intType) stmx,stmy,stmz
+    integer(kind=intType) nnd
+    integer(kind=intType) npe
+    integer(kind=intType) nnd_
+
+    m    = method%ddmMat%n
+    nx   = method%ddmMat%prm%nx
+    ny   = method%ddmMat%prm%ny
+    nz   = method%ddmMat%prm%nz
+  
+    mx   = method%ddmMat%prm%mx
+    my   = method%ddmMat%prm%my
+    mxy  = method%ddmMat%prm%mxy
+
+    stmx = method%ddmMat%prm%stmx
+    stmy = method%ddmMat%prm%stmy
+    stmz = method%ddmMat%prm%stmz
+
+    nnd = method%ddmMat%mat%nnd_dia
+    npe = method%ddmMat%ncpu
+
+    if ( npe .ne. 1 ) then
+       if(  present(nocomm)  )then
+          call sleev_zero_GPU(method,x,offset_x)
+       else
+          call sleev_comm_GPU(method,x,offset_x)
+       endif
+       nnd_ = method%ddmMat%C_DDMMat_Neumann%nnd
+       call jacobi_iter1_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd_, &
+            method%ddmMat%C_DDMMat_Neumann%ddmA, &
+            x, offset_x,&
+            y, offset_y,&		
+            method%ddmMat%C_DDMMat_Neumann%offset &
+            )
+       call sleev_zero_GPU(method,x,offset_x)
+    else
+       nnd_ = method%ddmMat%C_DDMMat_Neumann%nnd
+       call jacobi_iter1_ddm_FP64_GPU(&
+            CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+            nx, &
+            ny, &
+            nz, &
+            stmx, &
+            stmy, &
+            stmz, &
+            mx, &
+            mxy, &
+            m, &
+            nnd_, &
+            method%ddmMat%C_DDMMat_Neumann%ddmA, &
+            x, offset_x,&
+            y, offset_y,&		
+            method%ddmMat%C_DDMMat_Neumann%offset &
+            )
+    endif
+
+    return    
+  end subroutine jacobi_iter1_ddm_GPU
+
   subroutine spaxv_ddm_commhide_0( &
        NND, mdist, A, IOFF_A, P, Q, prm , &
        PRECISION_CALC, &
@@ -158,7 +468,8 @@ contains
     use common_kernel,only : set_region_for_threads
     implicit none
     !
-    integer, intent(in) :: nnd, mdist
+    integer(kind=intType), intent(in) ::  mdist
+    integer, intent(in) :: nnd
     real*8, intent(in) ::  A(nnd*mdist)
     integer, intent(in) :: ioff_a(nnd)
     real*8  P(mdist)
@@ -171,7 +482,7 @@ contains
     real*8,optional :: Q_lo(mdist)
 
     !
-    integer j, jx, jy, jz, ip
+    integer(kind=intType) j, jx, jy, jz, ip
     integer nx, ny, nz, nxy, mx, my, mxy
     integer stmx, stmy, stmz
     integer PRECISION
@@ -277,7 +588,8 @@ contains
     use ddmMat_wrap
     implicit none
     !
-    integer, intent(in) :: nnd, mdist
+    integer(kind=intType), intent(in) ::  mdist
+    integer, intent(in) :: nnd
     real*8, intent(in) ::  A(nnd*mdist)
     integer, intent(in) :: ioff_a(nnd)
     real*8 P(mdist)
@@ -542,8 +854,9 @@ contains
   subroutine spaxv_ddm_commhide_2( NND, mdist, A, IOFF_A, P, Q, prm, myrank, newcomm )
     ! use ddm_tmp
     use ddmMat_wrap
+    use mpi
     implicit none
-    include "mpif.h"
+!    include "mpif.h"
     !
     integer, intent(in) :: nnd, mdist
     real*8, intent(in) ::  A(nnd*mdist)
@@ -910,19 +1223,20 @@ contains
   subroutine sleev_comm_novec2( mdist, vec, prm, myrank, comm )
     ! use ddm_tmp
     use ddmMat_wrap
+    use mpi
     implicit none
-    include "mpif.h"
+!    include "mpif.h"
 
     ! inout
-    integer, intent(in) :: mdist
+    integer(kind=intType), intent(in) :: mdist
     real*8,intent(inout) :: vec( mdist )
     type(ddm_param), intent(in) :: prm
     integer, intent(in) :: comm, myrank
 
     ! local
-    integer kx, ky, kz, kxmax, kymax, kzmax
-    integer ix, iy, iz, i, j, info, k
-
+    integer(kind=intType) kx, ky, kz, kxmax, kymax, kzmax
+    integer(kind=intType) ix, iy, iz, i, j, k
+    integer info
     type array
        real*8, allocatable :: v(:)
     end type array
@@ -1012,28 +1326,19 @@ contains
        end if
     end do
 
-
-    !
     ! 通信処理
-    !
     do i=1, 6
        if ( rank_s(i) /= -1 ) allocate( sbuf(i)%v(grids(i)) )
        if ( rank_r(i) /= -1 ) allocate( rbuf(i)%v(grids(i)) )
     end do
-    !
+
     do xyz=0, 2  ! x, y, z
-       !
        ! 同じ軸方向の領域のみ同時に通信できる
-       !
        do pm=0, 1  ! +xyz, -xyz
           i = 2 * xyz + pm + 1
-          !
           ! 通信データの設定
-          !
           if ( rank_s(i) /= -1 ) then
-             !
              !$OMP PARALLEL do private(ix, iy, iz, k)
-             !
              do j=0, grids(i)-1
                 ix = x0s(i) + mod(j, xlen(i))
                 iy = y0s(i) + mod(j/xlen(i),  ylen(i))
@@ -1041,20 +1346,18 @@ contains
                 k = (ix+prm%stmx) + prm%mx*(iy+prm%stmy) + prm%mxy*(iz+prm%stmz) +1;
                 sbuf(i)%v(j + 1) = vec(k)
              end do
-             !
              !$OMP end PARALLEL do
-             !
           end if
           !
           ! 通信開始
           !
           if ( rank_s(i) /= -1 ) then
              call MPI_Isend( sbuf(i)%v, size(sbuf(i)%v), mpi_double_precision, &
-                  & rank_s(i), rank_s(i), comm, ireqs(i), info )
+                  rank_s(i), rank_s(i), comm, ireqs(i), info )
           end if
           if ( rank_r(i) /= -1 ) then
              call MPI_Irecv( rbuf(i)%v, size(rbuf(i)%v), mpi_double_precision, &
-                  & rank_r(i), myrank, comm, ireqr(i), info )
+                  rank_r(i), myrank, comm, ireqr(i), info )
           end if
        end do
        !
@@ -1068,9 +1371,7 @@ contains
           ! 受信したデータをコピー
           !
           if ( rank_r(i) /= -1 ) then
-             !
              !$OMP PARALLEL do private(ix, iy, iz, k)
-             !
              do j=0, grids(i)-1
                 ix = x0r(i) + mod(j, xlen(i))
                 iy = y0r(i) + mod(j/xlen(i),  ylen(i))
@@ -1078,9 +1379,7 @@ contains
                 k = (ix+prm%stmx) + prm%mx*(iy+prm%stmy) + prm%mxy*(iz+prm%stmz) +1;
                 vec(k) = rbuf(i)%v(j + 1) 
              end do
-             !
              !$OMP end PARALLEL do
-             !
           end if
        end do
     end do
@@ -1092,6 +1391,466 @@ contains
 
   end subroutine sleev_comm_novec2
 
+  subroutine sleev_comm_GPU( &
+       method, &
+       vec,offset_vec)
+    ! use ddm_tmp
+    use krylov,only : KSP
+    use ddmMat_wrap
+    use mpi
+    use PARCEL_VEC_kernel,only : PARCEL_VEC
+    use cu_comm,only : &
+         C_MPI_Wait,C_MPI_Irecv_FP64,C_MPI_Isend_FP64,&
+         set_sbuf_DDM_FP64_GPU,set_rbuf_DDM_FP64_GPU, &
+         C_MPI_Isend_FP64buf_FP64,C_MPI_Irecv_FP64buf_FP64, &
+         comm_ddm_GPU,comm_ddm_GPU_host
+    use cu_common_wrapper,only : &
+         cudaDeviceSynchronize, &
+         cudaMemcpy_d2h_fp64,cudaMemcpy_h2d_fp64
+
+    implicit none
+
+    ! inout
+    type(KSP) :: method
+    type(devicemem) :: vec
+    integer(kind=intType) offset_vec
+    integer(kind=intType),parameter :: offset_zero=0
+
+    ! local
+    integer myrank
+    integer(kind=intType) kx, ky, kz, kxmax, kymax, kzmax
+    integer(kind=intType) ix, iy, iz, i, j, k
+    integer info
+
+    integer :: ireqs(6), ireqr(6)
+    integer istatus (mpi_status_size)
+    integer(kind=intType) xyz, pm
+    !
+    integer :: grids(6)  ! 通信領域の全グリッド数
+    integer :: rank_s (6), rank_r (6)          ! 通信相手のプロセスのランク
+    integer :: x0s    (6), y0s    (6), z0s (6) ! 通信領域の原点（s = send, r = receive）
+    integer :: x0r    (6), y0r    (6), z0r (6) !
+    integer :: xlen   (6), ylen   (6), zlen(6) ! 通信領域の幅
+    integer :: xpos   (6), ypos   (6), zpos(6) !
+
+!    real*8 vec_cpu(method%ddmMat%n)
+!    real*8 sbuf(method%ddmMat%prm%nx*method%ddmMat%prm%ny*method%ddmMat%prm%nz,6)
+!    real*8 rbuf(method%ddmMat%prm%nx*method%ddmMat%prm%ny*method%ddmMat%prm%nz,6)
+    integer offset 
+
+    if ( method%ddmMat%prm%npe_x * method%ddmMat%prm%npe_y * method%ddmMat%prm%npe_z == 1 ) return
+    myrank = method%commVec%myrank
+    xpos(1) =-1;  ypos(1) = 0;  zpos(1) = 0  ! -x
+    xpos(2) = 1;  ypos(2) = 0;  zpos(2) = 0  ! +x
+    xpos(3) = 0;  ypos(3) =-1;  zpos(3) = 0  ! -y
+    xpos(4) = 0;  ypos(4) = 1;  zpos(4) = 0  ! +y
+    xpos(5) = 0;  ypos(5) = 0;  zpos(5) =-1  ! -z
+    xpos(6) = 0;  ypos(6) = 0;  zpos(6) = 1  ! +z
+    rank_s(:) = -1
+    rank_r(:) = -1
+    do i=1, 6
+       k = 1;
+       kxmax = 0;  kymax = 0;  kzmax = 0;
+       if ( method%ddmMat%prm%npe_z > 1 )  kzmax = 1;
+       if ( method%ddmMat%prm%npe_y > 1 )  kymax = 1; 
+       if ( method%ddmMat%prm%npe_x > 1 )  kxmax = 1; 
+       Do kz=-kzmax, kzmax
+          Do ky=-kymax, kymax
+             Do kx=-kxmax, kxmax
+                if ( kx*kx +ky*ky +kz*kz == 0 ) cycle
+                if (method%ddmMat%prm%neighbor_ranks(k) > -1 .and. method%ddmMat%prm%comm_flag(k) == 1 ) then
+                   if ( kx==xpos(i) .and. ky==ypos(i) .and. kz==zpos(i) ) then
+                      rank_s(i) = method%ddmMat%prm%neighbor_ranks(k)
+                   end if
+                   if ( kx==-xpos(i) .and. ky==-ypos(i) .and. kz==-zpos(i) ) then
+                      rank_r(i) = method%ddmMat%prm%neighbor_ranks(k)
+                   end if
+                end if
+                k = k +1
+             End Do
+          End Do
+       End Do
+    end do
+
+    !
+    ! 通信領域の原点と形状 *0*, *len, grids の取得
+    !
+    x0s(1)    = 0
+    x0s(2)    = method%ddmMat%prm%nx - method%ddmMat%prm%leng_halo
+    x0s(3:6)  = -method%ddmMat%prm%leng_halo
+    x0r(1)    = method%ddmMat%prm%nx
+    x0r(2:6)  = -method%ddmMat%prm%leng_halo
+    xlen(1:2) = method%ddmMat%prm%leng_halo
+    xlen(3:6) = method%ddmMat%prm%nx + 2 * method%ddmMat%prm%leng_halo
+    !
+    y0s(1:3)  = 0
+    y0s(4)    = method%ddmMat%prm%ny - method%ddmMat%prm%leng_halo
+    y0s(5:6)  = -method%ddmMat%prm%leng_halo
+    y0r(1:2)  = 0
+    y0r(3)    = method%ddmMat%prm%ny
+    y0r(4:6)  = -method%ddmMat%prm%leng_halo
+    ylen(1:2) = method%ddmMat%prm%ny
+    ylen(3:4) = method%ddmMat%prm%leng_halo
+    ylen(5:6) = method%ddmMat%prm%ny + 2 * method%ddmMat%prm%leng_halo
+    !
+    z0s(1:5)  = 0
+    z0s(6)    = method%ddmMat%prm%nz - method%ddmMat%prm%leng_halo
+    z0r(1:4)  = 0
+    z0r(5)    = method%ddmMat%prm%nz
+    z0r(6)    = -method%ddmMat%prm%leng_halo
+    zlen(1:4) = method%ddmMat%prm%nz
+    zlen(5:6) = method%ddmMat%prm%leng_halo
+    !
+    do i=1, 6
+       if ( method%ddmMat%prm%ncomp_grids == 1 ) then
+          grids(i) = xlen(i)
+       else if ( method%ddmMat%prm%ncomp_grids == 2 ) then
+          grids(i) = xlen(i) * ylen(i)
+       else
+          grids(i) = xlen(i) * ylen(i) * zlen(i)
+       end if
+    end do
+
+    call cudaDeviceSynchronize()     
+
+    ! 通信処理
+    offset = 1
+    do xyz=0, 2  ! x, y, z
+       do pm=0, 1  ! +xyz, -xyz
+          i = 2 * xyz + pm + 1
+          if ( rank_s(i) /= -1 ) then
+             call set_sbuf_DDM_FP64_GPU( &
+                  CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+                  vec,offset_vec, &
+                  method%ddmMat%mat%C_sbuf, offset_zero, &
+                  offset, &
+                  grids(i), &
+                  method%ddmMat%prm%mx,method%ddmMat%prm%mxy, &
+                  x0s(i),y0s(i),z0s(i), &
+                  xlen(i),ylen(i), &
+                  method%ddmMat%prm%stmx, &
+                  method%ddmMat%prm%stmy, &
+                  method%ddmMat%prm%stmz &
+                  )
+          end if
+          offset = offset + grids(i)
+       enddo
+    enddo
+          !
+          ! 通信開始
+          !
+#if CUDA_AWARE
+    call cudaDeviceSynchronize()     
+    call comm_ddm_GPU( &
+         method%ddmMat%prm%nx*method%ddmMat%prm%ny*method%ddmMat%prm%nz, &
+         method%ddmMat%mat%C_sbuf, offset_zero,&
+         method%ddmMat%mat%C_rbuf, offset_zero,&
+         grids, &
+         myrank, &
+         rank_s,rank_r, &
+         method%commVec%C_comm, &
+         method%commVec%C_s_sta,method%commVec%C_r_sta, &
+         method%commVec%C_s_req,method%commVec%C_r_req &
+         )
+    call cudaDeviceSynchronize()     
+#else
+    call cudaDeviceSynchronize()     
+    call comm_ddm_GPU_host( &
+         method%ddmMat%prm%nx*method%ddmMat%prm%ny*method%ddmMat%prm%nz, &
+         method%ddmMat%mat%C_sbuf, offset_zero,&
+         method%ddmMat%mat%C_rbuf, offset_zero,&
+         grids, &
+         myrank, &
+         rank_s,rank_r, &
+         method%commVec%C_comm, &
+         method%commVec%C_s_sta,method%commVec%C_r_sta, &
+         method%commVec%C_s_req,method%commVec%C_r_req &
+         )
+    call cudaDeviceSynchronize()     
+#endif
+
+    offset = 1
+    do xyz=0, 2  ! x, y, z
+       do pm=0, 1
+          i = 2 * xyz + pm + 1
+          !
+          ! 受信したデータをコピー
+          !
+          if ( rank_r(i) /= -1 ) then
+             call set_rbuf_DDM_FP64_GPU( &
+                  CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+                  vec, offset_vec,&
+                  method%ddmMat%mat%C_rbuf, offset_zero,&
+                  offset, &
+                  grids(i), &
+                  method%ddmMat%prm%mx,method%ddmMat%prm%mxy, &
+                  x0r(i),y0r(i),z0r(i), &
+                  xlen(i),ylen(i), &
+                  method%ddmMat%prm%stmx, &
+                  method%ddmMat%prm%stmy, &
+                  method%ddmMat%prm%stmz &
+                  )
+          end if
+          offset = offset + grids(i)
+       end do
+    end do
+
+    call cudaDeviceSynchronize()     
+
+  end subroutine sleev_comm_GPU
+
+  subroutine sleev_zero_GPU( &
+       method,&
+       vec,offset_vec)
+    ! use ddm_tmp
+    use krylov,only : KSP
+    use ddmMat_wrap
+    use mpi
+    use PARCEL_VEC_kernel,only : PARCEL_VEC
+    use cu_comm,only : sleev_zero_DDM_FP64_GPU
+    use cu_common_wrapper,only : &
+         cudaDeviceSynchronize
+
+    implicit none
+
+    ! inout
+    type(KSP) :: method
+    type(devicemem) :: vec
+    integer(kind=intType) offset_vec
+    integer(kind=intType),parameter :: offset_zero=0
+
+    ! local
+    integer myrank
+    integer(kind=intType) kx, ky, kz, kxmax, kymax, kzmax
+    integer(kind=intType) ix, iy, iz, i, j, k
+    integer info
+    integer(kind=intType) xyz, pm
+    !
+    integer :: grids(6)  ! 通信領域の全グリッド数
+
+    integer :: rank_r (6)          ! 通信相手のプロセスのランク
+    integer :: x0r    (6), y0r    (6), z0r (6) !
+    integer :: xlen   (6), ylen   (6), zlen(6) ! 通信領域の幅
+    integer :: xpos   (6), ypos   (6), zpos(6) !
+
+    integer offset 
+    if ( method%ddmMat%prm%npe_x * method%ddmMat%prm%npe_y * method%ddmMat%prm%npe_z == 1 ) return
+    myrank = method%commVec%myrank
+    xpos(1) =-1;  ypos(1) = 0;  zpos(1) = 0  ! -x
+    xpos(2) = 1;  ypos(2) = 0;  zpos(2) = 0  ! +x
+    xpos(3) = 0;  ypos(3) =-1;  zpos(3) = 0  ! -y
+    xpos(4) = 0;  ypos(4) = 1;  zpos(4) = 0  ! +y
+    xpos(5) = 0;  ypos(5) = 0;  zpos(5) =-1  ! -z
+    xpos(6) = 0;  ypos(6) = 0;  zpos(6) = 1  ! +z
+
+    rank_r(:) = -1
+    do i=1, 6
+       k = 1;
+       kxmax = 0;  kymax = 0;  kzmax = 0;
+       if ( method%ddmMat%prm%npe_z > 1 )  kzmax = 1;
+       if ( method%ddmMat%prm%npe_y > 1 )  kymax = 1; 
+       if ( method%ddmMat%prm%npe_x > 1 )  kxmax = 1; 
+       do kz=-kzmax, kzmax
+          do ky=-kymax, kymax
+             do kx=-kxmax, kxmax
+                if ( kx*kx +ky*ky +kz*kz == 0 ) cycle
+                if (method%ddmMat%prm%neighbor_ranks(k) > -1 .and. method%ddmMat%prm%comm_flag(k) == 1 ) then
+                   if ( kx==-xpos(i) .and. ky==-ypos(i) .and. kz==-zpos(i) ) then
+                      rank_r(i) = method%ddmMat%prm%neighbor_ranks(k)
+                   end if
+                end if
+                k = k +1
+             enddo
+          enddo
+       enddo
+    enddo
+
+    !
+    ! 通信領域の原点と形状 *0*, *len, grids の取得
+    !
+    x0r(1)    = method%ddmMat%prm%nx
+    x0r(2:6)  = -method%ddmMat%prm%leng_halo
+    xlen(1:2) = method%ddmMat%prm%leng_halo
+    xlen(3:6) = method%ddmMat%prm%nx + 2 * method%ddmMat%prm%leng_halo
+    !
+    y0r(1:2)  = 0
+    y0r(3)    = method%ddmMat%prm%ny
+    y0r(4:6)  = -method%ddmMat%prm%leng_halo
+    ylen(1:2) = method%ddmMat%prm%ny
+    ylen(3:4) = method%ddmMat%prm%leng_halo
+    ylen(5:6) = method%ddmMat%prm%ny + 2 * method%ddmMat%prm%leng_halo
+    !
+    z0r(1:4)  = 0
+    z0r(5)    = method%ddmMat%prm%nz
+    z0r(6)    = -method%ddmMat%prm%leng_halo
+    zlen(1:4) = method%ddmMat%prm%nz
+    zlen(5:6) = method%ddmMat%prm%leng_halo
+    !
+    do i=1, 6
+       if ( method%ddmMat%prm%ncomp_grids == 1 ) then
+          grids(i) = xlen(i)
+       else if ( method%ddmMat%prm%ncomp_grids == 2 ) then
+          grids(i) = xlen(i) * ylen(i)
+       else
+          grids(i) = xlen(i) * ylen(i) * zlen(i)
+       end if
+    end do
+
+    call cudaDeviceSynchronize()     
+
+    offset = 1
+    do xyz=0, 2  ! x, y, z
+       do pm=0, 1
+          i = 2 * xyz + pm + 1
+          if ( rank_r(i) /= -1 ) then
+             ! 受信データを詰めた場所のみゼロにする
+             call sleev_zero_DDM_FP64_GPU( &
+                  CUDA_NUM_BLOCKS,CUDA_NUM_THREADS, &
+                  vec, offset_vec, &
+                  offset, &
+                  grids(i), &
+                  method%ddmMat%prm%mx,method%ddmMat%prm%mxy, &
+                  x0r(i),y0r(i),z0r(i), &
+                  xlen(i),ylen(i), &
+                  method%ddmMat%prm%stmx, &
+                  method%ddmMat%prm%stmy, &
+                  method%ddmMat%prm%stmz &
+                  )
+          endif
+          offset = offset + grids(i)
+       end do
+    end do
+
+    call cudaDeviceSynchronize()     
+
+  end subroutine sleev_zero_GPU
+
+  subroutine sleev_comm_init_GPU(method)
+    ! use ddm_tmp
+    use krylov,only : KSP
+    use ddmMat_wrap
+    use cu_common_wrapper,only : cudaMalloc_fp64,cudaMemcpy_h2d_fp64
+
+    use mpi
+    implicit none
+
+    ! inout
+    type(KSP) :: method
+
+    ! local
+    integer kx, ky, kz, kxmax, kymax, kzmax
+    integer ix, iy, iz, i, j, info, k
+
+    integer :: ireqs(6), ireqr(6)
+    integer istatus (mpi_status_size)
+    integer xyz, pm
+    !
+    integer :: grids(6)  ! 通信領域の全グリッド数
+    integer :: rank_s (6), rank_r (6)          ! 通信相手のプロセスのランク
+    integer :: x0s    (6), y0s    (6), z0s (6) ! 通信領域の原点（s = send, r = receive）
+    integer :: x0r    (6), y0r    (6), z0r (6) !
+    integer :: xlen   (6), ylen   (6), zlen(6) ! 通信領域の幅
+    integer :: xpos   (6), ypos   (6), zpos(6) !
+    integer grids_max
+    real*8, allocatable :: vec(:)
+
+    integer(kind=intType) parcel_int
+
+    if ( method%ddmMat%prm%npe_x * method%ddmMat%prm%npe_y * method%ddmMat%prm%npe_z == 1 ) return;
+
+
+    xpos(1) =-1;  ypos(1) = 0;  zpos(1) = 0  ! -x
+    xpos(2) = 1;  ypos(2) = 0;  zpos(2) = 0  ! +x
+    xpos(3) = 0;  ypos(3) =-1;  zpos(3) = 0  ! -y
+    xpos(4) = 0;  ypos(4) = 1;  zpos(4) = 0  ! +y
+    xpos(5) = 0;  ypos(5) = 0;  zpos(5) =-1  ! -z
+    xpos(6) = 0;  ypos(6) = 0;  zpos(6) = 1  ! +z
+    rank_s(:) = 1
+    rank_r(:) = 1
+    do i=1, 6
+       k = 1;
+       kxmax = 0;  kymax = 0;  kzmax = 0;
+       if ( method%ddmMat%prm%npe_z > 1 )  kzmax = 1;
+       if ( method%ddmMat%prm%npe_y > 1 )  kymax = 1; 
+       if ( method%ddmMat%prm%npe_x > 1 )  kxmax = 1; 
+       Do kz=-kzmax, kzmax
+          Do ky=-kymax, kymax
+             Do kx=-kxmax, kxmax
+                if ( kx*kx +ky*ky +kz*kz == 0 ) cycle
+                if (method%ddmMat%prm%neighbor_ranks(k) > -1 .and. method%ddmMat%prm%comm_flag(k) == 1 ) then
+                   if ( kx==xpos(i) .and. ky==ypos(i) .and. kz==zpos(i) ) then
+                      rank_s(i) = method%ddmMat%prm%neighbor_ranks(k)
+                   end if
+                   if ( kx==-xpos(i) .and. ky==-ypos(i) .and. kz==-zpos(i) ) then
+                      rank_r(i) = method%ddmMat%prm%neighbor_ranks(k)
+                   end if
+                end if
+                k = k +1
+             End Do
+          End Do
+       End Do
+    end do
+
+    ! 通信領域の原点と形状 *0*, *len, grids の取得
+    x0s(1)    = 0
+    x0s(2)    = method%ddmMat%prm%nx - method%ddmMat%prm%leng_halo
+    x0s(3:6)  = -method%ddmMat%prm%leng_halo
+    x0r(1)    = method%ddmMat%prm%nx
+    x0r(2:6)  = -method%ddmMat%prm%leng_halo
+    xlen(1:2) = method%ddmMat%prm%leng_halo
+    xlen(3:6) = method%ddmMat%prm%nx + 2 * method%ddmMat%prm%leng_halo
+
+    y0s(1:3)  = 0
+    y0s(4)    = method%ddmMat%prm%ny - method%ddmMat%prm%leng_halo
+    y0s(5:6)  = -method%ddmMat%prm%leng_halo
+    y0r(1:2)  = 0
+    y0r(3)    = method%ddmMat%prm%ny
+    y0r(4:6)  = -method%ddmMat%prm%leng_halo
+    ylen(1:2) = method%ddmMat%prm%ny
+    ylen(3:4) = method%ddmMat%prm%leng_halo
+    ylen(5:6) = method%ddmMat%prm%ny + 2 * method%ddmMat%prm%leng_halo
+
+    z0s(1:5)  = 0
+    z0s(6)    = method%ddmMat%prm%nz - method%ddmMat%prm%leng_halo
+    z0r(1:4)  = 0
+    z0r(5)    = method%ddmMat%prm%nz
+    z0r(6)    = -method%ddmMat%prm%leng_halo
+    zlen(1:4) = method%ddmMat%prm%nz
+    zlen(5:6) = method%ddmMat%prm%leng_halo
+
+    do i=1, 6
+       if ( method%ddmMat%prm%ncomp_grids == 1 ) then
+          grids(i) = xlen(i)
+       else if ( method%ddmMat%prm%ncomp_grids == 2 ) then
+          grids(i) = xlen(i) * ylen(i)
+       else
+          grids(i) = xlen(i) * ylen(i) * zlen(i)
+       end if
+    end do
+
+    grids_max = 1
+    do i=1, 6
+       grids_max = grids_max + grids(i)      
+    enddo
+    allocate(vec(grids_max))
+    vec = 0.0d0
+
+    parcel_int = grids_max
+    call cudaMalloc_fp64(method%ddmMat%mat%C_sbuf,parcel_int)
+    call cudaMalloc_fp64(method%ddmMat%mat%C_rbuf,parcel_int)
+#if 0
+    call cudaMemcpy_h2d_fp64( &
+         vec, &
+         method%ddmMat%mat%C_sbuf,parcel_int,0,0)
+    call cudaMemcpy_h2d_fp64( &
+         vec, &
+         method%ddmMat%mat%C_rbuf,parcel_int,0,0)
+#endif
+
+    deallocate(vec)
+    
+  end subroutine sleev_comm_init_GPU
+  
   subroutine set_sleev_comm_flag( nnd, ncomp_grids, ioff_grids, prm )
     ! use ddm_tmp
     use ddmMat_wrap

@@ -1,5 +1,42 @@
-
+#define PRINT_TIME 0
 module comm_kernel
+  use PARCEL_integer
+  implicit none
+  interface
+     subroutine get_cusparse_sort( &
+          istart , &
+          iend , &
+          n , &
+          nnz , &
+          nnz_comm , &
+          maxcrsRow_ptr, &
+          crsA, &
+!          crsA_local, &
+          crsCol , &
+          crsCol_comm , &
+!          crsCol_local,  &
+          crsRow_ptr &
+          ) &
+          bind(c,name = "get_cusparse_sort")
+       import :: intType
+
+       integer(kind=intType),value :: istart
+       integer(kind=intType),value :: iend
+       integer(kind=intType),value :: n
+       integer(kind=intType),value :: nnz
+       integer(kind=intType),value :: nnz_comm
+       integer(kind=intType),value :: maxcrsRow_ptr
+       real*8 crsA(nnz)
+!       real*8 crsA_local(nnz)
+       integer(kind=intType) crsCol(nnz)
+       integer(kind=intType) crsCol_comm(nnz)
+!       integer(kind=intType) crsCol_local(nnz)
+       integer(kind=intType) crsRow_ptr(n+1)
+
+     end subroutine get_cusparse_sort
+
+    end interface
+
 contains
   subroutine get_nrk_comm(commVec,nCol,Colsort)
     use comm
@@ -35,7 +72,11 @@ contains
           endif
        enddo
     enddo
-    commVec%nrk_rank=nrank
+    commVec%nrk_rank=nrank 
+
+    if(allocated(commVec%nrk_prm))then
+       deallocate(commVec%nrk_prm)
+    endif       
     allocate(commVec%nrk_prm(commVec%nrk_rank))
     do i=1,commVec%nrk_rank
        commVec%nrk_prm(i)%ndata=0
@@ -161,6 +202,10 @@ contains
 
     call MPI_Comm_size( commVec%comm, commVec%npes,   ierr )
     call MPI_Comm_rank( commVec%comm, commVec%myrank, ierr )
+
+    if( allocated(commVec%istart) )then
+       deallocate(commVec%istart)
+    endif
     allocate(commVec%istart(commVec%npes+1))
     do i=1,commVec%npes
        commVec%istart(i)=-1
@@ -217,6 +262,10 @@ contains
        endif
     enddo
     commVec%nrk_rank_send=nrk_rank_send
+
+    if( allocated(commVec%nrk_prm_send) )then
+       deallocate(commVec%nrk_prm_send)
+    endif
     allocate(commVec%nrk_prm_send(nrk_rank_send))
 
     j=0
@@ -248,6 +297,10 @@ contains
        if(comm_pair_recv(i)>0)then
           j=j+1
           commVec%nrk_prm_send(j)%ndata=comm_pair_recv(i)
+
+          if( allocated(commVec%nrk_prm_send(j)%offset) )then
+             deallocate(commVec%nrk_prm_send(j)%offset)
+          endif
           allocate(commVec%nrk_prm_send(j)%offset( &
                commVec%nrk_prm_send(j)%ndata))
           nrk_data_send=nrk_data_send+commVec%nrk_prm_send(j)%ndata
@@ -372,36 +425,47 @@ contains
     integer ierr
 
     !    deallocate(commVec%buff)
-    deallocate(commVec%istart)
+    if(allocated(commVec%istart))then
+       deallocate(commVec%istart)
+    endif
 
     !     do i=1,commVec%nrk_rank
     !        deallocate(commVec%nrk_prm(i)%iLs_Ovl2)
     !        deallocate(commVec%nrk_prm(i)%iLe_Ovl2)
     !     enddo
     do i=1,commVec%nrk_rank
-       if(allocated(commVec%nrk_prm(i)%offset))then
-          deallocate(commVec%nrk_prm(i)%offset)
-       endif
+       if(allocated(commVec%nrk_prm))then
+          if(allocated(commVec%nrk_prm(i)%offset))then
+             deallocate(commVec%nrk_prm(i)%offset)
+          endif
 
-       if(allocated(commVec%nrk_prm(i)%nrk_ptr))then
-          deallocate(commVec%nrk_prm(i)%nrk_ptr)
-       endif
+          if(allocated(commVec%nrk_prm(i)%nrk_ptr))then
+             deallocate(commVec%nrk_prm(i)%nrk_ptr)
+          endif
 
-       if(allocated(commVec%nrk_prm(i)%nrkRow))then
-          deallocate(commVec%nrk_prm(i)%nrkRow)
-       endif
+          if(allocated(commVec%nrk_prm(i)%nrkRow))then
+             deallocate(commVec%nrk_prm(i)%nrkRow)
+          endif
 
-       if(allocated(commVec%nrk_prm(i)%nrkCol))then
-          deallocate(commVec%nrk_prm(i)%nrkCol)
+          if(allocated(commVec%nrk_prm(i)%nrkCol))then
+             deallocate(commVec%nrk_prm(i)%nrkCol)
+          endif
        endif
     enddo
-    deallocate(commVec%nrk_prm)
 
+    if(allocated(commVec%nrk_prm))then
+       deallocate(commVec%nrk_prm)
+    endif
     do i=1,commVec%nrk_rank_send
-       deallocate(commVec%nrk_prm_send(i)%offset)
+       if(allocated(commVec%nrk_prm_send))then
+          if(allocated(commVec%nrk_prm_send(i)%offset))then
+             deallocate(commVec%nrk_prm_send(i)%offset)
+          endif
+       endif
     enddo
-    deallocate(commVec%nrk_prm_send)
-
+    if(allocated(commVec%nrk_prm_send))then
+       deallocate(commVec%nrk_prm_send)
+    endif
   end subroutine free_comm
 
   subroutine nrk_vec_pack_ovl2(nrk_prm,n,ndata,vec,sbuf,nrk_rank,srank)
@@ -925,4 +989,291 @@ contains
 
   end subroutine view_nrk
 
+  subroutine set_comm_dia_GPUmem( &
+       prm, &
+       commVec, &
+       istart, &
+       n, nnd, &
+       nColL, nColU, &
+       diaA,offset &
+       )
+    use PARCEL_integer
+    use matrix,only : prmMat,minReal8
+    use comm,only : comm_Vec
+    use sort_kernel,only : MergeSort
+    implicit none
+
+    type(prmMat) :: prm
+    type(comm_Vec) :: commVec
+    integer(kind=intType) istart ! 受け持つベクトルに対応する開始行
+    integer(kind=intType) n
+    integer(kind=intType) nnd
+    integer(kind=intType) nColL
+    integer(kind=intType) nColU
+    integer(kind=intType) iend
+    real*8 diaA(nnd*n)
+    integer(kind=intType) offset(nnd)
+    integer(kind=intType) crsCol_comm(nnd*n)
+
+    real*8 absAmat
+    integer(kind=intType) i,j,k
+    integer(kind=intType) nnz_comm
+    integer(kind=intType) nCol
+    integer(kind=intType) Row,Col
+
+    iend = istart + n -1 
+
+#if 1
+    nnz_comm = 0
+    do k=1,n
+       Row = k-1+istart
+       do j=1,nnd
+          Col = Row + offset(j)  
+          ! 領域外判定
+          if( (Col<istart) .or. (iend<Col) )then
+!             absAmat = abs(diaA(k+(j-1)*n))
+!             if(absAmat > minReal8)then
+                nnz_comm = nnz_comm+1
+                crsCol_comm(nnz_comm) = Col
+!             endif
+          endif
+       enddo
+    enddo
+#else
+    nnz_comm = 0
+    do k=1,n
+       Row = k-1+istart
+       do j=1,nnd
+          Col = Row + offset(j)  
+          ! 領域外判定
+          if( (Col<istart) .or. (iend<Col) )then
+             absAmat = abs(diaA(k+(j-1)*n))
+             if(absAmat > minReal8)then
+                nnz_comm = nnz_comm+1
+                crsCol_comm(nnz_comm) = Col
+             endif
+          endif
+       enddo
+    enddo
+#endif
+
+    ! 重複を含む列番号を昇順にソートする
+    call MergeSort(crsCol_comm,nnz_comm)
+
+    ! 重複する列番号を削除
+    nCol=1
+    do i=1,nnz_comm
+       Col=crsCol_comm(i)
+       if(crsCol_comm(nCol).ne.Col )then
+          nCol=nCol+1
+          crsCol_comm(nCol)=Col
+       endif
+    enddo
+    ! 領域外の列番号総数
+    nnz_comm = nCol
+
+!    write(*,*)commVec%myrank,"DIA set_comm : ",nnz_comm
+    call set_comm(&
+       commVec,commVec%comm,&
+       prm, &
+       crsCol_comm,nnz_comm &
+       )
+
+  end subroutine set_comm_dia_GPUmem
+
+  subroutine set_comm_crs_GPUmem( &
+       prm, &
+       commVec, &
+       istart, &
+       n, nnz, &
+       nColL, nColU, &
+       crsA,crsCol,crsRow_ptr &
+       )
+    use PARCEL_integer
+    use matrix,only : prmMat
+    use comm,only : comm_Vec
+    use sort_kernel,only : MergeSort
+    implicit none
+
+    type(prmMat) :: prm
+    type(comm_Vec) :: commVec
+    integer(kind=intType) istart ! 受け持つベクトルに対応する開始行
+    integer(kind=intType) n
+    integer(kind=intType) nnz
+    integer(kind=intType) nColL
+    integer(kind=intType) nColU
+    integer(kind=intType) iend
+
+    real*8 crsA(nnz)
+    integer(kind=intType) crsCol(nnz)
+    integer(kind=intType) crsRow_ptr(n+1)
+
+    integer(kind=intType) iLs(nnz) ! ローカルな列番号
+
+    integer(kind=intType) k,j,i
+    real*8 val
+    integer(kind=intType) Col,Row
+    integer(kind=intType) LocalCol,LocalRow
+
+    ! ------
+    ! real*8 crsA_local(nnz)
+    integer(kind=intType) crsCol_comm(nnz)
+    ! integer(kind=intType) crsCol_local(nnz)
+
+    integer(kind=intType) nnz_comm
+    integer(kind=intType) nCol
+
+    integer(kind=intType) maxcrsRow_ptr
+    integer(kind=intType) maxcrsRow_ptr_
+    real*8 stime,etime
+
+    stime=MPI_Wtime()
+    nColL = 0
+    nColU = 0
+    nnz_comm = 0
+    maxcrsRow_ptr = 1;
+    do k=1,n
+       Row = k + istart -1 
+       LocalRow = k
+       maxcrsRow_ptr_ =  crsRow_ptr(k+1) - crsRow_ptr(k)
+       maxcrsRow_ptr = max(maxcrsRow_ptr,maxcrsRow_ptr_)
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          Col = crsCol(j)
+          val = crsA(j)
+
+          ! ---------------
+          if( Col < istart )then
+             nColL = nColL + 1
+             nnz_comm = nnz_comm + 1
+             crsCol_comm(nnz_comm) = Col
+             cycle
+          endif
+          if( (istart+n-1) < Col )then
+             nColU = nColU + 1
+             nnz_comm = nnz_comm + 1
+             crsCol_comm(nnz_comm) = Col
+             cycle
+          endif
+       enddo
+    enddo
+    etime=MPI_Wtime()
+#if PRINT_TIME
+    if(commVec%myrank.eq.0)then
+       write(*,*)"            @ 4-6-1-1 @",etime-stime
+    endif
+#endif
+    stime=MPI_Wtime()
+
+    ! 重複を含む列番号を昇順にソートする
+    call MergeSort(crsCol_comm,nnz_comm)
+
+    etime=MPI_Wtime()
+#if PRINT_TIME
+    if(commVec%myrank.eq.0)then
+       write(*,*)"            @ 4-6-1-2 @",etime-stime
+    endif
+#endif
+    stime=MPI_Wtime()
+
+    ! 重複する列番号を削除
+    nCol=1
+    do i=1,nnz_comm
+       Col=crsCol_comm(i)
+       if(crsCol_comm(nCol).ne.Col )then
+          nCol=nCol+1
+          crsCol_comm(nCol)=Col
+       endif
+    enddo
+    ! 領域外の列番号総数
+    nnz_comm = nCol
+
+    etime=MPI_Wtime()
+#if PRINT_TIME
+    if(commVec%myrank.eq.0)then
+       write(*,*)"            @ 4-6-1-3 @",etime-stime
+    endif
+#endif
+    stime=MPI_Wtime()
+
+#if 1
+!    write(*,*)commVec%myrank,"CRS set_comm : ",nnz_comm
+    call set_comm(&
+       commVec,commVec%comm,&
+       prm, &
+       crsCol_comm,nnz_comm &
+       )
+#endif
+
+    iend = istart + n -1 
+    call get_cusparse_sort( &
+         istart , &
+         iend , &
+         n , &
+         nnz , &
+         nnz_comm , &
+         maxcrsRow_ptr, &
+         crsA, &
+         crsCol , &
+         crsCol_comm , &
+         crsRow_ptr  &
+         )
+
+    etime=MPI_Wtime()
+#if PRINT_TIME
+    if(commVec%myrank.eq.0)then
+       write(*,*)"            @ 4-6-1-4 @",etime-stime
+    endif
+#endif
+    stime=MPI_Wtime()
+
+#if 0
+    do k=1,n
+       Row = k + istart -1 
+       LocalRow = k
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          Col = crsCol(j)
+!          LocalCol = crsCol_local(j)
+          if(commVec%myrank.eq.2)then
+             write(*,*)"   ",Row,Col
+          endif
+       enddo
+       if(commVec%myrank.eq.2)then
+          write(*,*)" ------- "
+       endif
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          Col = crsCol(j)
+!          LocalCol = crsCol_local(j)
+          if(commVec%myrank.eq.2)then
+             write(*,*)"   ",Row," : ",Col,LocalCol
+!             write(*,*)"   ",LocalRow,LocalCol
+          endif
+       enddo
+       if(commVec%myrank.eq.2)then
+          write(*,*)" ---------------- "
+       endif
+    enddo
+#endif
+
+    do i=1,nnz_comm
+       if(commVec%myrank.eq.2)then
+          ! crsCol_comm(i) - istart + 1 : offsetした列番号
+!          write(*,*)" col = ",i,crsCol_comm(i),crsCol_comm(i) - istart + 1
+       endif
+    enddo
+
+    ! ------
+    ! call free_comm(commVec)
+
+    ! @%@@,@_GPU%@@
+    ! write(*,*)" nrk_rank : ",commVec%nrk_rank,commVec_GPU%nrk_rank
+    ! write(*,*)" nrk_data : ",commVec%nrk_data,commVec_GPU%nrk_data
+    ! write(*,*)" nrk_data_max : ",commVec%nrk_data_max,commVec_GPU%nrk_data_max
+    
+    ! write(*,*)" nrk_rank_send : ",commVec%nrk_rank_send,commVec_GPU%nrk_rank_send
+    ! write(*,*)" nrk_data_send : ",commVec%nrk_data_send,commVec_GPU%nrk_data_send
+    ! write(*,*)" nrk_data_max_send : ",commVec%nrk_data_max_send,commVec_GPU%nrk_data_max_send
+
+  end subroutine set_comm_crs_GPUmem
+
 end module comm_kernel
+

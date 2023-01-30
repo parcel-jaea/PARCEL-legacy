@@ -1,4 +1,40 @@
 module TSQR_kernel
+
+  use PARCEL_integer,only : intType
+  use c_wrapper,only : devicemem
+  implicit none
+  interface
+
+     subroutine TSQR_local_Ronly_FP64_GPU( &
+          n, &
+          s, &
+          A_,  offset_A,  lda, &
+          R_,  offset_R,  ldr, &
+          work_,  offset_work, &
+          numblock, &
+          nBlock  &
+          )bind(c,name="cuda_TSQR_local_Ronly")
+       import :: intType
+       import :: devicemem
+       implicit none
+
+       integer(kind=intType),value ::  n
+       integer(kind=intType),value ::  s
+       type(devicemem) A_
+       integer(kind=intType),value ::  offset_A
+       integer(kind=intType),value ::  lda
+       type(devicemem) R_
+       integer(kind=intType),value ::  offset_R
+       integer(kind=intType),value ::  ldr
+       type(devicemem) work_
+       integer(kind=intType),value ::  offset_work
+       integer,value :: numblock
+       integer,value :: nBlock 
+       
+     end subroutine TSQR_local_Ronly_FP64_GPU
+
+  end interface
+
 contains
 
   subroutine TSQR_local_Ronly(n,s,A,R,nvecBlock)
@@ -61,15 +97,168 @@ contains
        iRflag=1
     enddo
     !$OMP END DO NOWAIT
+
+    do i=1,s
+       do j=1,s
+          R_all(j+myth*s + (i-1)*s*numth)=R_th(j+(i-1)*s)
+       enddo
+    enddo
+
+    !$OMP END PARALLEL
+
+    call House_local_Ronly_omp(s*numth,s,R_all,R)
+
+    deallocate(R_all)
+  end subroutine TSQR_local_Ronly
+
+  subroutine TSQR_local_Ronly_( &
+       method, &
+       n,s,&
+       A, lda, &
+       R, ldr, &
+       work, &
+       numblock, &
+       nvecBlock)
+    use omp_lib
+    use krylov,only : KSP
+    use vec_type,only : PARCEL_VEC
+    use PARCEL_integer
+    use PARCEL_VEC_kernel,only : parcel_sync,set_vec_FP64, get_vec_FP64
+    ! use PARCEL_VEC_kernel,only : &
+    !      set_vec_FP64, get_vec_FP64, init_vec,free_vec
+    implicit none
+
+    type(KSP) :: method
+    integer(kind=intType) n
+    integer(kind=intType) s
+    ! real*8 A(n*s)
+    ! real*8 R(s*s)
+    type(PARCEL_VEC)  :: A
+    integer(kind=intType) lda
+    type(PARCEL_VEC)  :: R
+    integer(kind=intType) ldr
+    type(PARCEL_VEC)  :: work
+    integer nvecBlock
+
+    integer(kind=intType) i,j,jend,jBlock ,jj
+    integer(kind=intType) nQRblock
+    integer iRflag
+    integer myth
+    integer numth
+    real*8 R_th(s*s)
+    real*8 R_FP64(s*s)
+    integer max_numth
+    integer numblock
+!    real*8,allocatable :: R_all(:)
+    real*8 R_all(s*s*numblock)
+    real*8 stime1,etime1
+    real*8 stime2,etime2
+
+#if 1
+    ! 各プロセスが受け持つベクトルに対してQR分解してRを計算する.
+    ! CUDA関数
+    call parcel_sync(method)
+    stime1 = MPI_Wtime()
+    call TSQR_local_Ronly_FP64_GPU( &
+          n, &
+          s, &
+          A%C_vec_FP64   , A%offset,  lda, &
+          R%C_vec_FP64   , R%offset,  ldr, &
+          work%C_vec_FP64, work%offset, &
+          numblock, &
+          nvecBlock )
+    call parcel_sync(method)
+    etime1 = MPI_Wtime()
+
+    stime2 = MPI_Wtime()
+!    allocate(R_all(s*s*numblock))
+    call parcel_sync(method)
+    call get_vec_FP64(method,work,R_all,s*s*numblock)
+    call parcel_sync(method)
+    call House_local_Ronly_omp(s*numblock,s,R_all,R_FP64)
+    call parcel_sync(method)
+    call set_vec_FP64(method,R,R_FP64,s*s)
+    call parcel_sync(method)
+!    deallocate(R_all)
+    etime2 = MPI_Wtime()
+
+!    write(*,*)"time = ",etime1-stime1,etime2-stime2
+#if 0
+!    call get_vec_FP64(method,R,R_FP64,s*s)
+    do j=1,s
+       do i=1,s
+          write(*,*)"GPU @ Rtri : ",i,j,R_FP64(j+(i-1)*(s))
+       enddo
+    enddo
+#endif
+
+
+#else
+
+    call get_vec_FP64(method,A,A_FP64,n*s)
+
+    jBlock = nvecBlock + s
+    !$OMP PARALLEL 
+    !$OMP MASTER
+    numth=omp_get_num_threads()
+    !$OMP END MASTER
+    !$OMP END PARALLEL 
+
+    allocate(R_all(s*s*numth))
+    R_FP64=0.0d0
+    R_all=0.0d0
+
+    !$OMP PARALLEL PRIVATE( &
+    !$OMP j,jend,nQRblock,iRflag,&
+    !$OMP  myth,R_th)
+    myth=omp_get_thread_num()
+    R_th=0.0d0
+
+    iRflag=0
+
+    !$OMP DO
+    do j=1,n,jBlock 
+       jend=min(n,j+jBlock-1)
+       nQRblock=jend-j+1
+       !        write(*,*)myth,j,jend,nQRblock
+       if( (iRflag.eq.0).and.(nQRblock<=s))then
+          !        write(*,*)myth,j,jend,nQRblock
+          do i=1,s
+             do jj=j,jend
+!                R_th(1+jj-j+(i-1)*s)=A( jj + (i-1)*n )
+                R_th(1+jj-j+(i-1)*s)=A_FP64( jj + (i-1)*n )
+             enddo
+          enddo
+       else
+          call House_local_Ronly(&
+               n,s,A_FP64,R_th,&
+               j,nQRblock,iRflag)
+       endif
+       iRflag=1
+    enddo
+    !$OMP END DO NOWAIT
     do i=1,s
        do j=1,s
           R_all(j+myth*s + (i-1)*s*numth)=R_th(j+(i-1)*s)
        enddo
     enddo
     !$OMP END PARALLEL
-    call House_local_Ronly_omp(s*numth,s,R_all,R)
 
-  end subroutine TSQR_local_Ronly
+    call House_local_Ronly_omp(s*numth,s,R_all,R_FP64)
+    call set_vec_FP64(method,R,R_FP64,s*s)
+
+#if 0
+    do j=1,s
+       do i=1,s
+          write(*,*)"CPU @ Rtri : ",i,j,R_FP64(j+(i-1)*(s))
+       enddo
+    enddo
+#endif
+
+!    deallocate(R_all)
+#endif
+
+  end subroutine TSQR_local_Ronly_
 
   subroutine TSQR_GLOBAL(comm1,s,R)
     use mpi
@@ -392,12 +581,15 @@ contains
     real*8 tmp,tmp2,tmp3,tmp4
     real*8 tmp_t1(s),tmp_y1(s)
     !-------------------------------------------------------------------------------------------------- 
+    tmp_t1=0.0d0
+    tmp_y1=0.0d0
 
     i=1
     tmp2=0.0d0
     do k_=kk,kk+nblock-1
        A_TSQR(k_-kk+1,i)=A(k_,i)
        tmp2=tmp2+A(k_,i)*A(k_,i)
+!       write(*,*)"tmp2 add Ak_i:",k_,A(k_,i)*A(k_,i)
     enddo
 
     nHouse=nblock
@@ -405,14 +597,19 @@ contains
        do l_=1,s
           A_TSQR(l_+nblock,i)=R(l_+(i-1)*s)
           tmp2=tmp2+R(l_+(i-1)*s)*R(l_+(i-1)*s)
+!          write(*,*)"tmp2 add Rl_i:",R(l_+(i-1)*s)*R(l_+(i-1)*s)
        enddo
        nHouse=nHouse+s
     endif
     tmp2=tmp2-A_TSQR(1,1)*A_TSQR(1,1) 
+!    write(*,*)"tmp2 add A11:",-A_TSQR(1,1)*A_TSQR(1,1)
+
+          
     ! -----
     i=2
     do k_=kk,kk+nblock-1
        A_TSQR(k_-kk+1,i)=A(k_,i)
+!       write(*,*)"A_TSQR i = 2 : ",k_,A_TSQR(k_-kk+1,i)
     enddo
     if(iRflag.eq.1)then
        do l_=1,s
@@ -421,7 +618,7 @@ contains
     endif
 
     do i=1,s
-
+!       write(*,*)"tmp2 = ",tmp2
        tmp3=tmp2+A_TSQR(i,i)*A_TSQR(i,i)
        tmp3=sqrt(tmp3)
 #if 1
@@ -436,6 +633,7 @@ contains
        tmp=tmp2+y1*A_TSQR(i,i)
        tmp2=tmp2+y1*y1 
 
+!       write(*,*)"tmp3 = ",tmp3
        if(tmp2.eq.0.0d0)then
           tmp2=1.0d0-300
        endif
@@ -444,15 +642,23 @@ contains
        tmp_y1(i)=y1     
        tmp_t1(i)=t1
 
+!       write(*,*)"y1 = ",y1
        if(i.ne.s)then
-          tmp=tmp_y1(i)*A_TSQR(i,i+1)
+!          tmp=tmp_y1(i)*A_TSQR(i,i+1)
+          tmp = 0.0d0
           do j=i+1,nHouse
              tmp=tmp+A_TSQR(j,i)*A_TSQR(j,i+1)
+!             write(*,*)" tmp add : ",j,A_TSQR(j,i)*A_TSQR(j,i+1)
           enddo
+          tmp = tmp + tmp_y1(i)*A_TSQR(i,i+1) 
+!          write(*,*)" tmp add : ",tmp_y1(i)*A_TSQR(i,i+1)
           tmp=tmp_t1(i)*tmp
+!          write(*,*)" tmp mul : ",tmp_t1(i)
+
           A_TSQR(i,i+1)=A_TSQR(i,i+1)-tmp_y1(i)*tmp
           A_TSQR(i+1,i+1)=A_TSQR(i+1,i+1)-A_TSQR(i+1,i)*tmp
 
+!          write(*,*)"tmp  = ",tmp
           tmp4=0.0d0
           do j=i+2,nHouse
              A_TSQR(j,i+1)=A_TSQR(j,i+1)-A_TSQR(j,i)*tmp
@@ -463,6 +669,7 @@ contains
           if(k<=s)then
              do k_=kk,kk+nblock-1
                 A_TSQR(k_-kk+1,k)=A(k_,k)
+!                write(*,*)"A_TSQR ",k_,A_TSQR(k_-kk+1,k)
              enddo
              if(iRflag.eq.1)then
                 do l_=1,s
@@ -480,6 +687,8 @@ contains
                 enddo
                 tmp=tmp_t1(ii)*tmp
                 A_TSQR(ii,k)=A_TSQR(ii,k)-tmp_y1(ii)*tmp
+
+!                write(*,*)" 2 tmp  = ",tmp
                 do j=ii+1,nHouse
                    A_TSQR(j,k)=A_TSQR(j,k)-A_TSQR(j,ii)*tmp
                 enddo
@@ -490,7 +699,10 @@ contains
              tmp=tmp_y1(ii)*A_TSQR(ii,k)
              do j=ii+1,nHouse
                 tmp=tmp+A_TSQR(j,ii)*A_TSQR(j,k)
+!                write(*,*)" 3 tmp add ",j,A_TSQR(j,ii)*A_TSQR(j,k)
              enddo
+!             write(*,*)" 3 tmp  = ",tmp,tmp_y1(ii),A_TSQR(ii,k)
+
              do ii=ii_,i,2
                 tmp=tmp_t1(ii)*tmp
                 A_TSQR(ii,k)=A_TSQR(ii,k)-tmp_y1(ii)*tmp
@@ -501,6 +713,8 @@ contains
                    tmp2=tmp2+A_TSQR(j,ii+1)*A_TSQR(j,k)
                 enddo
                 tmp2=tmp_t1(ii+1)*tmp2
+!                write(*,*)" 2 tmp2 = ",tmp
+
                 if(ii+2<i)then
                    A_TSQR(ii+1,k)=A_TSQR(ii+1,k)-tmp_y1(ii+1)*tmp2
                    A_TSQR(ii+2,k)=A_TSQR(ii+2,k)-A_TSQR(ii+2,ii+1)*tmp2
@@ -509,6 +723,8 @@ contains
                       A_TSQR(j,k)=A_TSQR(j,k)-A_TSQR(j,ii+1)*tmp2
                       tmp=tmp+A_TSQR(j,ii+2)*A_TSQR(j,k)
                    enddo
+!                   write(*,*)" 4 tmp  = ",tmp
+
                 else
                    A_TSQR(ii+1,k)=A_TSQR(ii+1,k)-tmp_y1(ii+1)*tmp2
                    do j=ii+2,nHouse
@@ -547,6 +763,10 @@ contains
     real*8 tmp,tmp2,tmp3,tmp4
     real*8 tmp_t1(s),tmp_tmp(s,s),tmp_y1(s)
     !-------------------------------------------------------------------------------------------------- 
+    tmp_t1 = 0.0d0
+    tmp_tmp = 0.0d0
+    tmp_y1 = 0.0d0
+ 
     do i=1,s
 
        tmp2=0.0d0
@@ -628,8 +848,11 @@ contains
     real*8 tmp,tmp2,tmp3,tmp4
     real*8 tmp_t1(s),tmp_tmp(s,s),tmp_y1(s)
     !-------------------------------------------------------------------------------------------------- 
+    tmp_t1 = 0.0d0
+    tmp_tmp = 0.0d0
+    tmp_y1 = 0.0d0
     do i=1,s
-
+   
        tmp2=0.0d0
        !$OMP PARALLEL DO PRIVATE(j) &
        !$OMP REDUCTION(+:tmp2) 

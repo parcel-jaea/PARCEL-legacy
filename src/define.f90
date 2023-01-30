@@ -4,6 +4,7 @@ module PARCEL_define
   integer,parameter :: MATRIX_FORMAT_CRS=1  ! 圧縮行  格納形式
   integer,parameter :: MATRIX_FORMAT_DIA=2  ! 圧縮対角格納形式
   integer,parameter :: MATRIX_FORMAT_DDM=3  ! DDM形式
+!  integer,parameter :: MATRIX_FORMAT_ELL=11  ! ELL形式
 
   ! 倍精度,4倍精度フラグ
   integer,parameter :: KSP_DOUBLE_PRECISION=1        !  倍精度
@@ -18,7 +19,7 @@ module PARCEL_define
   integer,parameter :: KSP_SOLVER_POWER_METHOD=50    ! POWER_METHOD法
   integer,parameter :: KSP_SOLVER_CAARNOLDI=51   ! CAARNOLDI法 
   integer,parameter :: KSP_SOLVER_CALANCZOS=52   ! CALANCZOS法 
-
+  integer,parameter :: KSP_SOLVER_JACOBI=100 ! JACOBI法
   integer,parameter :: KSP_CHECK_QR=-1      ! QR分解の直交性確認
 
   ! 疎行列ベクトル積の通信・計算オーバーラップ
@@ -31,6 +32,14 @@ module PARCEL_define
   integer,parameter :: KSP_PRECONDITION_POINTJACOBI=1     ! ポイントヤコビ前処理
   integer,parameter :: KSP_PRECONDITION_BLOCKJACOBI=2     ! ブロックヤコビ前処理
   integer,parameter :: KSP_PRECONDITION_ADDITIVESCHWARZ=3 ! 加法シュヴァルツ前処理
+  integer,parameter :: KSP_PRECONDITION_NEUMANN=4       ! ノイマン展開前処理
+  integer,parameter :: KSP_PRECONDITION_NEUMANN_LOCAL=5 ! ローカルノイマン展開 (SpMVで通信を行わない)
+
+  integer,parameter :: KSP_PRECONDITION_PARILU=11 ! MagmaのParILU前処理
+  integer,parameter :: KSP_PRECONDITION_JACOBI_MatBF16=20 ! ヤコビ法前処理
+
+  integer,parameter :: KSP_PRECONDITION_NEUMANN_TRUE_COMM=1 ! ノイマン展開前処理
+
   integer,parameter :: KSP_PRECONDITION_DDM_ILUindepend=1 ! DDM形式の細分化ILU分解フラグ
 
   ! 不完全LU分解(D-ILU分解)の対角行列の決定方法
@@ -94,7 +103,42 @@ module PARCEL_define
   ! 
   integer,parameter :: PARCEL_RESET_INHERIT=-1 ! リセット時の設定を引き継ぐ
 
+  ! CPU flag
+  integer,parameter :: PARCEL_CPU_FLAG_ON  =  1 ! CPU カーネル呼び出しON
+  integer,parameter :: PARCEL_CPU_FLAG_OFF = -1 ! CPU カーネル呼び出しOFF
+
+  ! GPU flag
+  integer,parameter :: PARCEL_GPU_FLAG_ON  =  2 ! GPU カーネル呼び出しON
+  integer,parameter :: PARCEL_GPU_FLAG_OFF = -2 ! GPU カーネル呼び出しOFF
+  integer,parameter :: WARP_SIZE=32
+
+  ! compile時にデフォルトを切り替える
+#ifdef CUDA_SOLVER 
+  integer,parameter :: PARCEL_MACHINE_FLAG_DEFAULT = PARCEL_GPU_FLAG_ON
+#else
+  integer,parameter :: PARCEL_MACHINE_FLAG_DEFAULT = PARCEL_CPU_FLAG_ON
+#endif
+  ! MAGMA flag
+  integer,parameter :: PARCEL_MAGMA_FLAG_ON  =  3 ! MAGMA カーネル呼び出しON
+  integer,parameter :: PARCEL_MAGMA_FLAG_OFF = -3 ! MAGMA カーネル呼び出しOFF
+
+  integer,parameter :: PARCEL_ALLARCH_FLAG_ON  =  0 ! CPU カーネル呼び出しON
+
+  integer,parameter :: PARCEL_FP64TOBF16_ROUND_NEAR   = 0
+  integer,parameter :: PARCEL_FP64TOBF16_ROUND_ZERO   = 1
+  integer,parameter :: PARCEL_FP64TOBF16_ROUND_DOWN   = 2
+  integer,parameter :: PARCEL_FP64TOBF16_ROUND_UP     = 3
+  integer,parameter :: PARCEL_FP64TOBF16_ROUND_ABSINF = 4
+
+  integer,parameter :: PARCEL_REAL_SIZE = 8
+#ifdef PARCEL_INT8
+  integer,parameter :: PARCEL_INT_SIZE  = 8
+#else
+  integer,parameter :: PARCEL_INT_SIZE  = 4
+#endif
+
 ! todo :: CG法の場合に残差ベクトルは収束したが真の残差が収束していない場合  integer,parameter :: PARCEL_RETURNCODE_MAXITERATION=2 ! 残差ベクトルは収束はしたが|| b -Ax ||/||b||の残差は収束条件よりも大きい
+
 end module PARCEL_define
 
 module PARCEL_integer

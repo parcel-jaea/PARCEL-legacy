@@ -3,8 +3,27 @@
 ! todo :: DDMを8バイト整数型に対応させる
 
 ! -----
-module ddmMat_wrap
+module EigenSolver
   implicit none
+
+  type Eigen_Type
+     integer max_numth
+     real*8 EigenMax_Real,EigenMax_Imag
+     real*8 EigenMin_Real,EigenMin_Imag
+     real*8,allocatable :: EigenValueReal(:)
+     real*8,allocatable :: EigenValueImag(:)
+     real*8,allocatable :: EigenVector(:)
+     real*8,allocatable :: EigenErrorNorm(:)
+     integer MaxEigenID
+     integer MinEigenID
+  end type Eigen_Type
+
+end module EigenSolver
+
+module ddmMat_wrap
+  use c_wrapper
+  implicit none
+
   type ddm_param
      integer stmx, stmy, stmz
      integer nx, ny, nz, nxy, nxyz
@@ -18,9 +37,13 @@ module ddmMat_wrap
      integer div_direc_th
      integer precon_thblock
      integer iflag_DDM_independ
-     integer underlap_step
-     
+     integer underlap_step     
   end type ddm_param
+
+  type under_lap
+     integer,allocatable :: ioff_x(:), ioff_y(:), ioff_z(:)  
+     integer,allocatable :: region_interior(:)
+  end type under_lap
 
   type ddmmatrix_wrap
      integer mat_type ! 1:CRS 2:DIA 3:DDM 
@@ -33,7 +56,16 @@ module ddmMat_wrap
      double precision, allocatable :: val_dia(:)
      double precision, allocatable :: val_dia_lo(:)
      integer, allocatable :: ioff_grids(:,:)
-     type(ddm_param) :: prm
+     type(under_lap) :: underlap
+
+     ! GPU Memm
+     type(devicemem) :: C_ioff_dia
+     type(devicemem) :: C_val_dia
+
+     ! 3次元のみ対応なので配列サイズは-z,-y,-x,+x,+y,+zの6方向
+     type(devicemem) :: C_sbuf
+     type(devicemem) :: C_rbuf
+
   end type ddmmatrix_wrap
 
   ! 加法シュワルツ前処理に特有のパラメータ
@@ -58,8 +90,18 @@ module ddmMat_wrap
      integer xlen_r (6), ylen_r (6), zlen_r(6) !
      type(comm_buff_id) send_from_id(6),recv_from_id(6)
      type(comm_buff_id) send_to_id(6),recv_to_id(6)
-
   end type AS_geom
+
+  type AS_val
+     real*8, allocatable :: AS_val_dia_init(:)
+     real*8, allocatable :: diag_init(:)
+     real*8, allocatable :: AS_val_dia_init_lo(:)
+     real*8, allocatable :: diag_init_lo(:)
+
+     integer(kind=intType) AS_num
+     integer,allocatable :: AS_ioff_dia_init(:)
+     type(devicemem) :: C_AS_val_dia_init
+  end type AS_val
 
 end module ddmMat_wrap
 
@@ -102,6 +144,7 @@ module param_AS_type_ddm
      ! 前処理後のベクトル
      real*8,allocatable  :: svec(:)
      real*8,allocatable  :: svec_lo(:)
+
   end type precon_AS_DDM
 
   type precon_AS_wrap
@@ -117,16 +160,127 @@ end module param_AS_type_ddm
 module DDM_TYPE
   use ddmMat_wrap
   use param_AS_type_ddm
+
   implicit none
+
+  type C_DDM_Mat
+     integer nx,ny,nz
+     integer stmx,stmy,stmz
+     integer(kind=intType) m
+     integer mx,my,mz
+     integer mxy
+     integer nnd
+     type(devicemem) :: ddmA
+     type(devicemem) :: offset
+  end type C_DDM_Mat
+
+  type DDM_Mat
+     integer nx,ny,nz
+     integer stmx,stmy,stmz
+     integer(kind=intType) m
+     integer mx,my,mz
+     integer mxy
+     integer nnd
+     real*8,allocatable :: ddmA(:)
+     integer,allocatable ::  offset(:)
+  end type DDM_Mat
+
+  type C_DDM_precon_DILU
+
+     integer lattice_dimention 
+     integer nx_local,ny_local,nz_local
+     integer mx_local,my_local,mz_local
+
+     integer m_local ! 袖領域を含んだ1ブロックのサイズ
+     integer nblock  ! ブロックの総数
+     integer nxblock,nyblock,nzblock
+
+     ! 配列サイズ : nxblock
+     type(devicemem) :: nxs
+     type(devicemem) :: nxe
+     ! 配列サイズ : nyblock
+     type(devicemem) :: nys
+     type(devicemem) :: nye
+     ! 配列サイズ : nzblock
+     type(devicemem) :: nzs
+     type(devicemem) :: nze
+
+     ! 配列サイズ : nxblock
+     type(devicemem) :: nxs0
+     type(devicemem) :: nxe0
+     ! 配列サイズ : nyblock
+     type(devicemem) :: nys0
+     type(devicemem) :: nye0
+     ! 配列サイズ : nzblock
+     type(devicemem) :: nzs0
+     type(devicemem) :: nze0
+
+     ! 配列サイズ : nblock * m_local
+     type(devicemem) :: Dinv
+     type(devicemem) :: svec
+     type(devicemem) :: rvec
+     type(devicemem) :: svec_AS
+
+     ! 配列サイズ : nnd * 3
+     type(devicemem) :: offset_xyz
+
+  end type C_DDM_precon_DILU
+
+  type DDM_precon_DILU
+
+     integer lattice_dimention 
+     integer nx_local,ny_local,nz_local
+     integer mx_local,my_local,mz_local
+
+     integer m_local ! 袖領域を含んだ1ブロックのサイズ
+     integer nblock ! ブロックの総数
+     integer nxblock,nyblock,nzblock
+
+     ! 配列サイズ : nxblock
+     integer,allocatable :: nxs(:)
+     integer,allocatable :: nxe(:)
+     ! 配列サイズ : nyblock
+     integer,allocatable :: nys(:)
+     integer,allocatable :: nye(:)
+     ! 配列サイズ : nzblock
+     integer,allocatable :: nzs(:)
+     integer,allocatable :: nze(:)
+
+     ! 各プロセスがAS前処理以外で担当する領域
+     integer,allocatable :: nxs0(:)
+     integer,allocatable :: nxe0(:)
+     ! 配列サイズ : nyblock
+     integer,allocatable :: nys0(:)
+     integer,allocatable :: nye0(:)
+     ! 配列サイズ : nzblock
+     integer,allocatable :: nzs0(:)
+     integer,allocatable :: nze0(:)
+
+     ! 配列サイズ : nblock * m_local
+     real*8,allocatable :: Dinv(:)
+     real*8,allocatable :: svec(:)
+     real*8,allocatable :: rvec(:) 
+     real*8,allocatable :: svec_AS(:)
+
+     ! 配列サイズ : nnd * 3
+     integer,allocatable :: offset_xyz(:)
+
+     ! ! 配列サイズ : mx_local * nblock
+     ! real*8,allocatable :: xfilter(:)
+     ! real*8,allocatable :: yfilter(:)
+     ! real*8,allocatable :: zfilter(:)
+
+  end type DDM_precon_DILU
 
   type DDM_ALL_TYPE
      type(precon_AS_wrap), pointer ::  precon
-     integer ndim !dimension of global matrix
-     integer n !number of rows of local matrix  
-     integer n0
+     integer(kind=intType) ndim !dimension of global matrix
+     integer(kind=intType) n !number of rows of local matrix  
+     integer(kind=intType) n0
+!     integer(kind=intType) nnd
      integer nnd
-     integer istart !start row index in global matrix
-     type(ddmmatrix_wrap), pointer :: mat
+     integer(kind=intType) istart !start row index in global matrix
+!     type(ddmmatrix_wrap), pointer :: mat
      double precision, pointer :: b(:)
      double precision, pointer :: x(:) 
      double precision, pointer :: b_lo(:)
@@ -135,6 +289,7 @@ module DDM_TYPE
      integer myrank
      integer icomm !MPI communicator
      double precision, pointer :: diag(:)
+!     double precision,allocatable :: diag(:)
      double precision, pointer :: diag_lo(:)
      integer, pointer :: oloop !outer loop
      double precision tol !tolerance
@@ -145,14 +300,17 @@ module DDM_TYPE
      integer commHide         ! 0: no hiding, 1: one time, 2: each time
      integer AS_len           ! additive Schwarz overlap length
      integer AS_mean
-     integer AS_n
-     type(AS_geom), pointer :: AS_g
+     integer(kind=intType) AS_n
+!     type(AS_geom), pointer :: AS_g
      double precision, pointer :: AS_val_dia(:)
      double precision, pointer :: AS_val_dia_lo(:)
      integer,pointer :: AS_ioff_dia(:)
-     type(ddm_param), pointer :: AS_prm
-     double precision,pointer ::  AS_v1(:), AS_v2(:)
-     double precision,pointer ::  AS_v1_lo(:), AS_v2_lo(:)
+     !     type(ddm_param), pointer :: AS_prm
+     double precision,allocatable ::  AS_v1(:), AS_v2(:)
+     double precision,allocatable ::  AS_v1_lo(:), AS_v2_lo(:)
+
+     type(devicemem) :: C_AS_V1
+     type(devicemem) :: C_AS_V2
 
      integer solver
      ! -----
@@ -169,6 +327,29 @@ module DDM_TYPE
      integer tstep
      integer qrflag
      integer basis
+
+     ! ------
+     type(AS_geom)   :: AS_g
+     type(ddm_param) :: AS_prm
+     type(ddm_param) :: prm
+     type(precon_AS_wrap) :: precon_ddm
+     type(ddmmatrix_wrap) :: mat
+     type(AS_val) ASval
+     ! ------
+     integer PRECISION_A_DDM
+     integer PRECISION_b_DDM
+     integer PRECISION_x_DDM
+     integer PRECISION_KRYLOV_DDM
+     integer PRECISION_PRECONDITION_DDM ! 前処理行列の精度 (前処理の精度ではない)
+
+     ! -------
+     type(DDM_precon_DILU)   :: DDMMat_DILU
+     type(C_DDM_precon_DILU) :: C_DDMMat_DILU
+     type(DDM_Mat)   :: DDMMat_Neumann
+
+     type(C_DDM_Mat) :: C_DDMMat_Neumann
+     type(devicemem) :: C_diag
+     type(devicemem) :: C_work
 
   end type DDM_ALL_TYPE
 
@@ -189,6 +370,7 @@ module comm
 
   use mpi
   use PARCEL_integer
+  use cu_common_wrapper
   implicit none
 
   type nrk
@@ -196,11 +378,16 @@ module comm
      !     integer(kind=intType) ndata 
      integer ndata 
      integer(kind=intType),allocatable :: offset(:)
+     type(devicemem) :: C_offset
 
      integer(kind=intType) nnz
      integer(kind=intType),allocatable :: nrk_ptr(:)
      integer(kind=intType),allocatable :: nrkRow(:)
      integer(kind=intType),allocatable :: nrkCol(:)
+
+     type(devicemem) :: C_nrk_ptr
+     type(devicemem) :: C_nrkRow
+     type(devicemem) :: C_nrkCol
 
   end type nrk
   
@@ -213,25 +400,42 @@ module comm
      !     integer(kind=MPI_ADDRESS_KIND) imem_size ! バイト
      !     real*8,allocatable  :: buff(:) ! mem window 
      integer(kind=intType),allocatable :: istart(:)
+     type(devicemem) :: C_istart
 
      ! 受信データ情報
-     integer nrk_rank
-     integer nrk_data
-     integer nrk_data_max
+     integer nrk_rank ! 受信するプロセスの総数
+     integer nrk_data ! 受信バッファの大きさ
+     integer nrk_data_max ! 各プロセスで最大の通信量
      type(nrk),allocatable :: nrk_prm(:)
 
      ! 送信データ情報
-     integer nrk_rank_send
-     integer nrk_data_send
-     integer nrk_data_max_send
+     integer nrk_rank_send ! 送信するプロセスの総数
+     integer nrk_data_send ! 送信バッファの大きさ
+     integer nrk_data_max_send ! 各プロセスで最大の通信量
      type(nrk),allocatable :: nrk_prm_send(:)
      !     integer(kind=intType) win_info
+
+     ! C MPI データ
+!     integer s_req(commVec%nrk_rank_send)
+!     integer r_req(commVec%nrk_rank)
+!     type(send_stat) :: s_sta(commVec%nrk_rank_send)
+!     type(recv_stat) :: r_sta(commVec%nrk_rank)
+
+     type(devicemem) :: C_comm
+     type(devicemem) :: C_s_sta
+     type(devicemem) :: C_r_sta
+
+     type(devicemem) :: C_s_req
+     type(devicemem) :: C_r_req
+
   end type comm_Vec
 
 end module comm
 
 module matrix
   use PARCEL_integer
+  use c_wrapper
+
   implicit none
   ! ブロックサイズ --> 未調整
   !integer,parameter :: nBlock
@@ -277,6 +481,7 @@ module matrix
   end type COO_Mat
 
   type CRS_Mat
+     integer(kind=intType) nnz
      real*8,allocatable  :: crsA(:)       ! 行列値
      real*8,allocatable  :: crsA_hi(:)    ! 行列値
      real*8,allocatable  :: crsA_lo(:)    ! 行列値
@@ -293,20 +498,45 @@ module matrix
      integer(kind=intType) nColL,nColU ! L,U側の列幅
   end type CRS_Mat
 
+  type Local_CRS_Mat
+     ! ローカル座標なので4バイト整数を利用
+     real*8 ,allocatable :: crsA(:)       ! 行列値
+     integer,allocatable :: crsRow_ptr(:) ! ポインタ 
+     integer,allocatable :: crsCol(:)     ! 列番号
+  end type Local_CRS_Mat
+  
+  type C_CRS_Mat
+     integer(kind=intType) nnz
+     type(devicemem) :: crsA    ! 行列値
+     type(devicemem) :: crsA_hi ! 行列値
+     type(devicemem) :: crsA_lo ! 行列値
+     type(devicemem) :: crsRow_ptr ! ポインタ
+     type(devicemem) :: crsRow_ptr_Diag_s ! ポインタ
+     type(devicemem) :: crsRow_ptr_Diag_e ! ポインタ
+     type(devicemem) :: crsCol ! 列番号
+
+     type(devicemem) :: RowL
+     type(devicemem) :: RowD
+     type(devicemem) :: RowU
+
+     type(devicemem) :: iLs
+     integer(kind=intType) nColL  ! L側の列幅
+     integer(kind=intType) nColU  ! U側の列幅
+  end type C_CRS_Mat
+
   type HybCRS_Mat
      real*8,allocatable  :: crsAL(:),crsAD(:),crsAU(:) ! 行列値
      real*8,allocatable  :: crsAL_hi(:),crsAD_hi(:),crsAU_hi(:) ! 行列値
      real*8,allocatable  :: crsAL_lo(:),crsAD_lo(:),crsAU_lo(:) ! 行列値
      integer(kind=intType),allocatable :: crsRow_ptr_L(:),crsRow_ptr_D(:),crsRow_ptr_U(:) ! ポインタ
      integer(kind=intType),allocatable :: crsColL(:),crsColD(:),crsColU(:)  ! 列番号
-
      integer(kind=intType),allocatable :: RowL(:),RowD(:),RowU(:) ! 行番号
      integer(kind=intType) nnzL,nnzD,nnzU
      integer(kind=intType) nColL,nColD,nColU
-
   end type HybCRS_Mat
 
   type DIA_Mat
+     integer(kind=intType) nnd
      real*8,allocatable  :: diaA(:)    ! 行列値
      real*8,allocatable  :: diaA_hi(:) ! 行列値
      real*8,allocatable  :: diaA_lo(:) ! 行列値
@@ -320,8 +550,26 @@ module matrix
      integer(kind=intType),allocatable :: RowL(:),RowD(:),RowU(:) ! 行番号
      integer(kind=intType) nCol
      integer(kind=intType) nColL,nColD,nColU
-
   end type DIA_Mat
+
+  type C_DIA_Mat
+     integer(kind=intType) nnd
+     type(devicemem) :: diaA    ! real*8 行列値
+     type(devicemem) :: diaA_hi ! real*8 行列値
+     type(devicemem) :: diaA_lo ! real*8 行列値
+     type(devicemem) :: offset  ! integer(kind=intType) 対角位置からのオフセット
+     type(devicemem) :: iLs
+
+     type(devicemem) :: offsetVec ! ベクトルのオフセット
+     type(devicemem) :: Vec    ! real*8 DIA形式の行列ベクトル積のベクトル
+     type(devicemem) :: Vec_hi ! real*8 DIA形式の行列ベクトル積のベクトル
+     type(devicemem) :: Vec_lo ! real*8 DIA形式の行列ベクトル積のベクトル
+     type(devicemem) :: RowL ! integer(kind=intType)
+     type(devicemem) :: RowD ! integer(kind=intType)
+     type(devicemem) :: RowU ! integer(kind=intType)
+     integer(kind=intType) nCol
+     integer(kind=intType) nColL,nColD,nColU
+  end type C_DIA_Mat
 
 end module matrix
 
@@ -334,6 +582,49 @@ module precon
      integer(kind=intType),allocatable :: ILU_Lstart(:),ILU_Lend(:)
      integer(kind=intType),allocatable :: ILU_Ustart(:),ILU_Uend(:)
   end type ILU_regionMat
+
+  type precon_Neuman
+     type(CRS_Mat) crsMat
+     type(DIA_Mat) diaMat
+     real*8,allocatable  :: vecx(:)    
+     real*8,allocatable  :: vecx_hi(:) 
+     real*8,allocatable  :: vecx_lo(:) 
+
+     real*8,allocatable  :: vecy(:)    
+     real*8,allocatable  :: vecy_hi(:) 
+     real*8,allocatable  :: vecy_lo(:) 
+
+     real*8,allocatable  :: D(:)    ! 対角スケーリング係数
+     real*8,allocatable  :: D_hi(:) ! 対角スケーリング係数
+     real*8,allocatable  :: D_lo(:) ! 対角スケーリング係数
+
+     real*8,allocatable  :: Dinv(:)    ! 対角スケーリング係数
+     real*8,allocatable  :: Dinv_hi(:) ! 対角スケーリング係数
+     real*8,allocatable  :: Dinv_lo(:) ! 対角スケーリング係数
+  end type precon_Neuman
+
+  type C_precon_Neuman
+     type(C_CRS_Mat) crsMat
+     type(C_DIA_Mat) diaMat
+
+     type(devicemem)  :: vecx    
+     type(devicemem)  :: vecx_hi 
+     type(devicemem)  :: vecx_lo 
+
+     type(devicemem)  :: vecy    
+     type(devicemem)  :: vecy_hi 
+     type(devicemem)  :: vecy_lo 
+
+     type(devicemem)  :: D    ! 対角スケーリング係数
+     type(devicemem)  :: D_hi ! 対角スケーリング係数
+     type(devicemem)  :: D_lo ! 対角スケーリング係数
+
+     type(devicemem)  :: Dinv    ! 対角スケーリング係数
+     type(devicemem)  :: Dinv_hi ! 対角スケーリング係数
+     type(devicemem)  :: Dinv_lo ! 対角スケーリング係数
+     integer itr 
+     integer local_flag
+  end type C_precon_Neuman
 
   type precon_AS
      integer(kind=intType) istart_th 
@@ -381,12 +672,25 @@ module precon
 
   end type precon_ILU
 
+  type C_precon_ILU
+
+     type(devicemem) n_th 
+     type(devicemem) istart_th 
+     type(devicemem) iend_th 
+     type(devicemem) work
+
+     type(C_CRS_Mat) crsMatLU
+     type(C_DIA_Mat) diaMatLU
+
+  end type C_precon_ILU
+
 end module precon
 
 module krylov
   use comm
   use matrix
   use precon
+  use KSP_STATUS
   use DDM_TYPE,only : DDM_ALL_TYPE
   implicit none
 
@@ -402,6 +706,19 @@ module krylov
      real*8,allocatable :: rbuffU(:)
      real*8,allocatable :: rbuffU_hi(:)
      real*8,allocatable :: rbuffU_lo(:)
+
+     ! sbuffはGPU環境のみ.CPU環境ではサブルーチン内で配列を定義している
+     type(devicemem) :: C_sbuff
+     type(devicemem) :: C_buff
+     type(devicemem) :: C_buff_hi
+     type(devicemem) :: C_buff_lo
+     ! type(devicemem) :: C_rbuffL
+     ! type(devicemem) :: C_rbuffL_hi
+     ! type(devicemem) :: C_rbuffL_lo
+     ! type(devicemem) :: C_rbuffU
+     ! type(devicemem) :: C_rbuffU_hi
+     ! type(devicemem) :: C_rbuffU_lo
+
      integer max_numth
      real*8 EigenMax_Real,EigenMax_Imag
      real*8 EigenMin_Real,EigenMin_Imag
@@ -426,10 +743,33 @@ module krylov
      integer iovlflag
 
      ! 対応する疎行列形式
+     type(Local_CRS_Mat)  :: Local_CRS_Mat
      type(CRS_Mat)    :: crsMat 
      type(DIA_Mat)    :: diaMat 
      type(HybCRS_Mat) :: HybcrsMat
      type(DDM_ALL_TYPE) :: ddmMat
+
+     type(C_CRS_Mat)  :: C_crsMat 
+     type(C_DIA_Mat)  :: C_diaMat 
+
+     ! precon
+     type(C_precon_Neuman) :: C_preconNeuman
+     type(C_CRS_Mat) :: C_precon_CRS_lo_precision
+
+     ! cusparce
+     type(cusparce_type)   :: cusparce_solver
+     type(cusparce_crsMat) :: cusparce_crsMatrix
+     type(cusparce_crsMat) :: cusparce_preconcrsMatrix
+
+     ! cublas
+     type(cublas_type)   :: cublas_solver
+
+     ! magma
+     integer magmaMatrixtype
+     type(magma_memory) :: magmaMatrix
+     type(magma_memory) :: precon_magmaMatrix
+     type(magma_handle) :: magmahandle
+     type(magma_memory) :: magmaPreconWork
 
      real*8,allocatable :: r(:)
      real*8,allocatable :: r_hi(:)
@@ -440,6 +780,16 @@ module krylov
      real*8,allocatable :: b(:)
      real*8,allocatable :: b_hi(:)
      real*8,allocatable :: b_lo(:)
+
+     type(devicemem) :: C_r
+     type(devicemem) :: C_r_hi
+     type(devicemem) :: C_r_lo
+     type(devicemem) :: C_x
+     type(devicemem) :: C_x_hi
+     type(devicemem) :: C_x_lo
+     type(devicemem) :: C_b
+     type(devicemem) :: C_b_hi
+     type(devicemem) :: C_b_lo
 
      ! 最大反復回数
      integer itrmax
@@ -460,6 +810,11 @@ module krylov
      real*8,allocatable :: Dinv_hi(:)
      real*8,allocatable :: Dinv_lo(:)
 
+     type(devicemem) :: C_D
+     type(devicemem) :: C_Dinv
+     type(devicemem) :: C_Dinv_hi
+     type(devicemem) :: C_Dinv_lo
+
      ! 不完全LU分解の対角行列の決定方法
      integer ILU_method
 
@@ -474,6 +829,25 @@ module krylov
      real*8,allocatable :: ovec_AS(:)
      real*8,allocatable :: ovec_AS_hi(:)
      real*8,allocatable :: ovec_AS_lo(:)
+
+     ! GPU用のASベクトル
+     type(devicemem) :: C_ivec_AS
+     type(devicemem) :: C_ivec_AS_hi
+     type(devicemem) :: C_ivec_AS_lo
+     type(devicemem) :: C_ovec_AS
+     type(devicemem) :: C_ovec_AS_hi
+     type(devicemem) :: C_s_buffL
+     type(devicemem) :: C_s_reqL
+     type(devicemem) :: C_s_staL
+     type(devicemem) :: C_r_buffL
+     type(devicemem) :: C_r_reqL
+     type(devicemem) :: C_r_staL
+     type(devicemem) :: C_s_buffU
+     type(devicemem) :: C_s_reqU
+     type(devicemem) :: C_s_staU
+     type(devicemem) :: C_r_buffU
+     type(devicemem) :: C_r_reqU
+     type(devicemem) :: C_r_staU
 
      ! SpMVの際に1スレッドが担当するタスクの最小行数.
      !     integer,save :: nBlock=2000
@@ -494,11 +868,13 @@ module krylov
 
      ! スレッド並列加法シュワルツ計算用構造体
      type(precon_AS),allocatable ::  preconAS(:) 
+
      type(prmMat)  :: prm_AS
+     type(precon_Neuman)  :: preconNeuman
      type(dia_Mat) :: precon_diaMatAS
      type(CRS_Mat) :: precon_crsMatAS
      integer iflagAS
-     ! -----
+
      integer GMRES_m ! GMRES(m) リスタート数
      integer GMRES_GSflag ! GMRES(m)のグラムシュミット直交化方法
 
@@ -522,7 +898,10 @@ module krylov
      integer power_method_itrmax ! べき乗法の反復回数
      integer CBCG_Eigenflag ! CBCG法の固有値計算方法
 
+     integer GPUflag
      integer iret ! リターンコード
+     type(STATUS_FLAG) ::  flag
+
   end type KSP
 
   type KSP_INPUT_PARAM
@@ -546,6 +925,13 @@ module krylov
      integer CAARNOLDI_basis
      integer CAARNOLDI_QRflag
 
+     integer machineflag
+     integer dataflag
+     integer calcflag 
+
+     integer Neuman_itr
+     integer Neuman_local
+
      integer itrmax
      real*8  rtolmax
      real*8  abstolmax
@@ -562,6 +948,12 @@ contains
 
   subroutine PARCEL_KSP_Default_Setting(method)
     use PARCEL_define
+    use KSP_STATUS,only : &
+         init_staus_flag, &
+         set_machineflag, &
+         set_dataflag, &
+         set_calcflag
+
     implicit none
     type(KSP) :: method
     integer solver_default
@@ -579,6 +971,10 @@ contains
     integer CAARNOLDI_tstep_default 
     integer CAARNOLDI_basis_default 
     integer CAARNOLDI_QRflag_default
+
+    integer machineflag_default
+    integer dataflag_default
+    integer calcflag_default
 
     integer CALANCZOS_sstep_default 
     integer CALANCZOS_tstep_default 
@@ -602,7 +998,12 @@ contains
     integer PRECISION_x_default
     integer PRECISION_PRECONDITION_default
     integer PRECISION_KRYLOV_default
+    integer GPUflag_default
+    integer magmaMatrixtype_default
 
+    integer Neumanitr_default
+    integer Neumanlocal_flag_default
+    
     solver_default       = KSP_SOLVER_GMRES
     addL_default         = 0
     iflagAS_default      = KSP_ADDITIVESCHWARZ_TYPE_NONE
@@ -622,6 +1023,11 @@ contains
     !    CAARNOLDI_basis_default  = KSP_MPK_MONOMIAL_BASIS
     CAARNOLDI_QRflag_default = KSP_CAARNOLDI_QR_TYPE_TSQR
     !    CAARNOLDI_QRflag_default = KSP_QRDECOMPOSITION_CHOLESKYQR
+
+
+    machineflag_default = PARCEL_MACHINE_FLAG_DEFAULT
+    dataflag_default    = KSP_DOUBLE_PRECISION
+    calcflag_default    = KSP_DOUBLE_PRECISION
 
     CALANCZOS_sstep_default  = 4
     CALANCZOS_tstep_default  = 10
@@ -643,7 +1049,12 @@ contains
     abstolmax_default    = 1.0d0-50
 
     nBlock_default = 2000
+!    nBlock_default = 20
     nvecBlock_default = 100
+
+    Neumanitr_default = 1
+    Neumanlocal_flag_default = KSP_PRECONDITION_NEUMANN_TRUE_COMM
+
 #if 0
     PRECISION_A_default            = KSP_DOUBLE_PRECISION
     PRECISION_b_default            = KSP_DOUBLE_PRECISION
@@ -658,6 +1069,10 @@ contains
     PRECISION_KRYLOV_default       = KSP_DOUBLE_PRECISION
 #endif
 
+    GPUflag_default = PARCEL_GPU_FLAG_OFF
+!    GPUflag_default = PARCEL_GPU_FLAG_ON
+!    GPUflag_default = PARCEL_MAGMA_FLAG_ON
+    magmaMatrixtype_default = MATRIX_FORMAT_CRS
     ! -----
 
     call set_KSP_solver(method,solver_default)
@@ -685,6 +1100,10 @@ contains
     call set_KSP_CAARNOLDI_basis(method,CAARNOLDI_basis_default)
     call set_KSP_CAARNOLDI_QRflag(method,CAARNOLDI_QRflag_default)
 
+    call set_KSP_dataflag(method,dataflag_default)
+    call set_KSP_calcflag(method,calcflag_default)
+    call set_KSP_machineflag(method,machineflag_default)
+
     call set_KSP_CALANCZOS_sstep(method,CALANCZOS_sstep_default)
     call set_KSP_CALANCZOS_tstep(method,CALANCZOS_tstep_default)
     call set_KSP_CALANCZOS_basis(method,CALANCZOS_basis_default)
@@ -703,6 +1122,12 @@ contains
     call set_KSP_itrmax(method,itrmax_default)
     call set_KSP_rtolmax(method,rtolmax_default)
     call set_KSP_abstolmax(method,abstolmax_default)
+    call set_KSP_magmaMatrixtype(method,magmaMatrixtype_default)
+
+    ! method%C_preconNeuman%itr = 1
+    ! method%C_preconNeuman%local_flag = KSP_PRECONDITION_NEUMANN_TRUE_COMM 
+    call set_KSP_Neumanitr(method,Neumanitr_default)
+    call set_KSP_Neumanlocal_flag(method,Neumanlocal_flag_default)
 
   end subroutine PARCEL_KSP_Default_Setting
 
@@ -843,6 +1268,31 @@ contains
     method%CAARNOLDI_QRflag=CAARNOLDI_QRflag
   end subroutine set_KSP_CAARNOLDI_QRflag
 
+  subroutine set_KSP_dataflag(method,dataflag)
+    implicit none
+    type(KSP) :: method
+    integer dataflag
+    call set_dataflag(method%flag,KSP_DOUBLE_PRECISION)
+  end subroutine set_KSP_dataflag
+
+  subroutine set_KSP_calcflag(method,calcflag)
+    implicit none
+    type(KSP) :: method
+    integer calcflag
+    call set_calcflag(method%flag,calcflag)
+  end subroutine set_KSP_calcflag
+
+  subroutine set_KSP_machineflag(method,machineflag)
+    implicit none
+    type(KSP) :: method
+    integer machineflag
+
+    call set_machineflag(method%flag,machineflag)
+    method%GPUflag = machineflag
+    !    call set_KSP_GPUflag(method,machineflag)
+
+  end subroutine set_KSP_machineflag
+
   subroutine set_KSP_CALANCZOS_sstep(method,CALANCZOS_sstep)
     implicit none
     type(KSP) :: method
@@ -882,7 +1332,7 @@ contains
     implicit none
     type(KSP) :: method
     integer power_method_itrmax
-    method%power_method_itrmax=power_method_itrmax
+    method%power_method_itrmax = max(1,power_method_itrmax)
   end subroutine set_KSP_power_method_itrmax
 
   subroutine set_KSP_CBCG_Eigenflag(method,CBCG_Eigenflag)
@@ -942,7 +1392,7 @@ contains
     implicit none
     type(KSP) :: method
     integer itrmax
-    method%itrmax=itrmax
+    method%itrmax = max(1,itrmax)
   end subroutine set_KSP_itrmax
 
   subroutine set_KSP_rtolmax(method,rtolmax)
@@ -958,5 +1408,33 @@ contains
     real*8  abstolmax
     method%abstolmax=abstolmax
   end subroutine set_KSP_abstolmax
+
+  ! subroutine set_KSP_GPUflag(method,GPUflag)
+  !   implicit none
+  !   type(KSP) :: method
+  !   integer GPUflag
+  !   method%GPUflag=GPUflag
+  ! end subroutine set_KSP_GPUflag
+
+  subroutine set_KSP_Neumanitr(method,Neumanitr)
+    implicit none
+    type(KSP) :: method
+    integer Neumanitr
+    method%C_preconNeuman%itr = max(1,Neumanitr)
+  end subroutine set_KSP_Neumanitr
+
+  subroutine set_KSP_Neumanlocal_flag(method,Neumanlocal_flag)
+    implicit none
+    type(KSP) :: method
+    integer Neumanlocal_flag
+    method%C_preconNeuman%local_flag = Neumanlocal_flag
+  end subroutine set_KSP_Neumanlocal_flag
+
+  subroutine set_KSP_magmaMatrixtype(method,magmaMatrixtype)
+    implicit none
+    type(KSP) :: method
+    integer magmaMatrixtype
+    method%magmaMatrixtype=magmaMatrixtype
+  end subroutine set_KSP_magmaMatrixtype
 
 end module krylov

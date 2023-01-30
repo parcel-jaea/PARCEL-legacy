@@ -1,4 +1,5 @@
-
+module moore_penrose_kernel
+contains
 subroutine moore_penrose(A,Ainv,m,n)
   implicit none
   integer m,n
@@ -73,7 +74,7 @@ subroutine moore_penrose(A,Ainv,m,n)
   ! enddo
 
 end subroutine moore_Penrose
-
+end module moore_penrose_kernel
 ! program main
 !   implicit none
 ! ! 特異値計算

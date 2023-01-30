@@ -1,0 +1,45 @@
+&input
+  ityp_eq                = 1       ! Matrix :: (1:3D Poisson) 
+  gnx                    = 20      !1630    ! Problem size in x
+  gny                    = 20      !1630    ! Problem size in y
+  gnz                    = 20      !1630    ! Problem size in z
+  MAX_NITER              = 2000     ! Maximum number of iterations 
+  rtolmax                = 1.0d-9 ! Convergence criterion (Relative error) ||b-Ax||/||b||  
+  abstolmax              = 0.0d0   ! Convergence criterion (Absolute error) ||b-Ax|| 
+  ipreflag               = 0       ! Preconditioner :: (0:None,1:Point Jacobi,2:Block Jacobi,3:Additive Schwarz,4:Neumann series)
+  Neuman_itrmax          = 1      ! Number of iterations in Neumann series precondition
+  independ_nvec          = -1
+  addL                   = 2       ! Overlapping width in Additive Schwarz 
+  iflagAS                = 1       ! Averaging method in Additive Schwarz :: (1:BASIC,2:RESTRICT,3:INTERPOLATE,4:NONE)
+  ILU_method             = 1       ! Incomplete LU factorization :: (1:D-ILU1,2:D-ILU2)
+  iovlflag               = 0       ! Communication overlap in SpMV :: (0:None,1:Single step,2:Multiple steps)
+  ityp_solver            = 1       ! Algorithm :: Double precision (1:CG,2:BiCG,3:GMRES,:4:CAGMRES,:5:CBCG)
+  precon_thblock         = -1
+  restart                = 4      ! Restart length in GMRES(m)
+  GMRES_GSflag           = 1       ! Orthogonalization method in GMRES(m) :: (1:MGS,2:CGS)
+  CBCG_kstep             = 4       ! Communication avoiding steps in CBCG
+  CBCG_Eigenflag         = 2       ! Eigenvalue solver in CBCG :: (1:Power method,2:CA-ARNOLDI)
+  power_method_itrmax    = 100     ! Number of iterations in power method
+  CAARNOLDI_sstep        = 4       ! Communication avoiding steps in CA-ARNOLDI
+  CAARNOLDI_tstep        = 25     ! Number of outer iterations in CA-ARNOLDI
+  CAARNOLDI_basis        = 1       ! Basis vector in CA-ARNOLDI :: (0:Monomial basis,1:Newton basis)
+  CAARNOLDI_QRflag       = 3       ! QR factorization in CA-ARNOLDI :: (1:MGS,2:CGS,3:TSQR,4:Cholesky QR,5:Cholesky QR2)  
+  CAGMRES_sstep          = 10      ! Communication avoiding steps in CA-GMRES
+  CAGMRES_tstep          = 1       ! Number of outer iterations in CA-GMRES  
+  CAGMRES_basis          = 1       ! Basis vector in CA-GMRES :: (0:Monomial basis,1:Newton basis)
+  CAGMRES_QRflag         = 3       ! QR factorization in CA-GMRES :: (1:MGS,2:CGS,3:TSQR,4:Cholesky QR,5:Cholesky QR2)
+/
+
+&input_dd
+  PRECISION_A = 2
+  PRECISION_b = 2
+  PRECISION_x = 2
+  PRECISION_PRECONDITION = 2
+/
+
+&input_ddm
+       npe_x            = 1        ! domain division (x)
+       npe_y            = 4        ! domain division (y)
+       npe_z            = 1        ! domain division (z)
+       div_direc_th     = 1
+/

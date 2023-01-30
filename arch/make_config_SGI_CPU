@@ -1,0 +1,23 @@
+#Currently Loaded Modulefiles:
+# 1) intel/2022.2.0   
+# 2) mpt/2.22
+
+CUDAFLAG  = OFF
+CUDAAWARE = OFF
+
+CC     = mpicc
+FC     = mpif90
+CXX    = icpc
+
+CFLAGS = -O3 -qopenmp -xHost
+FFLAGS = -O3 -fpp -qopenmp -xHost  -mcmodel=large 
+CXXFLAGS = -O3 -qopenmp -xHost -std=c++11
+FP_MODE  = -fp-model precise
+
+INCLUDEDIR =
+LD_MPI     = 
+LD_FORT    = -lifcore
+LD_LAPACK  = -mkl -lstdc++
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.2

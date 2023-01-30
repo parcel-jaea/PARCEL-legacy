@@ -4,6 +4,73 @@ module PARCEL_time
   real*8 precon_time(30)
 end module PARCEL_time
 
+module KSP_STATUS
+  use PARCEL_define
+  implicit none
+
+  type STATUS_FLAG
+     integer machineflag
+     integer dataflag
+     integer calcflag
+  end type STATUS_FLAG
+
+contains
+  subroutine init_staus_flag(flag)
+    implicit none
+    type(STATUS_FLAG) :: flag
+    flag%machineflag = PARCEL_CPU_FLAG_ON
+    flag%dataflag    = KSP_DOUBLE_PRECISION
+    flag%calcflag    = KSP_DOUBLE_PRECISION
+  end subroutine init_staus_flag
+
+  subroutine set_machineflag(flag,machineflag)
+    implicit none
+    type(STATUS_FLAG) :: flag
+    integer machineflag
+    flag%machineflag = machineflag
+  end subroutine set_machineflag
+
+  subroutine set_dataflag(flag,dataflag)
+    implicit none
+    type(STATUS_FLAG) :: flag
+    integer dataflag
+    flag%dataflag = dataflag
+  end subroutine set_dataflag
+
+  subroutine set_calcflag(flag,calcflag)
+    implicit none
+    type(STATUS_FLAG) :: flag
+    integer calcflag
+    flag%calcflag = calcflag
+  end subroutine set_calcflag
+
+end module KSP_STATUS
+
+module vec_type
+  
+  use c_wrapper
+  use KSP_STATUS
+  use PARCEL_define
+  use PARCEL_integer
+  implicit none
+
+  type PARCEL_VEC
+     real*8,allocatable :: vec_FP64(:)
+     ! double - double 演算
+     real*8,allocatable :: vec_hi(:)
+     real*8,allocatable :: vec_lo(:)
+
+     type(devicemem)    :: C_vec_FP64
+     type(magma_memory) :: C_magma_vec_FP64     
+     integer(kind=intType) n
+     integer CPUflag
+     integer GPUflag
+     integer dataflag
+     integer(kind=intType) offset
+  end type PARCEL_VEC
+  
+end module vec_type
+
 module common_kernel
 contains
   subroutine get_maxthreads(max_numth)

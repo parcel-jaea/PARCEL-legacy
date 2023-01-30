@@ -22,6 +22,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     ! -----
@@ -111,6 +112,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     integer icomm ! MPI コミュニケータ
@@ -177,6 +179,7 @@
          niter,reshistory,iret)
     itrmax=niter
   end subroutine parcel_ddbicgstab_dia
+
   ! CG法(CRS)
   subroutine parcel_ddcg(&
        icomm, &
@@ -199,6 +202,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     ! -----
@@ -237,9 +241,12 @@
     integer PRECISION_PRECONDITION
     type(KSP_INPUT_PARAM) :: PARCEL_INPUT
 !    write(*,*)"rtolmax = ",rtolmax
+
     abstolmax           = 0.0d0
     solver              = KSP_SOLVER_CG
+
     call INIT_PARCEL_INPUT(PARCEL_INPUT)
+
     PARCEL_INPUT%ipreflag=ipreflag
     PARCEL_INPUT%ILU_method=ILU_method
     PARCEL_INPUT%addL=addL
@@ -257,7 +264,8 @@
     PARCEL_INPUT%PRECISION_b=PRECISION_b
     PARCEL_INPUT%PRECISION_x=PRECISION_x
     PARCEL_INPUT%PRECISION_PRECONDITION=PRECISION_PRECONDITION
-!    write(*,*)"PARCEL_INPUT%rtolmax -- ",PARCEL_INPUT%rtolmax
+
+    PARCEL_INPUT%machineflag = PARCEL_CPU_FLAG_ON
     call PARCEL_ddKSP_CRS( &
          icomm, &
          vecx_hi,vecx_lo,&
@@ -269,6 +277,7 @@
          niter,reshistory,iret)
     itrmax=niter
   end subroutine parcel_ddcg
+
   ! CG法(DIA)
   subroutine parcel_ddcg_dia(&
        icomm, &
@@ -291,6 +300,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     integer icomm ! MPI コミュニケータ
@@ -327,9 +337,12 @@
     integer PRECISION_x
     integer PRECISION_PRECONDITION
     type(KSP_INPUT_PARAM) :: PARCEL_INPUT
+
     abstolmax           = 0.0d0
     solver              = KSP_SOLVER_CG
+
     call INIT_PARCEL_INPUT(PARCEL_INPUT)
+
     PARCEL_INPUT%ipreflag=ipreflag
     PARCEL_INPUT%ILU_method=ILU_method
     PARCEL_INPUT%addL=addL
@@ -347,6 +360,8 @@
     PARCEL_INPUT%PRECISION_b=PRECISION_b
     PARCEL_INPUT%PRECISION_x=PRECISION_x
     PARCEL_INPUT%PRECISION_PRECONDITION=PRECISION_PRECONDITION
+
+    PARCEL_INPUT%machineflag = PARCEL_CPU_FLAG_ON
     call PARCEL_ddKSP_DIA( &
          icomm, &
          vecx_hi,vecx_lo,vecb_hi,vecb_lo, &
@@ -380,6 +395,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     ! -----
@@ -476,6 +492,7 @@
        )
     use PARCEL_define
     use krylov
+    use PARCEL_wrapper
 !    use PARCEL_wrapper,only : INIT_PARCEL_INPUT
     implicit none
     integer icomm ! MPI コミュニケータ
@@ -583,6 +600,7 @@
     integer iret ! 残差履歴
     real*8 reshistory(PARCEL_INPUT%itrmax)
 !    write(*,*)"PARCEL_INPUT%rtolmax = ",PARCEL_INPUT%rtolmax
+
     call ddKSP_CRS(&
          icomm, &
          vecx_hi,vecx_lo,&
@@ -594,6 +612,7 @@
          PARCEL_INPUT,&
          niter,reshistory,iret)
   end subroutine PARCEL_ddKSP_CRS
+
   subroutine PARCEL_ddKSP_DIA( &
        icomm, &
        vecx_hi,vecx_lo,vecb_hi,vecb_lo, &
@@ -626,7 +645,7 @@
     real*8 reshistory(PARCEL_INPUT%itrmax) ! 残差履歴
     integer niter
     integer iret
-    ! 未対応
+
     call ddKSP_DIA( &
          icomm, &
          vecx_hi,vecx_lo,&

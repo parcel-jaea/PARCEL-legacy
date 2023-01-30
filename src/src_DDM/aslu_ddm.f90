@@ -28,7 +28,9 @@ contains
     implicit none
 
     ! input
-    integer, intent(in) ::  nnd, mdist
+
+    integer(kind=intType), intent(in) :: mdist
+    integer, intent(in) ::  nnd
     integer, intent(in) ::  ncomp_grids, num_grids(ncomp_grids)
     integer, intent(in) ::  ioff_dia(nnd), ioff_grids(nnd,ncomp_grids)
     real*8, intent(in) ::  val_dia(mdist*nnd), vec1(mdist), diag(mdist)
@@ -46,8 +48,7 @@ contains
     real*8,optional :: diag_lo(mdist)
 
     ! local
-    integer div_direc_th
-!    type(precon_AS) precon
+    integer div_direc_th 
     type(precon_AS_wrap) precon
     integer precon_thblock
     integer PRECISION
@@ -62,7 +63,7 @@ contains
     !  write(*,*)"div_direc_th = ",div_direc_th
     if( PRECISION.eq.KSP_DOUBLE_DOUBLE_PRECISION )then
        if ( div_direc_th == KSP_DDM_DIVIDE_THREADS_DIRECT_NONE ) then
-          write(*,*)"not support"
+          write(*,*)"not support : aslu_ddm"
           stop
        else if ( div_direc_th == KSP_DDM_DIVIDE_THREADS_DIRECT_X ) then
           call ilu_ddm_case_xdiv( mdist, nnd, val_dia, ioff_dia, diag, vec1, vec2, &
@@ -103,7 +104,7 @@ contains
 
     else
        if ( div_direc_th == KSP_DDM_DIVIDE_THREADS_DIRECT_NONE ) then
-          write(*,*)"not support"
+          write(*,*)"not support : aslu_ddm "
           stop
           ! call ilu_ddm_case_nodiv( mdist, nnd, val_dia, ioff_dia, diag, vec1, vec2, &
           !      prm, ncomp_grids, ioff_grids, div_direc_th )
@@ -140,7 +141,8 @@ contains
     use omp_lib
     implicit none
     ! input
-    integer, intent(in) ::  nnd, mdist
+    integer(kind=intType), intent(in) :: mdist
+    integer, intent(in) ::  nnd
     integer, intent(in) ::  ncomp_grids, num_grids(ncomp_grids)
     integer, intent(in) ::  ioff_dia(nnd), ioff_grids(nnd,ncomp_grids)
     real*8, intent(in) ::  val_dia(mdist*nnd), vec1(mdist), diag(mdist)
@@ -159,7 +161,7 @@ contains
     ! local
     integer div_direc_th
     type(precon_AS_wrap) precon
-    integer i
+    integer(kind=intType) i
     integer addL
     integer PRECISION
     PRECISION = KSP_DOUBLE_PRECISION
@@ -336,7 +338,8 @@ contains
     implicit none
 
     ! input
-    integer, intent(in) ::  nnd, mdist, div_direc_th, precon_thblock
+    integer(kind=intType) mdist
+    integer, intent(in) ::  nnd,  div_direc_th, precon_thblock
 
     integer, intent(in) ::  ncomp_grids
     integer, intent(in) ::  ioff_dia(nnd), ioff_grids(nnd,ncomp_grids)
@@ -355,11 +358,11 @@ contains
     real*8,optional :: vec2_lo(mdist)
 
     ! local  
-    integer k1, j, ip, idiag, offset, istart
+    integer(kind=intType) k1, j, ip, idiag, offset, istart
     integer(kind=intType) n
     integer nx, ny, nz, mx, my, mz, mxy, jx, jy, jz
     integer stmx, stmy, stmz
-    integer nxy, nxyz, i
+    integer(kind=intType) nxy, nxyz, i
     integer num_threads, my_thread
     integer max_numth_0
     integer nxs_th, nxe_th, nys_th, nye_th, nzs_th, nze_th
@@ -766,7 +769,8 @@ contains
     implicit none
 
     ! input
-    integer, intent(in) ::  nnd, mdist, div_direc_th, precon_thblock
+    integer(kind=intType) mdist
+    integer, intent(in) ::  nnd, div_direc_th, precon_thblock
     integer, intent(in) ::  ncomp_grids
     integer, intent(in) ::  ioff_dia(nnd), ioff_grids(nnd,ncomp_grids)
     real*8, intent(in) ::  val_dia(mdist*nnd), vec1(mdist), diag(mdist)
@@ -784,11 +788,11 @@ contains
     real*8,optional :: vec2_lo(mdist)
 
     ! local  
-    integer k1, j, ip, idiag, offset, istart
+    integer(kind=intType) k1, j, ip, idiag, offset, istart
     integer(kind=intType) n
     integer nx, ny, nz, mx, my, mz, mxy, jx, jy, jz
     integer stmx, stmy, stmz
-    integer nxy, nxyz, i
+    integer(kind=intType) nxy, nxyz, i
     integer num_threads, my_thread
     integer max_numth_0
     integer nxs_th, nxe_th, nys_th, nye_th, nzs_th, nze_th
@@ -1167,7 +1171,8 @@ contains
     implicit none
 
     ! input
-    integer, intent(in) ::  nnd, mdist, div_direc_th, precon_thblock
+    integer(kind=intType) mdist
+    integer, intent(in) ::  nnd, div_direc_th, precon_thblock
     integer, intent(in) ::  ncomp_grids
     integer, intent(in) ::  ioff_dia(nnd), ioff_grids(nnd,ncomp_grids)
     real*8, intent(in) ::  val_dia(mdist*nnd), vec1(mdist), diag(mdist)
@@ -1185,11 +1190,11 @@ contains
     real*8,optional :: vec2_lo(mdist)
 
     ! local  
-    integer k1, j, ip, idiag, offset, istart
+    integer(kind=intType) k1, j, ip, idiag, offset, istart
     integer(kind=intType) n
     integer nx, ny, nz, mx, my, mz, mxy, jx, jy, jz
     integer stmx, stmy, stmz
-    integer nxy, nxyz, i
+    integer(kind=intType) nxy, nxyz, i
     integer num_threads, my_thread
     integer max_numth_0
     integer nxs_th, nxe_th, nys_th, nye_th, nzs_th, nze_th

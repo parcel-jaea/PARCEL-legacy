@@ -39,6 +39,7 @@ contains
     use krylov_kernel
     use mpi
     implicit none
+
     integer icomm ! MPI コミュニケータ
     integer(kind=intType) n ! プロセスの受け持つベクトルのサイズ
     integer(kind=intType) gn ! ベクトル全体のサイズ
@@ -73,7 +74,23 @@ contains
 
     call PARCEL_KSP_Default_Setting(method) 
     call SET_KSP_PARAM(method,input_param)
-!    write(*,*)"@ 1 @ -- init : PRECISION_PRECONDITION = ",method%PRECISION_PRECONDITION
+    ! OVL_NONEが動作しない?
+    method%iovlflag = KSP_SPMV_OVL_CORE
+
+    ! GPU Solver 未対応
+    call set_KSP_machineflag(method,PARCEL_CPU_FLAG_ON)
+
+    ! Neumann 展開未対応
+    call MPI_Comm_rank( icomm, myrank, ierr )
+    if( (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN_LOCAL) )then
+       if( method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON )then
+          if(myrank.eq.0)then
+             write(*,*)"not support Neuman Preconditione"
+          endif
+          return 
+       endif
+    endif
 
     call MPI_Barrier(icomm,ierr)
     stime=MPI_Wtime()
@@ -185,9 +202,21 @@ contains
 
     call PARCEL_KSP_Default_Setting(method)
     call SET_KSP_PARAM(method,input_param)
-!    write(*,*)"input_param%rtolmax = ",input_param%rtolmax,method%rtolmax
 
-!    method%independ_nvec=8
+    ! GPU Solver 未対応
+    call set_KSP_machineflag(method,PARCEL_CPU_FLAG_ON)
+
+    ! Neumann 展開未対応
+    call MPI_Comm_rank( icomm, myrank, ierr )
+    if( (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN_LOCAL) )then
+       if( method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON )then
+          if(myrank.eq.0)then
+             write(*,*)"not support Neuman Preconditione"
+          endif
+          return 
+       endif
+    endif
 
     ! method%rtolmax       = rtolmax
     ! method%abstolmax     = abstolmax
@@ -329,6 +358,7 @@ contains
   end subroutine set_ddKSP_CRS
 
   subroutine set_ddprecon_CRS(ipreflag,method)
+
     use krylov
     use ddmatrix_kernel
     use matrix_kernel,only : init_AdditiveSchwarz_crs
@@ -551,8 +581,8 @@ contains
     ! addL     = method%addL
     ! iflagAS  = method%iflagAS
     call get_maxthreads(method%max_numth)
-    ! -----
     call set_ddprecon_DIA(method%ipreflag,method)
+
   end subroutine set_ddKSP_DIA
 
 ! resetは整備しているがサンプルを整備していないので動作は未確認

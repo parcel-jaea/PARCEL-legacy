@@ -1,10 +1,607 @@
+
+#define GS_method 0
 ! todo dia,craのコードを整理
 module matrix_kernel
   use PARCEL_define
   use common_kernel
+  use PARCEL_integer
 
   implicit none
+
+  interface
+     subroutine init_Matvec_crs_iLs(&
+          istart,&
+          iend,&
+          n,&
+          nColL,&
+          nColU,&
+          crsCol,&
+          crsRow_ptr,&
+          iLs,&
+          RowL,&
+          RowU&
+          )&
+          bind(c,name = "init_Matvec_crs_iLs")
+       import :: intType
+
+       integer(kind=intType),value :: istart
+       integer(kind=intType),value :: iend
+       integer(kind=intType),value :: n
+       integer(kind=intType),value :: nColL
+       integer(kind=intType),value :: nColU
+       integer(kind=intType) crsCol(*)
+       integer(kind=intType) crsRow_ptr(*)
+       integer(kind=intType) iLs(*)
+       integer(kind=intType) RowL(*)
+       integer(kind=intType) RowU(*)
+
+     end subroutine init_Matvec_crs_iLs
+  end interface
+
 contains
+  subroutine Neumann_dia(method,r,s)
+    use omp_lib
+    use krylov
+    use vec_kernel
+    use comm_kernel
+    use PARCEL_integer
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    integer itr_neumann
+
+    integer(kind=intType) parcel_int
+    real*8 r(method%prm%n)
+    real*8 s(method%prm%n)
+
+    ! A = I - F
+    ! (I - F)^-1 = I + F + F^2 + F^3 + ....
+    itr_neumann = 1
+    if( itr_neumann .eq. 1)then
+!    if( itr_neumann .eq. -1)then
+       call vec_scaling(method%prm%n, &
+            r, &
+            method%preconNeuman%Dinv, &
+            method%preconNeuman%vecx)
+       if( method%C_preconNeuman%local_flag .eq. &
+            KSP_PRECONDITION_NEUMANN_TRUE_COMM)then
+          call get_nrk_vec(method%commVec,method%preconNeuman%vecx,method%buff)
+       else
+          parcel_int = size(method%buff)
+          call zero_initialize(parcel_int,method%buff)
+       endif
+       ! 対角はゼロ
+       call MatVec_neumann_dia( &
+            method%prm, &
+            method%preconNeuman%diaMat, &
+            method%preconNeuman%vecx, &
+            s, &
+            method%commVec, &
+            method%buff, &
+            method%nBlock)
+       ! call xcpy(method%prm%n, &
+       !      method%preconNeuman%vecy, &
+       !      method%preconNeuman%vecx)
+       ! call axpy(method%prm%n,1.0d0,1.0d0,method%preconNeuman%vecy,s)
+       
+    else
+       !    call xcpy(method%prm%n,r,s)
+       call vec_scaling(method%prm%n,r,method%preconNeuman%Dinv,s)
+       call xcpy(method%prm%n,s,method%preconNeuman%vecx)    
+       do i = 1,itr_neumann
+          if( method%C_preconNeuman%local_flag .eq. &
+               KSP_PRECONDITION_NEUMANN_TRUE_COMM)then
+             call get_nrk_vec(method%commVec,method%preconNeuman%vecx,method%buff)
+          else
+             parcel_int = size(method%buff)
+             call zero_initialize(parcel_int,method%buff)
+          endif
+          ! 対角はゼロ
+          call MatVec_dia( &
+               method%prm, &
+               method%preconNeuman%diaMat, &
+               method%preconNeuman%vecx, &
+               method%preconNeuman%vecy, &
+               method%commVec, &
+               method%buff, &
+               method%nBlock)
+          call xcpy(method%prm%n, &
+               method%preconNeuman%vecy, &
+               method%preconNeuman%vecx)
+          call axpy(method%prm%n,1.0d0,1.0d0,method%preconNeuman%vecy,s)
+       enddo
+!    call vec_scaling(method%prm%n,s,method%preconNeuman%D,s)
+    endif
+
+  end subroutine Neumann_dia
+
+  subroutine Neumann_scaling_dia(prm,diaMat,D,Dinv)
+    use matrix
+    use vec_kernel
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(DIA_Mat) :: diaMat 
+    real*8 D(prm%n)
+    real*8 Dinv(prm%n)
+
+    !    real*8 buff(commVec%nrk_data)
+    integer(kind=intType) i,j
+    integer(kind=intType) n,nnd
+    integer(kind=intType) offset
+
+    n      = prm%n
+    nnd    = prm%nnd
+
+    !$OMP PARALLEL PRIVATE( &
+    !$OMP i,j,offset &
+    !$OMP ) 
+
+    !$OMP DO
+    do i=1,n
+       D(i)    = 1.0d0
+       Dinv(i) = 1.0d0
+    enddo
+
+    do j=1,nnd
+       offset = diaMat%offset(j)
+       if(offset.eq.0)then
+          !$OMP DO
+          do i=1,n
+             if(diaMat%diaA(i+(j-1)*n).eq.0.0d0)then
+                D(i)    = 1.0d0
+             else
+                D(i)    = diaMat%diaA(i+(j-1)*n)
+             endif
+             Dinv(i) = 1.0d0 / D(i)
+             diaMat%diaA(i+(j-1)*n) = 0.0d0 ! 対角はゼロにする
+          enddo
+       endif
+    enddo
+    do j=1,nnd
+       !$OMP DO
+       do i=1,n
+          diaMat%diaA(i+(j-1)*n) = -diaMat%diaA(i+(j-1)*n) * Dinv(i) 
+       enddo
+    enddo
+
+    !$OMP END PARALLEL
+
+  end subroutine Neumann_scaling_dia
+
+  subroutine Neumann_scaling_crs(prm,crsMat,D,Dinv)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(CRS_Mat) :: crsMat 
+    real*8 D(prm%n)
+    real*8 Dinv(prm%n)
+    real*8 nDiag
+
+    real*8 tmp
+
+    integer(kind=intType) i,j,k
+    integer(kind=intType) n,istart,iend
+    integer(kind=intType) Row,Col
+    
+    n = prm%n
+    istart=prm%istart
+    iend=prm%iend
+
+    !$OMP PARALLEL DO PRIVATE(i)
+    do i=1,n
+       D(i)    = 1.0d0
+       Dinv(i) = 1.0d0
+    enddo
+    !$OMP END PARALLEL DO
+
+    !$OMP PARALLEL DO PRIVATE(k,j,Col) 
+    do k=1,n
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             if(crsMat%crsA(j).eq.0.0d0)then
+                D(k) = 1.0d0
+             else
+                D(k) = crsMat%crsA(j)
+             endif
+             Dinv(k) = 1.0d0 / D(k) 
+             crsMat%crsA(j) = 0.0d0 ! 対角はゼロにする
+             exit
+          endif
+       enddo
+    enddo
+    !$OMP END PARALLEL DO
+
+    ! do i=1,n
+    !    write(*,*)i,D(i)
+    ! enddo
+
+#if 0
+    ! 対角優位
+    !$OMP PARALLEL DO PRIVATE(k,j,nDiag) 
+    do k=1,n
+       nDiag = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          nDiag = nDiag + dabs(crsMat%crsA(j))
+       enddo
+       nDiag = dabs(D(k)) / nDiag
+       if(nDiag>1.0d0)then
+          nDiag = 1.0d0
+       endif
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          crsMat%crsA(j) = -crsMat%crsA(j) *  Dinv(k) * nDiag
+       enddo
+    enddo
+    !$OMP END PARALLEL DO
+#endif
+
+#if 0
+    ! Jacobi-Like(SOR-Like)? @ 対角項 + 非対角項の絶対値を対角項として採用する
+    !$OMP PARALLEL DO PRIVATE(k,j,nDiag) 
+    do k=1,n
+       ! 対角項 + 非対角項の絶対値
+       nDiag = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          nDiag = nDiag + dabs(crsMat%crsA(j))
+       enddo
+       nDiag = dabs(D(k)) + nDiag
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          crsMat%crsA(j) = -crsMat%crsA(j) / nDiag
+       enddo
+    enddo
+    !$OMP END PARALLEL DO
+#endif
+
+#if 0
+    ! Jacobi-Like(SOR-Like)? @ 対角要素が非対角要素の絶対値の和より小さければ非対角項を対角項として採用する
+    !$OMP PARALLEL DO PRIVATE(k,j,nDiag) 
+    do k=1,n
+       nDiag = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          nDiag = nDiag + dabs(crsMat%crsA(j))
+       enddo
+       
+       if(dabs(D(k))>nDiag)then
+          nDiag = dabs(D(k))
+       endif
+
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          crsMat%crsA(j) = -crsMat%crsA(j) / nDiag
+       enddo
+    enddo
+    !$OMP END PARALLEL DO
+#endif
+
+#if 1
+    !$OMP PARALLEL DO PRIVATE(k,j) 
+    do k=1,n
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          crsMat%crsA(j) = -crsMat%crsA(j) *  Dinv(k)
+       enddo
+    enddo
+    !$OMP END PARALLEL DO
+#endif
+    
+  end subroutine Neumann_scaling_crs
+
+  subroutine init_jacobilike_crs(prm,crsMat,D,Dinv)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(CRS_Mat) :: crsMat 
+    real*8 D(prm%n)
+    real*8 Dinv(prm%n)
+    real*8 nDiag
+
+    real*8 tmp
+
+    integer(kind=intType) i,j,k
+    integer(kind=intType) n,istart,iend
+    integer(kind=intType) Row,Col
+    
+    n = prm%n
+    istart=prm%istart
+    iend=prm%iend
+
+!     !$OMP PARALLEL DO PRIVATE(k,j,nDiag) 
+    do k=1,n
+
+#if 1
+
+
+#if 0
+       D(k)    = 0.0d0
+       Dinv(k) = 0.0d0
+       nDiag   = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             D(k) = crsMat%crsA(j)         
+          endif
+          nDiag = nDiag + dabs(crsMat%crsA(j))
+       enddo
+
+       if(nDiag.eq.0.0d0)then
+          nDiag = 1.0d0
+       endif
+       if(D(k)<0.0d0)then
+          nDiag = -nDiag
+       endif
+#endif
+
+#if 1
+       D(k)    = 0.0d0
+       Dinv(k) = 0.0d0
+       nDiag   = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             D(k) = crsMat%crsA(j)         
+          else
+
+#if 1
+             nDiag = nDiag + dabs(crsMat%crsA(j))
+#endif
+          endif
+#if 0
+          nDiag = nDiag + dabs(crsMat%crsA(j))
+#endif
+          ! if((k-1+istart)>(crsMat%crsCol(j)))then
+          !    nDiag = nDiag + dabs(crsMat%crsA(j)) 
+          ! endif
+       enddo
+       !       nDiag =  D(k) - nDiag
+       if(nDiag.eq.0.0d0)then
+          nDiag = 1.0d0
+       endif
+       if(D(k)<0.0d0)then
+          nDiag = -nDiag
+       endif
+#endif
+
+#if 1
+       ! ヤコビ法,GS法
+       nDiag = D(k)
+#endif
+       D(k)  = nDiag ! N
+       Dinv(k) = 1.0d0 / D(k)
+
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             ! 対角項
+             crsMat%crsA(j) = -( crsMat%crsA(j) - D(k) )
+          else
+             crsMat%crsA(j) = -crsMat%crsA(j)
+          endif
+       enddo
+
+#else
+
+       D(k)    = 1.0d0
+       Dinv(k) = 1.0d0
+       nDiag = 0.0d0
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             if(crsMat%crsA(j).eq.0.0d0)then
+                D(k) = 1.0d0
+             else
+                D(k) = crsMat%crsA(j)
+             endif
+          else
+             nDiag = nDiag + dabs(crsMat%crsA(j))
+          endif
+       enddo
+#if 0
+       ! 対角優位になるまで+する
+       if( (dabs(D(k)) - nDiag) >= 0.0d0 )then
+          ndiag = 0.0d0
+       else
+          ndiag = nDiag - dabs(D(k)) 
+       endif
+#endif
+       if(D(k)>0.0d0)then
+          nDiag = -ndiag
+       endif
+
+!       nDiag = 0.0d0
+!       nDiag = 1.0d0
+!       write(*,*)k,D(k),nDiag
+       D(k)    = D(k)  - nDiag
+       Dinv(k) = 1.0d0 / D(k)
+
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if((k-1+istart).eq.(crsMat%crsCol(j)))then
+             ! 対角要素はパラメータOMEGA
+             crsMat%crsA(j) = -nDiag
+          else
+             crsMat%crsA(j) = -crsMat%crsA(j)
+          endif
+       enddo
+#endif
+
+    enddo
+!    !$OMP END PARALLEL DO
+    
+  end subroutine init_jacobilike_crs
+
+  subroutine Neumann_crs(method,r,s)
+    use omp_lib
+    use krylov
+    use vec_kernel
+    use comm_kernel
+    use PARCEL_integer
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    integer itr_neumann
+    real*8 r(method%prm%n)
+    real*8 s(method%prm%n)
+
+    ! A = I - F
+    ! (I - F)^-1 = I + F + F^2 + F^3 + ....
+    itr_neumann = method%C_preconNeuman%itr
+!    if( itr_neumann .eq. 1)then
+    if( itr_neumann .eq. -1)then
+       write(*,*)"not support : Neumann_crs"
+#if 0
+       call vec_scaling(method%prm%n, &
+            r, &
+            method%preconNeuman%Dinv, &
+            method%preconNeuman%vecx)
+#if 1
+       call get_nrk_vec(method%commVec,method%preconNeuman%vecx,method%buff)
+#else
+       call zero_initialize(size(method%buff),method%buff)
+#endif
+       ! 対角はゼロ
+       call MatVec_neumann_dia( &
+            method%prm, &
+            method%preconNeuman%diaMat, &
+            method%preconNeuman%vecx, &
+            s, &
+            method%commVec, &
+            method%buff, &
+            method%nBlock)
+       ! call xcpy(method%prm%n, &
+       !      method%preconNeuman%vecy, &
+       !      method%preconNeuman%vecx)
+       ! call axpy(method%prm%n,1.0d0,1.0d0,method%preconNeuman%vecy,s)
+#endif
+       
+    else
+       !    call xcpy(method%prm%n,r,s)
+       call vec_scaling(method%prm%n,r,method%preconNeuman%Dinv,s)
+       call xcpy(method%prm%n,s,method%preconNeuman%vecx)    
+       do i = 1,itr_neumann
+          if( method%C_preconNeuman%local_flag .eq. &
+               KSP_PRECONDITION_NEUMANN_TRUE_COMM)then
+             call get_nrk_vec(&
+                  method%commVec,&
+                  method%preconNeuman%vecx,&
+                  method%buff)
+             call get_nrk_vecLU(&
+                  method%commVec, method%buff, method%crsMat%nColL, &
+                  method%crsMat%nColU, method%rbuffL, method%rbuffU&
+                  )
+          else
+             method%rbuffL = 0.0d0
+             method%rbuffU = 0.0d0
+          endif
+          call MatVec_crs(&
+               method%prm, &
+               method%preconNeuman%crsMat, &
+               method%rbuffL, &
+               method%preconNeuman%vecx,&
+               method%rbuffU, &
+               method%preconNeuman%vecy,&
+               method%nBlock)
+
+          call xcpy(method%prm%n, &
+               method%preconNeuman%vecy, &
+               method%preconNeuman%vecx)
+          call axpy(method%prm%n,1.0d0,1.0d0,method%preconNeuman%vecy,s)
+       enddo
+
+    endif
+
+  end subroutine Neumann_crs
+
+  subroutine Jacobilike_crs(method,r,s)
+    use omp_lib
+    use krylov
+    use vec_kernel
+    use comm_kernel
+    use PARCEL_integer
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    integer itr_jacobi
+    real*8 r(method%prm%n)
+    real*8 s(method%prm%n)
+
+    ! x(i+1) = (D-W)^-1 * ( b + (-W-L-U)*x(i) )  
+    itr_jacobi = 1
+#if GS_method
+!    itr_jacobi = itr_jacobi/2
+    call axpy(method%prm%n,0.0d0,0.0d0,&
+         method%preconNeuman%vecy,method%preconNeuman%vecy)
+    call axpy(method%prm%n,0.0d0,0.0d0,&
+         method%preconNeuman%vecx,method%preconNeuman%vecx)
+    call GS_crs(&
+         method%prm, &
+         method%preconNeuman%crsMat, &
+         method%rbuffL, &
+         method%preconNeuman%vecx,&
+         method%rbuffU, &
+         method%preconNeuman%vecy,&
+         method%preconNeuman%Dinv,&
+         r, &
+         method%nBlock)
+       call xcpy(method%prm%n, &
+            method%preconNeuman%vecy, &
+            s)
+#else
+    ! 初期値
+    call vec_scaling(method%prm%n,&
+         r,&
+         method%preconNeuman%Dinv,&
+         method%preconNeuman%vecx)
+    call xcpy(method%prm%n, &
+         method%preconNeuman%vecx, &
+         s)
+#endif
+!    return
+ 
+    do i = 1,itr_jacobi
+       call get_nrk_vec(&
+            method%commVec,&
+            method%preconNeuman%vecx,&
+            method%buff)
+       call get_nrk_vecLU(&
+            method%commVec, method%buff, method%crsMat%nColL, &
+            method%crsMat%nColU, method%rbuffL, method%rbuffU&
+            )
+#if GS_method
+       call GS_crs(&
+            method%prm, &
+            method%preconNeuman%crsMat, &
+            method%rbuffL, &
+            method%preconNeuman%vecx,&
+            method%rbuffU, &
+            method%preconNeuman%vecy,&
+            method%preconNeuman%Dinv,&
+            r, &
+            method%nBlock)
+       call xcpy(method%prm%n, &
+            method%preconNeuman%vecy, &
+            s)
+       call xcpy(method%prm%n, &
+            method%preconNeuman%vecy, &
+            method%preconNeuman%vecx)
+#else
+       call MatVec_crs(&
+            method%prm, &
+            method%preconNeuman%crsMat, &
+            method%rbuffL, &
+            method%preconNeuman%vecx,&
+            method%rbuffU, &
+            method%preconNeuman%vecy,&
+            method%nBlock)
+       call axpy(method%prm%n,1.0d0,1.0d0,r,method%preconNeuman%vecy)
+
+       call vec_scaling(method%prm%n,&
+            method%preconNeuman%vecy,&
+            method%preconNeuman%Dinv,&
+            method%preconNeuman%vecx)
+       call xcpy(method%prm%n, &
+            method%preconNeuman%vecx, &
+            s)
+#endif
+
+    enddo
+
+  end subroutine Jacobilike_crs
+
 
   subroutine init_denMat(denMat,n,gn)
     use matrix
@@ -46,6 +643,34 @@ contains
 
   end subroutine init_cooMat
 
+  subroutine init_LocalcrsMat(LocalcrsMat,n,nnz)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(Local_CRS_Mat) :: LocalcrsMat
+    integer(kind=intType) n
+    integer(kind=intType) nnz    
+    integer(kind=intType) i
+
+    allocate( LocalcrsMat%crsA(nnz) )
+    allocate( LocalcrsMat%crsRow_ptr(n+1) )
+    allocate( LocalcrsMat%crsCol(nnz) )
+
+    !$OMP PARALLEL DO PRIVATE(i)
+    do i=1,n+1
+       LocalcrsMat%crsRow_ptr(i)=0
+    enddo
+    !$OMP END PARALLEL DO
+
+    !$OMP PARALLEL DO PRIVATE(i)
+    do i=1,nnz
+       LocalcrsMat%crsA(i)=0.0d0
+       LocalcrsMat%crsCol(i)=0
+    enddo
+    !$OMP END PARALLEL DO
+    
+  end subroutine init_LocalcrsMat
+  
   subroutine init_crsMat(crsMat,n,nnz)
     use matrix
     use PARCEL_integer
@@ -55,6 +680,7 @@ contains
     integer(kind=intType) nnz
     integer(kind=intType) i
 
+    crsMat%nnz = nnz
     allocate( crsMat%crsA(nnz) )
     allocate( crsMat%crsRow_ptr(n+1) )
     allocate( crsMat%crsCol(nnz) )
@@ -87,14 +713,269 @@ contains
 
   end subroutine init_crsMat
 
+  subroutine xcpy_diaMat(method,diaMatX,diaMatY)
+    use krylov
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    integer(kind=intType) n
+    type(DIA_Mat) :: diaMatX,diaMatY
+
+    call free_diaMat(diaMatY)
+    diaMatY%nnd = diaMatX%nnd
+
+    diaMatY%nCol  = diaMatX%nCol
+    diaMatY%nColL = diaMatX%nColL
+    diaMatY%nColD = diaMatX%nColD
+    diaMatY%nColU = diaMatX%nColU
+
+    if(allocated(diaMatX%diaA))then
+!       n = max(1,size(diaMatX%diaA))
+       n = diaMatX%nnd * method%prm%n
+       allocate(diaMatY%diaA(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%diaA(i) = diaMatX%diaA(i)
+       enddo
+    end if
+    if(allocated(diaMatX%diaA_hi))then
+!       n = max(1,size(diaMatX%diaA_hi))
+       n = diaMatX%nnd * method%prm%n
+       allocate(diaMatY%diaA_hi(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%diaA_hi(i) = diaMatX%diaA_hi(i)
+       enddo
+    end if
+    if(allocated(diaMatX%diaA_lo))then
+!       n = max(1,size(diaMatX%diaA_lo))
+       n = diaMatX%nnd * method%prm%n
+       allocate(diaMatY%diaA_lo(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%diaA_lo(i) = diaMatX%diaA_lo(i)
+       enddo
+    end if
+
+    if(allocated(diaMatX%offset))then
+!       n = max(1,size(diaMatX%offset))
+       n = diaMatX%nnd
+       allocate(diaMatY%offset(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%offset(i) = diaMatX%offset(i)
+       enddo
+    end if
+
+    if(allocated(diaMatX%iLs))then
+!       n = max(1,size(diaMatX%iLs))
+       n = diaMatX%nnd * method%prm%n
+       allocate(diaMatY%iLs(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%iLs(i) = diaMatX%iLs(i)
+       enddo
+    end if
+
+    if(allocated(diaMatX%offsetVec))then
+!       n = max(1,size(diaMatX%offsetVec))
+       n = diaMatX%nnd 
+       allocate(diaMatY%offsetVec(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%offsetVec(i) = diaMatX%offsetVec(i)
+       enddo
+    end if
+
+    if(allocated(diaMatX%Vec))then
+!       n = max(1,size(diaMatX%Vec))
+       n = diaMatX%nCol
+       allocate(diaMatY%Vec(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%Vec(i) = diaMatX%Vec(i)
+       enddo
+    end if
+    if(allocated(diaMatX%Vec_hi))then
+!       n = max(1,size(diaMatX%Vec_hi))
+       n = diaMatX%nCol
+       allocate(diaMatY%Vec_hi(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%Vec_hi(i) = diaMatX%Vec_hi(i)
+       enddo
+    end if
+    if(allocated(diaMatX%Vec_lo))then
+!       n = max(1,size(diaMatX%Vec_lo))
+       n = diaMatX%nCol
+       allocate(diaMatY%Vec_lo(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%Vec_lo(i) = diaMatX%Vec_lo(i)
+       enddo
+    end if
+
+    if(allocated(diaMatX%RowL))then
+!       n = max(1,size(diaMatX%RowL))
+       n =  diaMatX%nColL
+       allocate(diaMatY%RowL(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%RowL(i) = diaMatX%RowL(i)
+       enddo
+    end if
+    if(allocated(diaMatX%RowD))then
+!       n = max(1,size(diaMatX%RowD))
+       n = method%prm%n
+       allocate(diaMatY%RowD(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%RowD(i) = diaMatX%RowD(i)
+       enddo
+    end if
+    if(allocated(diaMatX%RowU))then
+!       n = max(1,size(diaMatX%RowU))
+       n = diaMatX%nColU
+       allocate(diaMatY%RowU(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          diaMatY%RowU(i) = diaMatX%RowU(i)
+       enddo
+    end if
+
+  end subroutine xcpy_diaMat
+
+  subroutine xcpy_crsMat(method,crsMatX,crsMatY)
+    use krylov
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    integer(kind=intType) n
+    type(CRS_Mat) :: crsMatX,crsMatY
+
+    call free_crsMat(crsMatY)
+    crsMatY%nnz   = crsMatX%nnz
+    crsMatY%nColL = crsMatX%nColL
+    crsMatY%nColU = crsMatX%nColU
+    if(allocated(crsMatX%crsA))then
+!       n = max(1,size(crsMatX%crsA))
+       n = crsMatX%nnz 
+       allocate(crsMatY%crsA(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsA(i) = crsMatX%crsA(i)
+       enddo
+    end if
+    if(allocated(crsMatX%crsA_hi))then
+!       n = max(1,size(crsMatX%crsA_hi))
+       n = crsMatX%nnz 
+       allocate(crsMatY%crsA_hi(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsA_hi(i) = crsMatX%crsA_hi(i)
+       enddo
+    end if
+    if(allocated(crsMatX%crsA_lo))then
+!       n = max(1,size(crsMatX%crsA_lo))
+       n = crsMatX%nnz 
+       allocate(crsMatY%crsA_lo(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsA_lo(i) = crsMatX%crsA_lo(i)
+       enddo
+    end if
+
+    if(allocated(crsMatX%crsRow_ptr))then
+!       n = max(1,size(crsMatX%crsRow_ptr))
+       n = method%prm%n+1
+       allocate(crsMatY%crsRow_ptr(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsRow_ptr(i) = crsMatX%crsRow_ptr(i)
+       enddo
+    end if
+    if(allocated(crsMatX%crsRow_ptr_Diag_s))then
+!       n = max(1,size(crsMatX%crsRow_ptr_Diag_s))
+       n = method%prm%n
+       allocate(crsMatY%crsRow_ptr_Diag_s(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsRow_ptr_Diag_s(i) = crsMatX%crsRow_ptr_Diag_s(i)
+       enddo
+    end if
+    if(allocated(crsMatX%crsRow_ptr_Diag_e))then
+!       n = max(1,size(crsMatX%crsRow_ptr_Diag_e))
+       n = method%prm%n
+       allocate(crsMatY%crsRow_ptr_Diag_e(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsRow_ptr_Diag_e(i) = crsMatX%crsRow_ptr_Diag_e(i)
+       enddo
+    end if
+    if(allocated(crsMatX%crsCol))then
+!       n = max(1,size(crsMatX%crsCol))
+       n = crsMatX%nnz 
+       allocate(crsMatY%crsCol(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%crsCol(i) = crsMatX%crsCol(i)
+       enddo
+    end if
+
+    if(allocated(crsMatX%RowL))then
+!       n = max(1,size(crsMatX%RowL))
+       n = crsMatX%nColL
+       allocate(crsMatY%RowL(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%RowL(i) = crsMatX%RowL(i)
+       enddo
+    end if
+    if(allocated(crsMatX%RowD))then
+!       n = max(1,size(crsMatX%RowD))
+       n = method%prm%n
+       allocate(crsMatY%RowD(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%RowD(i) = crsMatX%RowD(i)
+       enddo
+    end if
+    if(allocated(crsMatX%RowU))then
+!       n = max(1,size(crsMatX%RowU))
+       n = crsMatX%nColU
+       allocate(crsMatY%RowU(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%RowU(i) = crsMatX%RowU(i)
+       enddo
+    end if
+
+    if(allocated(crsMatX%iLs))then
+!       n = max(1,size(crsMatX%iLs))
+       n = crsMatX%nnz 
+       allocate(crsMatY%iLs(n))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i = 1,n
+          crsMatY%iLs(i) = crsMatX%iLs(i)
+       enddo
+    end if
+
+  end subroutine xcpy_crsMat
+
   subroutine init_diaMat(diaMat,n,nnd)
     use matrix
     use PARCEL_integer
     implicit none
+
     type(DIA_Mat) :: diaMat 
     integer(kind=intType) n
     integer(kind=intType) nnd
     integer(kind=intType) i
+    diaMat%nnd = nnd
     allocate( diaMat%diaA(n*nnd) )
     allocate( diaMat%offset(nnd) )
     allocate( diaMat%offsetVec(nnd) )
@@ -163,27 +1044,54 @@ contains
     use matrix
     use PARCEL_integer
     implicit none
+
     type(prmMat) :: prm
     integer(kind=intType) istart,iend
+    integer(kind=intType) n
     integer(kind=intType) nnz
     integer(kind=intType) crsCol(prm%nnz)
     integer(kind=intType) Colsort(prm%nnz)
     integer(kind=intType) nCol
     integer(kind=intType) nColL,nColU,nColD
     integer(kind=intType) i
+    integer(kind=intType) nnz_sort
     integer(kind=intType) Col
+
+    n=prm%n
     nnz=prm%nnz
     istart=prm%istart
     iend=prm%iend
 
+#if 0
     !$OMP PARALLEL DO PRIVATE(i)
     do i=1,nnz
        Colsort(i)=crsCol(i)
     enddo
     !$OMP END PARALLEL DO
-    !    call sort_c(Colsort,nnz)
-    call MergeSort(Colsort,nnz)
+#else
+    nnz_sort = 0
+    do i=1,nnz
+!       write(*,*)istart,iend,crsCol(i)
+       if( crsCol(i) < istart)then
+          nnz_sort = nnz_sort + 1
+          Colsort(nnz_sort) = crsCol(i)
+          cycle
+       endif
+       if( (istart+n-1) < crsCol(i) )then
+          nnz_sort = nnz_sort + 1
+          Colsort(nnz_sort) = crsCol(i)
+          cycle
+       endif
+    enddo
+    nnz = nnz_sort
+!    write(*,*)"Merge Sort START : ",nnz,nnz_sort
+#endif
 
+    !    call sort_c(Colsort,nnz)  
+    call MergeSort(Colsort,nnz)
+!    write(*,*)"Merge Sort END "
+    
+#if 1
     nCol=1
     do i=1,nnz
        Col=Colsort(i)
@@ -192,6 +1100,12 @@ contains
           Colsort(nCol)=Col
        endif
     enddo
+#else
+    ! 重複有り
+    nCol=nnz
+#endif
+   !  write(*,*)" get_crsCol_nCol : @ 4 @"
+
     ! do i=nCol+1,nnz
     !    Colsort(i)=-1
     ! enddo
@@ -216,7 +1130,11 @@ contains
        endif
     enddo
     !$OMP END PARALLEL DO
+    nColD=n
+
+    !  write(*,*)" get_crsCol_nCol : @ 5 @"
     !    write(*,*)"nColU,nColD,nColL = ",nColU,nColD,nColL
+
   end subroutine get_crsCol_nCol
 
   subroutine init_HybcrsMat(HybcrsMat,n)
@@ -425,6 +1343,7 @@ contains
     !    !$OMP END PARALLEL DO
 
   end subroutine MatVec_Hybcrs
+
 ! #define nBlock 2000
   subroutine MatVec_crs(prm,crsMat,xL,xD,xU,Ax,nBlock)
     use matrix
@@ -592,6 +1511,102 @@ contains
     
   end subroutine MatVec_crs
 
+  subroutine GS_crs(&
+       prm,crsMat,xL,xD,xU,Ax,&
+       Dinv,b, &
+       nBlock)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(CRS_Mat) :: crsMat 
+    real*8 xL(crsMat%nColL)
+    real*8 xD(prm%n)
+    real*8 xU(crsMat%nColU)
+
+    real*8 Dinv(prm%n)
+    real*8 b(prm%n)
+
+    real*8 tmp
+    real*8 diag
+    real*8 Ax(prm%n)
+    real*8 Ax0(nBlock)
+    integer(kind=intType) iptr_s,iptr_e
+!    integer(kind=intType) crsRow_ptr_Diag_s()
+!    integer(kind=intType) crsRow_ptr_Diag_e()
+
+    integer(kind=intType) i,j,jj,k,kk,kkstep,kk0,kkmin
+    integer(kind=intType) iLs,iUs,iLe,iUe
+    integer(kind=intType) n,istart,iend
+    integer(kind=intType) Row,Col
+    integer(kind=intType) nColL,nColU
+    integer nBlock
+    
+    n = prm%n
+    istart=prm%istart
+    iend=prm%iend
+    nColL=crsMat%nColL
+    nColU=crsMat%nColU
+
+     do k=1,n
+!     do k=n,1,-1
+       Ax(k) = 0.0d0
+       tmp   = 0.0d0
+       diag  = 0.0d0
+       Row=k-1+istart
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+
+          if( crsMat%crsCol(j)<istart ) then
+             Col=crsMat%iLs(j)
+             tmp=tmp+crsMat%crsA(j)*xL(Col)
+             cycle
+          endif
+          if( iend<crsMat%crsCol(j) )then
+             Col=crsMat%iLs(j)
+             tmp=tmp+crsMat%crsA(j)*xU(Col)
+             cycle
+          endif
+
+          Col=crsMat%iLs(j)
+          tmp=tmp+crsMat%crsA(j)*xD(Col)
+       enddo
+       Ax(k) = Dinv(k) * (b(k)+tmp)
+       xD(k) = Ax(k)
+    enddo
+
+    return 
+
+    do k=n,1,-1
+       Ax(k) = 0.0d0
+       tmp   = 0.0d0
+       diag  = 0.0d0
+       Row=k-1+istart
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+
+          if( crsMat%crsCol(j)<istart ) then
+             Col=crsMat%iLs(j)
+             tmp=tmp+crsMat%crsA(j)*xL(Col)
+             cycle
+          endif
+          if( iend<crsMat%crsCol(j) )then
+             Col=crsMat%iLs(j)
+             tmp=tmp+crsMat%crsA(j)*xU(Col)
+             cycle
+          endif
+
+          Col=crsMat%iLs(j)
+          tmp=tmp+crsMat%crsA(j)*xD(Col)
+       enddo
+       Ax(k) = Dinv(k) * (b(k)+tmp)
+       xD(k) = Ax(k)
+    enddo
+
+
+!    call fapp_stop("MatVecCRS",1,0)
+    
+  end subroutine GS_crs
+
+
   subroutine init_MatVec_crs(prm,crsMat,nBlock)
     use matrix
     use PARCEL_integer
@@ -606,12 +1621,26 @@ contains
     integer nBlock
 
     n = prm%n
-    nnz = prm%nnz
+!    nnz = prm%nnz
     istart=prm%istart
     iend=prm%iend
     nColL=crsMat%nColL
     nColU=crsMat%nColU
 
+#if 0
+    call init_Matvec_crs_iLs( &
+         istart, &
+         iend, &
+         n, &
+         nColL, &
+         nColU, &
+         crsMat%crsCol, &
+         crsMat%crsRow_ptr, &
+         crsMat%iLs, &
+         crsMat%RowL, &
+         crsMat%RowU  &
+         ); 
+#else
     !$OMP PARALLEL DO PRIVATE(i,j,k,iL,iU,Row,Col) SCHEDULE(dynamic,nBlock) 
     do k=1,n
        Row=k-1+istart
@@ -656,6 +1685,7 @@ contains
 
     enddo
     !$OMP END PARALLEL DO
+#endif
 
     !$OMP PARALLEL DO PRIVATE(i,j,k,Row,Col) SCHEDULE(dynamic,nBlock) 
     do k=1,n
@@ -1323,7 +2353,6 @@ contains
        do k=kk,kkmax
           Ax(k)=0.0d0
        enddo
-
        do j=1,nnd
           offset = diaMat%offset(j)
           minCol = kk    + istart - 1 + offset
@@ -1342,16 +2371,6 @@ contains
              Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
           enddo
        enddo
-
-       !        do j=1,nnd
-       !           do k=kk,kkmax
-       !              i = diaMat%iLs(  k + (j-1)*n  )
-       !              if( 0 < i )then
-       !                 Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
-       !              endif
-       !           enddo
-       !        enddo
-
     enddo
 
     !$OMP END PARALLEL
@@ -1359,8 +2378,7 @@ contains
     !    stop
   end subroutine MatVec_dia
 
-#if 0
-  subroutine init_MatVec_dia(prm,diaMat,commVec)
+  subroutine MatVec_neumann_dia(prm,diaMat,x,Ax,commVec,rbuf,nBlock)
     use matrix
     use comm
     use comm_kernel
@@ -1369,11 +2387,15 @@ contains
     implicit none
     type(prmMat)  :: prm 
     type(DIA_Mat) :: diaMat 
+    real*8 x(prm%n)
+    real*8 Ax(prm%n)
     type(comm_Vec) :: commVec
 
+    !    real*8 buff(commVec%nrk_data)
     integer(kind=intType) i,j,k,kk
     integer(kind=intType) n,nnd,istart
     integer(kind=intType) offset
+    ! nBlock --> module matrix 
     integer(kind=intType) Row,Col
     integer(kind=intType) maxRow,minRow
     integer(kind=intType) maxCol,minCol
@@ -1381,9 +2403,11 @@ contains
     integer myrank 
     integer irank,irank_start
     integer(kind=intType) kkmax,kmax,kmin
-    real*8 stime,etime
+    !    real*8 rbuf(commVec%nrk_data)
+    real*8 rbuf(commVec%nrk_data+1)
+    integer(kind=intType) iLs,iLe
+    integer nBlock
 
-    stime=mpi_wtime()
     n      = prm%n
     nnd    = prm%nnd
     istart = prm%istart
@@ -1391,49 +2415,59 @@ contains
 
     !$OMP PARALLEL PRIVATE( &
     !$OMP kk,kkmax,j,irank,irank_start,&
-    !$OMP i0,i,k,Col,Row,offset,&
+    !$OMP i0,i,k,Col,Row,offset,iLs,iLe,&
     !$OMP minCol,maxCol,minRow,maxRow,kmin,kmax &
     !$OMP ) 
-
+    
     !$OMP DO SCHEDULE(dynamic,1)
     do kk=1,n,nBlock
        kkmax=min(n,kk+nBlock-1)
        do k=kk,kkmax
-          do j=1,nnd
-
-             Col = k + istart+diaMat%offset(j) - 1
-             diaMat%iLs(  k + (j-1)*n  ) = commVec%nrk_data +1
-             do irank=1,commVec%nrk_rank
-                i0=0
-                do i=1,irank-1
-                   i0=i0+commVec%nrk_prm(i)%ndata
-                enddo
-                irank_start=commVec%istart( commVec%nrk_prm(irank)%rank+1 )
-                do i=1,commVec%nrk_prm(irank)%ndata
-                   Row = &
-                        irank_start + &
-                        commVec%nrk_prm(irank)%offset(i) 
-                   if(Row.eq.Col)then
-                      diaMat%iLs(  k + (j-1)*n  )=i+i0
-                      exit
-                   endif
-                enddo
-                if(Row.eq.Col)then
-                   exit
-                endif
-             enddo
-
+          Ax(k)= x(k)
+       enddo
+       do j=1,nnd
+          offset = diaMat%offset(j)
+          minCol = kk    + istart - 1 + offset
+          maxCol = kkmax + istart - 1 + offset
+          minRow = 1 + istart - 1
+          maxRow = n + istart - 1
+          call set_Head_Tail(minRow,maxRow,minCol,maxCol,kmin,kmax)
+          kmin=kmin-istart+1
+          kmax=kmax-istart+1
+          do k=kmin,kmax
+             Ax(k-offset) = &
+                  Ax(k-offset) + diaMat%diaA(k-offset + (j-1)*n) * x(k)
+          enddo
+          do k=kk,kkmax
+             i = diaMat%iLs(  k + (j-1)*n  )
+             Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
           enddo
        enddo
-
     enddo
+
     !$OMP END PARALLEL
-    etime=mpi_wtime()
-    !write(*,*)"init_matvec_time=",etime-stime,"[s]"
 
     !    stop
-  end subroutine init_MatVec_dia
-#else
+  end subroutine MatVec_neumann_dia
+
+
+  subroutine MatVec_dia_(prm,diaMat,x,Ax,commVec,rbuf,nBlock)
+    use matrix
+    use comm
+    use comm_kernel
+    use vec_kernel
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(DIA_Mat) :: diaMat 
+    real*8 x(prm%n)
+    real*8 Ax(prm%n)
+    type(comm_Vec) :: commVec
+    real*8 rbuf(commVec%nrk_data+1)
+    integer nBlock
+    call MatVec_dia(prm,diaMat,x,Ax,commVec,rbuf,nBlock)
+  end subroutine MatVec_dia_
+
   subroutine init_MatVec_dia(prm,diaMat,commVec,nBlock)
     use matrix
     use comm
@@ -1447,19 +2481,20 @@ contains
     integer nBlock
 
     integer(kind=intType) i,j,k,kk
-    integer(kind=intType) n,nnd,istart,iend
+    integer(kind=intType) n,gn,nnd,istart,iend
     integer(kind=intType) offset
     integer(kind=intType) Row,Col
     integer(kind=intType) maxRow,minRow
     integer(kind=intType) maxCol,minCol
     integer(kind=intType) i0
     integer myrank 
-    integer irank,irank_start
+    integer(kind=intType) irank,irank_start
     integer(kind=intType) kkmax,kmax,kmin
     real*8 stime,etime
     integer tmp,tmp_rank,pre_rank
 
     n      = prm%n
+    gn     = prm%gn
     nnd    = prm%nnd
     istart = prm%istart
     iend   = prm%iend
@@ -1474,18 +2509,64 @@ contains
     !$OMP DO SCHEDULE(dynamic,1)
     do kk=1,n,nBlock
        kkmax=min(n,kk+nBlock-1)
+
+#if 1
+       do j=1,nnd            
+          do k=kk,kkmax
+             Col = k + istart+diaMat%offset(j) - 1
+             diaMat%iLs(  k + (j-1)*n  ) = commVec%nrk_data + 1
+          enddo
+          tmp=1
+          tmp_rank=1
+          pre_rank=1
+          i0=0
+          do k=kk,kkmax
+             Col = k + istart+diaMat%offset(j) - 1
+             if (istart<=Col .and. Col<=iend) then
+                cycle
+             endif
+
+             do irank=tmp_rank,commVec%nrk_rank
+                if (pre_rank<irank) then
+                   tmp=1
+                endif
+                do i=pre_rank,irank-1
+                   i0=i0+commVec%nrk_prm(i)%ndata
+                enddo
+                pre_rank=irank
+                irank_start=commVec%istart( commVec%nrk_prm(irank)%rank+1 )
+                do i=tmp,commVec%nrk_prm(irank)%ndata
+                   Row = &
+                        irank_start + &
+                        commVec%nrk_prm(irank)%offset(i) 
+                   tmp=i
+                   tmp_rank=irank
+                   if(Row.eq.Col)then
+                      diaMat%iLs(  k + (j-1)*n  )=i+i0
+                      exit
+                   endif
+                enddo
+                if(Row.eq.Col)then
+                   exit
+                endif
+             enddo
+
+          enddo
+       enddo
+
+#else
        do k=kk,kkmax
           tmp=1
           tmp_rank=1
           pre_rank=1
           i0=0
-          do j=1,nnd
-            
+          do j=1,nnd            
              Col = k + istart+diaMat%offset(j) - 1
              diaMat%iLs(  k + (j-1)*n  ) = commVec%nrk_data +1
              if (istart<=Col .and. Col<=iend) then
                cycle
              endif
+
              do irank=tmp_rank,commVec%nrk_rank
                 if (pre_rank<irank) then
                   tmp=1
@@ -1501,154 +2582,50 @@ contains
                         commVec%nrk_prm(irank)%offset(i) 
                    tmp=i
                    tmp_rank=irank
-
-                   !if(Row>Col) then
-                   !   exit
-                   !endif
                    if(Row.eq.Col)then
                       diaMat%iLs(  k + (j-1)*n  )=i+i0
                       exit
                    endif
                 enddo
-                !if(Row>Col) then
-                !   exit
-                !endif
                 if(Row.eq.Col)then
                    exit
                 endif
              enddo
-
           enddo
        enddo
+#endif
 
     enddo
     !$OMP END PARALLEL
 
-    !    stop
-  end subroutine init_MatVec_dia
-  
-#endif
-  
-  subroutine init_MatVec_dia_org(prm,diaMat,commVec,nBlock)
-    use matrix
-    use comm
-    use comm_kernel
-    use vec_kernel
-    use PARCEL_integer
-    implicit none
-    type(prmMat)  :: prm 
-    type(DIA_Mat) :: diaMat 
-    type(comm_Vec) :: commVec
-    integer nBlock
-
-    integer(kind=intType) i,j,k,kk
-    integer(kind=intType) n,nnd,istart
-    integer(kind=intType) offset
-    integer(kind=intType) Row,Col
-    integer(kind=intType) maxRow,minRow
-    integer(kind=intType) maxCol,minCol
-    integer(kind=intType) i0
-    integer myrank 
-    integer irank,irank_start
-    integer(kind=intType) kkmax,kmax,kmin
-
-    n      = prm%n
-    nnd    = prm%nnd
-    istart = prm%istart
-    myrank = commVec%myrank
-
-    !$OMP PARALLEL PRIVATE( &
-    !$OMP kk,kkmax,j,irank,irank_start,&
-    !$OMP i0,i,k,Col,Row,offset,&
-    !$OMP minCol,maxCol,minRow,maxRow,kmin,kmax &
-    !$OMP ) 
-
-    !$OMP DO SCHEDULE(dynamic,1)
+#if 0
     do kk=1,n,nBlock
        kkmax=min(n,kk+nBlock-1)
-#if 0
        do j=1,nnd
           offset = diaMat%offset(j)
-          do irank=1,commVec%nrk_rank
-             i0=0
-             do i=1,irank-1
-                i0=i0+commVec%nrk_prm(i)%ndata
-             enddo
-             irank_start=commVec%istart( commVec%nrk_prm(irank)%rank+1 )
-             minCol = kk    + istart - 1 + offset
-             maxCol = kkmax + istart - 1 + offset
-             minRow = irank_start
-             maxRow = commVec%istart( commVec%nrk_prm(irank)%rank+1 +1 ) - 1
-             call set_Head_Tail(minRow,maxRow,minCol,maxCol,kmin,kmax)
-             kmin=kmin-istart+1-offset
-             kmax=kmax-istart+1-offset
-
-             do k=kmin,kmax
-                commVec%nrk_prm(irank)%iLs_Ovl2( k + (j-1)*n ) = 1
-                do i=1,commVec%nrk_prm(irank)%ndata
-                   Row = &
-                        irank_start + &
-                        commVec%nrk_prm(irank)%offset(i) 
-                   Col = k + istart+diaMat%offset(j) - 1
-                   if(Row.eq.Col)then
-                      commVec%nrk_prm(irank)%iLs_Ovl2(  k + (j-1)*n  )=i
-                      exit
-                   endif
-                enddo
-                commVec%nrk_prm(irank)%iLe_Ovl2( k + (j-1)*n ) = commVec%nrk_prm(irank)%ndata
-                do i=commVec%nrk_prm(irank)%ndata,1,-1
-                   Row = &
-                        irank_start + &
-                        commVec%nrk_prm(irank)%offset(i) 
-                   Col = k + istart+diaMat%offset(j) - 1
-                   if(Row.eq.Col)then
-                      commVec%nrk_prm(irank)%iLe_Ovl2(  k + (j-1)*n  )=i
-                      exit
-                   endif
-                enddo
-
-             enddo
+          minCol = kk    + istart - 1 + offset
+          maxCol = kkmax + istart - 1 + offset
+          minRow = 1 + istart - 1
+          maxRow = n + istart - 1
+          call set_Head_Tail(minRow,maxRow,minCol,maxCol,kmin,kmax)
+          kmin=kmin-istart+1
+          kmax=kmax-istart+1
+          do k=kmin,kmax
+             ! Ax(k-offset) = &
+             !      Ax(k-offset) + diaMat%diaA(k-offset + (j-1)*n) * x(k)
+          enddo
+          do k=kk,kkmax
+             i = diaMat%iLs(  k + (j-1)*n  )
+             ! Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
+             write(*,*)k,"rbuf(",i,")"
           enddo
        enddo
-#else
-       do k=kk,kkmax
-          do j=1,nnd
-
-             Col = k + istart+diaMat%offset(j) - 1
-             !              diaMat%iLs(  k + (j-1)*n  ) = -1
-             diaMat%iLs(  k + (j-1)*n  ) = commVec%nrk_data +1
-             do irank=1,commVec%nrk_rank
-                i0=0
-                do i=1,irank-1
-                   i0=i0+commVec%nrk_prm(i)%ndata
-                enddo
-                irank_start=commVec%istart( commVec%nrk_prm(irank)%rank+1 )
-                do i=1,commVec%nrk_prm(irank)%ndata
-                   Row = &
-                        irank_start + &
-                        commVec%nrk_prm(irank)%offset(i) 
-                   if(Row.eq.Col)then
-                      !                   Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i+i0)
-                      diaMat%iLs(  k + (j-1)*n  )=i+i0
-                      exit
-                   endif
-                enddo
-                if(Row.eq.Col)then
-                   exit
-                endif
-             enddo
-
-          enddo
-       enddo
-#endif
-
     enddo
 
-    !$OMP END PARALLEL
-
+#endif
     !    stop
-  end subroutine init_MatVec_dia_org
-
+  end subroutine init_MatVec_dia
+    
   subroutine MatVec_dia_ovl1(prm,diaMat,x,Ax,commVec,rbuf,nBlock)
     use matrix
     use comm
@@ -2661,7 +3638,7 @@ contains
 #else
       irank=omp_get_thread_num()
 #endif
-      write(*,*)irank," D -- ",k,D(k)
+      write(*,*)irank," Dinv -- ",k,1.0d0/D(k)
 !      !$omp end master
 #endif
 
@@ -2952,7 +3929,7 @@ contains
 
     ! -------
     ! 加法シュワルツ
-
+#if 1
     ! ----
     ! 送信する行列の非零要素数を計算
     s_nnzU=0
@@ -3115,10 +4092,10 @@ contains
        allocate(precon_crsMatASU%crsA(1))
        allocate(precon_crsMatASU%crsRow_ptr(2))
        allocate(precon_crsMatASU%crsCol(1))
-       precon_crsMatASU%crsA(1)      =0.0d0
-       precon_crsMatASU%crsRow_ptr(1)=1
-       precon_crsMatASU%crsRow_ptr(2)=1
-       precon_crsMatASU%crsCol(1)    =-1
+       precon_crsMatASU%crsA(1)       =  0.0d0
+       precon_crsMatASU%crsRow_ptr(1) =  1
+       precon_crsMatASU%crsRow_ptr(2) =  1
+       precon_crsMatASU%crsCol(1)     = -1
        prm_ASU%n      =  0
        prm_ASU%istart = -1
        prm_ASU%iend   = -2
@@ -3230,8 +4207,8 @@ contains
              if(iendAS<Col)then
                 cycle
              endif
-             method%precon_crsMatAS%crsA(i)  = precon_crsMatASU%crsA(j)
-             method%precon_crsMatAS%crsCol(i)= precon_crsMatASU%crsCol(j)
+             method%precon_crsMatAS%crsA(i)   = precon_crsMatASU%crsA(j)
+             method%precon_crsMatAS%crsCol(i) = precon_crsMatASU%crsCol(j)
              i=i+1
           enddo
        enddo
@@ -3278,8 +4255,11 @@ contains
     method%precon_crsMatAS%nColL=0
     method%precon_crsMatAS%nColU=0
 
+#endif
+
     ! -----
     ! D-ILU分解 
+    ! overlap領域を含んだベクトル
     allocate(method%ivec_AS(n+addL*2))
     allocate(method%ovec_AS(n+addL*2))
 
@@ -3306,7 +4286,6 @@ contains
          iend_th_AS, &
          method%precon_thblock)
     do i=1,max_numth
-       !@       write(*,*)i," istart_th_AS,iend_th_AS ",istart_th_AS(i),iend_th_AS(i)
        method%preconAS(i)%istart_th = istart_th_AS(i)
        method%preconAS(i)%iend_th   = iend_th_AS(i)
        method%preconAS(i)%n_startth = istart_th_AS(i) - istartAS +1
@@ -3485,6 +4464,7 @@ contains
        z(i)=y(i)*x(i)
     enddo
     !$OMP END PARALLEL DO
+
   end subroutine pointJacobi
 
   subroutine blockJacobi_crs(method,r,s)
@@ -3766,7 +4746,7 @@ contains
 
   end subroutine init_blockJacobi_dia
 
-  subroutine  AdditiveSchwarz_crs(method,r,s)
+  subroutine AdditiveSchwarz_crs(method,r,s)
     use krylov
     use vec_kernel
     use PARCEL_integer
@@ -4002,6 +4982,7 @@ contains
     precon_time(5) = precon_time(5) + etime - stime
 
   end subroutine AdditiveSchwarz_dia
+
 
   subroutine solve_ILU_crs( &
        n,nnz,&
@@ -4368,7 +5349,6 @@ contains
 
        do j=crsRow_ptr(k+1)-1,crsRow_ptr(k),-1
           Col=crsCol(j)-istart+1
-
           if(independ_end<Col)then
              cycle
           endif
@@ -5364,6 +6344,23 @@ contains
     enddo
   end subroutine view_crs
 
+  subroutine view_localcrs(n,LocalcrsMat)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    !    type(prmMat)  :: prm 
+    type(Local_CRS_Mat) :: LocalcrsMat
+    integer(kind=intType) i,j,k
+    integer(kind=intType) n
+    !   n = prm%n
+    !   istart=prm%istart
+    do k=1,n
+       do j=LocalcrsMat%crsRow_ptr(k),LocalcrsMat%crsRow_ptr(k+1)-1
+          write(*,*)"  CRS  ",k,LocalcrsMat%crsCol(j),LocalcrsMat%crsA(j)
+       enddo
+    enddo
+  end subroutine view_localcrs
+
   !  subroutine view_dia(prm,diaMat)
   subroutine view_dia(n,nnd,istart,diaMat)
     use matrix
@@ -5955,6 +6952,7 @@ contains
        crsMat%crsRow_ptr(i)=nptr
     enddo
     crsMat%crsRow_ptr(n+1)=nptr    
+
 #if 0
     do i=1,n
        !          write(*,*)"  @@",i,crsMat%crsRow_ptr(i),crsMat%crsRow_ptr(i+1)-1 
@@ -6212,6 +7210,192 @@ contains
 
   end subroutine get_nnd_crs_without_sort
 
+  ! Localcrsはローカル座標なのでintegerを利用
+  ! C言語で利用するには配列をゼロ始まりに変更する必要がある.
+  subroutine crs2Localcrs( &
+       crsMat, &
+       crsA,crsRow_ptr,crsCol, &       
+       n,istart,nnz, &
+       n_max,nnz_max)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(CRS_Mat) :: crsMat
+    integer(kind=intType) n
+    integer(kind=intType) nnz
+    integer(kind=intType) n_max
+    integer(kind=intType) nnz_max
+    real*8 crsA(nnz_max)
+    integer crsRow_ptr(n_max+1)
+    integer crsCol(nnz_max)
+
+    integer(kind=intType) istart
+
+    integer(kind=intType) k,j,j_,j0
+    integer(kind=intType) iend
+    integer(kind=intType) DiagBlock_Row_ptr_start
+    integer(kind=intType) DiagBlock_Row_ptr_end
+    iend   = istart + n -1
+
+    ! write(*,*)"crs2Localcrs : n,nnz = ",n,nnz
+
+#if 0
+    do k=1,n
+       crsRow_ptr(k) = crsMat%crsRow_ptr(k)
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          crsCol(j) = crsMat%crsCol(j)
+          crsA(j)   =  crsMat%crsA(j) 
+       enddo       
+    enddo
+    crsRow_ptr(n+1) = crsMat%crsRow_ptr(n+1)
+#else    
+    !$OMP PARALLEL DO PRIVATE(k,j,j0,j_,DiagBlock_Row_ptr_start,DiagBlock_Row_ptr_end )
+    do k=1,n
+       DiagBlock_Row_ptr_start = crsMat%crsRow_ptr(k)
+       DiagBlock_Row_ptr_end   = crsMat%crsRow_ptr(k+1)-1
+
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if(crsMat%crsCol(j)>=istart)then
+             DiagBlock_Row_ptr_start = j
+             exit
+          endif
+       enddo
+       do j=crsMat%crsRow_ptr(k+1)-1,crsMat%crsRow_ptr(k),-1
+          if(crsMat%crsCol(j)<=iend)then
+             DiagBlock_Row_ptr_end = j
+             exit
+          endif
+       enddo
+       
+       ! ------------
+       j0 = 0
+       ! 対角ブロック
+       do j=DiagBlock_Row_ptr_start,DiagBlock_Row_ptr_end
+          j_ = crsMat%crsRow_ptr(k) + j0
+          j0 = j0 + 1
+          crsCol(j_) = crsMat%crsCol(j) - istart + 1
+          crsA(j_)   = crsMat%crsA(j)
+       enddo
+       
+       ! L ブロック
+       do j=crsMat%crsRow_ptr(k),DiagBlock_Row_ptr_start-1
+          j_ = crsMat%crsRow_ptr(k) + j0
+          j0 = j0 + 1
+          crsCol(j_) = n + crsMat%iLs(j)
+          crsA(j_)   =  crsMat%crsA(j) 
+       enddo
+
+       ! U ブロック
+       do j=DiagBlock_Row_ptr_end+1,crsMat%crsRow_ptr(k+1)-1
+          j_ = crsMat%crsRow_ptr(k) + j0
+          j0 = j0 + 1
+          crsCol(j_) = n + crsMat%iLs(j) + crsMat%nColL
+          crsA(j_)   = crsMat%crsA(j) 
+       enddo
+
+#if 0
+       write(*,*)" ------------------------------- "
+       ! write(*,*)"CRS       : ",crsMat%crsRow_ptr(k)," - ",crsMat%crsRow_ptr(k+1)-1
+       ! write(*,*)"Local CRS : ",DiagBlock_Row_ptr_start," - ",DiagBlock_Row_ptr_end
+       ! write(*,*)"Local CRS D : ",DiagBlock_Row_ptr_start,DiagBlock_Row_ptr_end
+       ! write(*,*)"Local CRS L : ",crsMat%crsRow_ptr(k),DiagBlock_Row_ptr_start-1
+       ! write(*,*)"Local CRS U : ",DiagBlock_Row_ptr_end+1,crsMat%crsRow_ptr(k+1)-1
+
+       ! do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+       !    write(*,*)"       CRS  ",k-1+istart,crsMat%crsCol(j),crsMat%crsA(j), crsMat%iLs(j)
+       ! enddo
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          write(*,*)"  Local CRS  ",k,crsCol(j),crsA(j)                
+       enddo
+       write(*,*)" ------------------------------- "
+#endif
+       
+    enddo
+    !$OMP END PARALLEL DO
+    
+    !$OMP PARALLEL DO PRIVATE(k)
+    do k=1,n+1
+      crsRow_ptr(k) = crsMat%crsRow_ptr(k)
+    enddo
+    !$OMP END PARALLEL DO
+
+#endif
+
+#if 0
+    do k=n+1,n_max + 1
+       crsRow_ptr(k) = crsRow_ptr(k-1) + 1
+    enddo
+    do k=n+1,n_max 
+!       write(*,*)k,crsRow_ptr(k),crsRow_ptr(k+1)-1  
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          crsCol(j)  = k
+!          crsA(j_)   = 1.0d0
+          crsA(j)    = 0.0d0
+       enddo
+    enddo
+#endif
+
+  end subroutine crs2Localcrs
+
+  subroutine Localcrs_to_Clang( &
+       crsA,&
+       crsRow_ptr,crsCol, &       
+       n,istart,nnz)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(CRS_Mat) :: crsMat
+    integer(kind=intType) n
+    integer(kind=intType) nnz
+    real*8 crsA(nnz)
+    integer crsRow_ptr(n+1)
+    integer crsCol(nnz)
+    
+    integer(kind=intType) istart
+    integer(kind=intType) k,j
+
+    do k=1,n
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          crsCol(j) = crsCol(j) - 1
+          !          crsA(j)   =  crsA(j)
+       enddo       
+    enddo
+    do k=1,n+1
+       crsRow_ptr(k) = crsRow_ptr(k) - 1
+    enddo
+    
+  end subroutine Localcrs_to_Clang
+
+  subroutine Localcrs_to_Fortran( &
+       crsA,&
+       crsRow_ptr,crsCol, &       
+       n,istart,nnz)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(CRS_Mat) :: crsMat
+    integer(kind=intType) n
+    integer(kind=intType) nnz
+    real*8 crsA(nnz)
+    integer crsRow_ptr(n+1)
+    integer crsCol(nnz)
+    
+    integer(kind=intType) istart
+    integer(kind=intType) k,j
+
+    do k=1,n+1
+       crsRow_ptr(k) = crsRow_ptr(k) + 1
+    enddo
+
+    do k=1,n
+       do j=crsRow_ptr(k),crsRow_ptr(k+1) -1 
+          crsCol(j) = crsCol(j) + 1
+          !          crsA(j)   =  crsA(j)
+       enddo       
+    enddo
+    
+  end subroutine Localcrs_to_Fortran
+            
   subroutine crs2dia(crsMat,diaMat,n,istart,nnd,nnz)
     use sort_kernel
     use matrix
@@ -6459,6 +7643,7 @@ contains
           endif
        enddo
     enddo
+
     !    call sort_c(Colsort,nnz)
     call MergeSort(Colsort,nnz)
 
@@ -6518,34 +7703,98 @@ contains
     use PARCEL_integer
     implicit none
     type(DIA_Mat)  :: diaMat
-    deallocate(diaMat%diaA)
-    deallocate(diaMat%offset)
-    deallocate(diaMat%offsetVec)
-    deallocate(diaMat%Vec)
 
-    deallocate(diaMat%RowL)
-    deallocate(diaMat%RowD)
-    deallocate(diaMat%RowU) 
+    if(allocated(diaMat%diaA))then
+       deallocate(diaMat%diaA)
+    endif
+
+    if(allocated(diaMat%offset))then
+       deallocate(diaMat%offset)
+    endif
+
+    if(allocated(diaMat%iLs))then
+       deallocate(diaMat%iLs)
+    endif
+
+    if(allocated(diaMat%offsetVec))then
+       deallocate(diaMat%offsetVec)
+    endif
+
+    if(allocated(diaMat%Vec))then
+       deallocate(diaMat%Vec)
+    endif
+
+    if(allocated(diaMat%RowL))then
+       deallocate(diaMat%RowL)
+    endif
+
+    if(allocated(diaMat%RowD))then
+       deallocate(diaMat%RowD)
+    endif
+
+    if(allocated(diaMat%RowU))then
+       deallocate(diaMat%RowU) 
+    endif
 
   end subroutine free_diaMat
 
+  subroutine free_LocalcrsMat(LocalcrsMat)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(Local_CRS_Mat) :: LocalcrsMat
+    if(allocated(LocalcrsMat%crsA))then
+       deallocate(LocalcrsMat%crsA)
+    endif
+    if(allocated(LocalcrsMat%crsRow_ptr))then
+       deallocate(LocalcrsMat%crsRow_ptr)
+    endif
+    if(allocated(LocalcrsMat%crsCol))then
+       deallocate(LocalcrsMat%crsCol)
+    endif
+  end subroutine free_LocalcrsMat
+  
   subroutine free_crsMat(crsMat)
     use matrix
     use PARCEL_integer
     implicit none
     type(CRS_Mat)  :: crsMat
-    deallocate(crsMat%crsA)
-    deallocate(crsMat%crsRow_ptr)
+    if(allocated(crsMat%crsA))then
+       deallocate(crsMat%crsA)
+    endif
+    if(allocated(crsMat%crsA_hi))then
+       deallocate(crsMat%crsA_hi)
+    endif
+    if(allocated(crsMat%crsA_lo))then
+       deallocate(crsMat%crsA_lo)
+    endif
+    if(allocated(crsMat%crsRow_ptr))then
+       deallocate(crsMat%crsRow_ptr)
+    endif
     if(allocated(crsMat%crsRow_ptr_Diag_s))then
        deallocate(crsMat%crsRow_ptr_Diag_s)
     endif
     if(allocated(crsMat%crsRow_ptr_Diag_e))then
        deallocate(crsMat%crsRow_ptr_Diag_e)
     endif
-    deallocate(crsMat%crsCol)
-    deallocate(crsMat%RowL)
-    deallocate(crsMat%RowD)
-    deallocate(crsMat%RowU)
+
+    if(allocated(crsMat%crsCol))then
+       deallocate(crsMat%crsCol)
+    endif
+    if(allocated(crsMat%RowL))then
+       deallocate(crsMat%RowL)
+    endif
+    if(allocated(crsMat%RowD))then
+       deallocate(crsMat%RowD)
+    endif
+    if(allocated(crsMat%RowU))then
+       deallocate(crsMat%RowU)
+    endif
+
+    if(allocated(crsMat%iLs))then
+       deallocate(crsMat%iLs)
+    endif
+
   end subroutine free_crsMat
 
   subroutine free_HybcrsMat(HybcrsMat)
@@ -6813,6 +8062,7 @@ contains
        enddo
     enddo
 
+    deallocate(D_ptr)
     call divide_ILU_crs( &
          n,istart,&
          crsMatLU,crsMatL,crsMatU)
@@ -6820,6 +8070,68 @@ contains
     call free_crsMat(crsMatLU)
 
   end subroutine ILU_LU_crs
+
+  subroutine make_DiagBlock_Localcrs(& 
+       n,nnz,&
+       crsA,crsRow_ptr,crsCol)
+    use krylov
+    use PARCEL_integer
+    implicit none
+
+    integer(kind=intType) n,nnz,istart
+    real*8 crsA(nnz)
+    ! integer(kind=intType) crsRow_ptr(n+1)
+    ! integer(kind=intType) crsCol(nnz)
+    integer crsRow_ptr(n+1)
+    integer crsCol(nnz)
+
+    type(CRS_Mat) :: crsMatL
+    type(CRS_Mat) :: crsMatU
+    type(CRS_Mat) :: crsMatLU
+
+    integer(kind=intType) nnzL
+    integer(kind=intType) nnzU
+
+    integer(kind=intType) i,j,k
+    integer(kind=intType) ij,jk,kj,kk,ik
+    integer(kind=intType) Col
+    integer(kind=intType) kCol,jCol
+    integer,allocatable::D_ptr(:)
+    integer nnz_
+
+    istart = 1
+
+    call init_crsMat(crsMatLU,n,nnz) 
+
+    nnz_ = 1
+    crsMatLU%crsRow_ptr(1)=1
+    do k=1,n
+       do j=crsRow_ptr(k),crsRow_ptr(k+1)-1
+          if(n<crsCol(j))then
+!             write(*,*)"exit : ",crsCol(j)
+             exit
+          endif
+          crsMatLU%crsCol(nnz_) = crsCol(j)
+          crsMatLU%crsA(nnz_) = crsA(j)
+          nnz_ = nnz_ + 1
+       enddo
+       crsMatLU%crsRow_ptr(k+1) = nnz_
+    enddo
+
+    nnz_ = nnz_ -1
+    do i=1,nnz_
+       crsA(i)  = crsMatLU%crsA(i)
+       crsCol(i) = crsMatLU%crsCol(i)
+    enddo
+    do i=1,n+1
+       crsRow_ptr(i) = crsMatLU%crsRow_ptr(i)
+    enddo
+    nnz = nnz_
+    call free_crsMat(crsMatLU)
+    return 
+
+  end subroutine make_DiagBlock_Localcrs
+
 
   subroutine ILU_LU_dia(&
        n,istart,nnd,&
@@ -6931,7 +8243,6 @@ contains
          )
 
     call free_diaMat(diaMatLU)
-
 
   end subroutine ILU_LU_dia
 
@@ -7206,12 +8517,25 @@ contains
          method%preconILU(myth+1)%diaMatU )
 
     method%preconILU(myth+1)%nnd_th  = nnd
+#if 1
+    method%preconILU(myth+1)%nndL_th =  &
+         ( method%preconILU(myth+1)%diaMatL%nnd *  method%preconILU(myth+1)%n_th ) / &
+         method%preconILU(myth+1)%n_th
+#else
     method%preconILU(myth+1)%nndL_th =  &
          size(method%preconILU(myth+1)%diaMatL%diaA) / &
          method%preconILU(myth+1)%n_th
+#endif
+
+#if 1
+    method%preconILU(myth+1)%nndU_th = &
+         ( method%preconILU(myth+1)%diaMatU%nnd * method%preconILU(myth+1)%n_th ) / &
+         method%preconILU(myth+1)%n_th
+#else
     method%preconILU(myth+1)%nndU_th = &
          size(method%preconILU(myth+1)%diaMatU%diaA) / &
          method%preconILU(myth+1)%n_th
+#endif
     call free_diaMat(method%preconILU(myth+1)%diaMatLU)
 
     !$OMP END PARALLEL
@@ -7718,4 +9042,252 @@ contains
   end subroutine blockJacobi_ILU_dia
 
 end module matrix_kernel
+
+module PARCEL_MATRIX_kernel_CPU
+  implicit none
+
+contains
+
+  subroutine MatVec_crs_FP64_CPU(prm,crsMat,xL,xD,xU,Ax,nBlock)
+    use matrix
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(CRS_Mat) :: crsMat 
+    real*8 xL(crsMat%nColL)
+    real*8 xD(prm%n)
+    real*8 xU(crsMat%nColU)
+
+    real*8 tmp
+    real*8 Ax(prm%n)
+    real*8 Ax0(nBlock)
+    integer(kind=intType) iptr_s,iptr_e
+
+    integer(kind=intType) i,j,jj,k,kk,kkstep,kk0,kkmin
+    integer(kind=intType) iLs,iUs,iLe,iUe
+    integer(kind=intType) n,istart,iend
+    integer(kind=intType) Row,Col
+    integer(kind=intType) nColL,nColU
+    integer nBlock
+    
+    n = prm%n
+    istart=prm%istart
+    iend=prm%iend
+    nColL=crsMat%nColL
+    nColU=crsMat%nColU
+
+    !    call fapp_start("MatVecCRS",1,0)
+    !$OMP PARALLEL DO PRIVATE(i,j,k,iLs,iUs,iLe,iUe,Row,Col,tmp) SCHEDULE(static,nBlock)
+    do k=1,n
+      Ax(k)=0.0d0
+      tmp=0.0d0
+       Row=k-1+istart
+       do j=crsMat%crsRow_ptr(k),crsMat%crsRow_ptr(k+1)-1
+          if( crsMat%crsCol(j)<istart ) then
+             Col=crsMat%iLs(j)
+             !Ax(k)=Ax(k)+crsMat%crsA(j)*xL(Col)
+             tmp=tmp+crsMat%crsA(j)*xL(Col)
+             cycle
+          endif
+          if( iend<crsMat%crsCol(j) )then
+             Col=crsMat%iLs(j)
+             !Ax(k)=Ax(k)+crsMat%crsA(j)*xU(Col)
+             tmp=tmp+crsMat%crsA(j)*xU(Col)
+             cycle
+          endif
+          !          Col=crsMat%crsCol(j)-istart+1
+          Col=crsMat%iLs(j)
+          !Ax(k)=Ax(k)+crsMat%crsA(j)*xD(Col)
+          tmp=tmp+crsMat%crsA(j)*xD(Col)
+       enddo
+       Ax(k)=tmp
+!       write(*,*)"SpMV",k,Ax(k),xD(k)
+    enddo
+    !$OMP END PARALLEL DO
+    
+    !    call fapp_stop("MatVecCRS",1,0)
+    
+  end subroutine MatVec_crs_FP64_CPU
+
+  subroutine MatVec_dia_FP64_CPU(prm,diaMat,x,Ax,commVec,rbuf,nBlock)
+    use matrix
+    use comm
+    use comm_kernel
+    use common_kernel
+    use vec_kernel
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(DIA_Mat) :: diaMat 
+    real*8 x(prm%n)
+    real*8 Ax(prm%n)
+    type(comm_Vec) :: commVec
+
+    !    real*8 buff(commVec%nrk_data)
+    integer(kind=intType) i,j,k,kk
+    integer(kind=intType) n,nnd,istart
+    integer(kind=intType) offset
+    ! nBlock --> module matrix 
+    integer(kind=intType) Row,Col
+    integer(kind=intType) maxRow,minRow
+    integer(kind=intType) maxCol,minCol
+    integer(kind=intType) i0
+    integer myrank 
+    integer irank,irank_start
+    integer(kind=intType) kkmax,kmax,kmin
+    !    real*8 rbuf(commVec%nrk_data)
+    real*8 rbuf(commVec%nrk_data+1)
+    integer(kind=intType) iLs,iLe
+    integer nBlock
+
+    n      = prm%n
+    nnd    = prm%nnd
+    istart = prm%istart
+    myrank = commVec%myrank
+
+    !$OMP PARALLEL PRIVATE( &
+    !$OMP kk,kkmax,j,irank,irank_start,&
+    !$OMP i0,i,k,Col,Row,offset,iLs,iLe,&
+    !$OMP minCol,maxCol,minRow,maxRow,kmin,kmax &
+    !$OMP ) 
+    
+    !$OMP DO SCHEDULE(dynamic,1)
+    do kk=1,n,nBlock
+       kkmax=min(n,kk+nBlock-1)
+       do k=kk,kkmax
+          Ax(k)=0.0d0
+       enddo
+
+       do j=1,nnd
+          offset = diaMat%offset(j)
+          minCol = kk    + istart - 1 + offset
+          maxCol = kkmax + istart - 1 + offset
+          minRow = 1 + istart - 1
+          maxRow = n + istart - 1
+          call set_Head_Tail(minRow,maxRow,minCol,maxCol,kmin,kmax)
+          kmin=kmin-istart+1
+          kmax=kmax-istart+1
+
+          do k=kmin,kmax
+             Ax(k-offset) = &
+                  Ax(k-offset) + diaMat%diaA(k-offset + (j-1)*n) * x(k)
+          enddo
+          do k=kk,kkmax
+             i = diaMat%iLs(  k + (j-1)*n  )
+             Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
+          enddo
+
+       enddo
+    enddo
+
+    !$OMP END PARALLEL
+
+    ! call system("sleep 3") 
+    ! call MPI_Barrier(MPI_COMM_WORLD,i)
+    ! call system("sleep 3")
+    ! stop
+  end subroutine MatVec_dia_FP64_CPU
+
+end module PARCEL_MATRIX_kernel_CPU
+
+module PARCEL_PRECON_kernel_CPU
+  implicit none
+contains
+
+#if 0
+  subroutine Neumann_dia_FP64_CPU(method,r,s)
+    use omp_lib
+    use krylov
+    use vec_kernel
+    use comm_kernel
+    use PARCEL_integer
+    use PARCEL_MATRIX_kernel_CPU
+    implicit none
+    type(KSP) :: method
+    integer(kind=intType) i
+    real*8 r(method%prm%n)
+    real*8 s(method%prm%n)
+
+    ! A = I - F
+    ! (I - F)^-1 = I + F + F^2 + F^3 + ....
+    !    call xcpy(method%prm%n,r,s)
+    call vec_scaling(method%prm%n,r,method%preconNeuman%Dinv,s)
+    call xcpy(method%prm%n,s,method%preconNeuman%vecx)
+    do i = 1,2
+#if 1
+       call get_nrk_vec(method%commVec,method%preconNeuman%vecx,method%buff)
+#else
+       call zero_initialize(size(method%buff),method%buff)
+#endif
+       ! 対角はゼロ
+!       call MatVec_dia( &
+       call MatVec_dia_FP64_CPU( &
+            method%prm, &
+            method%preconNeuman%diaMat, &
+            method%preconNeuman%vecx, &
+            method%preconNeuman%vecy, &
+            method%commVec, &
+            method%buff, &
+            method%nBlock)
+       call xcpy(method%prm%n, &
+            method%preconNeuman%vecy, &
+            method%preconNeuman%vecx)
+       call axpy(method%prm%n,1.0d0,1.0d0,method%preconNeuman%vecy,s)
+    enddo
+    call vec_scaling(method%prm%n,s,method%preconNeuman%D,s)
+
+  end subroutine Neumann_dia_FP64_CPU
+
+  subroutine Neumann_scaling_dia_FP64_CPU(prm,diaMat,D,Dinv)
+    use matrix
+    use vec_kernel
+    use PARCEL_integer
+    implicit none
+    type(prmMat)  :: prm 
+    type(DIA_Mat) :: diaMat 
+    real*8 D(prm%n)
+    real*8 Dinv(prm%n)
+
+    !    real*8 buff(commVec%nrk_data)
+    integer(kind=intType) i,j
+    integer(kind=intType) n,nnd
+    integer(kind=intType) offset
+
+    n      = prm%n
+    nnd    = prm%nnd
+
+    !$OMP PARALLEL PRIVATE( &
+    !$OMP i,j,offset &
+    !$OMP ) 
+
+    !$OMP DO
+    do i=1,n
+       D(i)    = 1.0d0
+       Dinv(i) = 1.0d0
+    enddo
+
+    do j=1,nnd
+       offset = diaMat%offset(j)
+       if(offset.eq.0)then
+          !$OMP DO
+          do i=1,n
+             D(i)    = diaMat%diaA(i+(j-1)*n)
+             Dinv(i) = 1.0d0 / diaMat%diaA(i+(j-1)*n)
+             diaMat%diaA(i+(j-1)*n) = 0.0d0 ! 対角はゼロにする
+          enddo
+       endif
+    enddo
+    do j=1,nnd
+       !$OMP DO
+       do i=1,n
+          diaMat%diaA(i+(j-1)*n) = -diaMat%diaA(i+(j-1)*n) * Dinv(i) 
+       enddo
+    enddo
+
+    !$OMP END PARALLEL
+
+  end subroutine Neumann_scaling_dia_FP64_CPU
+#endif
+
+end module PARCEL_PRECON_kernel_CPU
 

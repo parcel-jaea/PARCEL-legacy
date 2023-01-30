@@ -2930,6 +2930,7 @@ contains
           do k=kmin,kmax
 !             Ax(k-offset) = &
 !                  Ax(k-offset) + diaMat%diaA(k-offset + (j-1)*n) * x(k)
+!             write(*,*)" diaA = ",diaMat%diaA_hi(k-offset+(j-1)*n)
 #ifdef Manual_inline
              ddmul_calc1(diaMat%diaA_hi(k-offset+(j-1)*n),diaMat%diaA_lo(k-offset+(j-1)*n),x_hi(k),x_lo(k),c_hi,c_lo)
              ddadd_calc1(c_hi,c_lo,Ax_hi(k-offset),Ax_lo(k-offset),Ax_hi(k-offset),Ax_lo(k-offset))
@@ -2946,7 +2947,7 @@ contains
           enddo
           do k=kk,kkmax
              i = diaMat%iLs(  k + (j-1)*n  )
-             ! Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)
+             ! Ax(k)=Ax(k) + diaMat%diaA(k+(j-1)*n) * rbuf(i)             
 #ifdef Manual_inline
              ddmul_calc1(diaMat%diaA_hi(k+(j-1)*n),diaMat%diaA_lo(k+(j-1)*n),rbuf_hi(i),rbuf_lo(i),c_hi,c_lo)
              ddadd_calc1(c_hi,c_lo,Ax_hi(k),Ax_lo(k),Ax_hi(k),Ax_lo(k))

@@ -1,0 +1,38 @@
+# Currently Loaded Modulefiles:
+# 1) cuda/11.4
+# 2) gnu/7.4.0
+# 3) intel/2021.4.0
+# 4) mpt/2.22
+ 
+CUDAFLAG  = ON
+CUDAAWARE = ON
+
+CC     = mpicc 
+FC     = mpif90 
+CXX    = icpc
+NVC    = nvcc
+
+
+CFLAGS = -O3 -qopenmp -xHost
+FFLAGS = -O3 -fpp -qopenmp -xHost  -mcmodel=large 
+CXXFLAGS = -O3 -qopenmp -xHost -std=c++11
+FP_MODE  = -fp-model precise
+
+INCLUDEDIR = 
+LD_MPI     = 
+LD_FORT    = -lifcore
+LD_LAPACK  = -mkl -lstdc++ 
+LD_CUDA    = -lcudart -lcublas -lcusparse 
+
+NVCFLAGS  = \
+	  -arch=sm_70 -ccbin=${CC} -O3 -restrict  \
+	  --expt-extended-lambda -use_fast_math   \
+	  --default-stream per-thread  \
+	  --nvlink-options -Werror     \
+	  --maxrregcount=128  \
+	  --extra-device-vectorization  \
+	  --restrict \
+	   "-std=c++11"
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.2

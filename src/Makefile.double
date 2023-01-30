@@ -5,31 +5,55 @@
 confdir=../
 include ${confdir}/arch/make_config
 
+PARCEL_FDEFINE = ${FDEFINE}
+ifeq (${CUDAFLAG},ON)
+# PARCEL_FDEFINE = -DCUDA_SOLVER ${FDEFINE}
+PARCEL_FDEFINE += -DCUDA_SOLVER 
+else
+# PARCEL_FDEFINE = -DCUDA_SOLVER ${FDEFINE}
+endif
+
+ifeq (${CUDAAWARE},ON)
+PARCEL_FDEFINE += -DCUDA_AWARE
+endif
+
 # PROG = parcel_sparse.a
 
 OBJS = \
      define.o \
+     c_common.o \
      common.o  \
      type.o  \
+     c_vec.o \
      vec.o \
      EigenProblem.o \
+     c_qsort.o LejaOrdering.o sort.o Moore_Penrose.o \
+     comm.o \
+     matrix.o  \
+     c_krylov_wrapper.o \
+     parcel_vec.o \
      AdditiveSchwarz_ddm.o \
      AS_util_ddm.o  \
      matv_ddm.o \
      underlap.o init_ddm_mod.o aslu_ddm.o \
-     ddm_kernel.o \
-     c_qsort.o LejaOrdering.o sort.o Moore_Penrose.o \
-     comm.o matrix.o  krylov.o TSQR.o QRDecomposition.o \
-     pcg.o pcbcg.o pcagmres.o pgmres.o  power_method.o pbicg.o  wrapper.o 
+     precon_ddm_GPU.o  \
+     ddm_kernel.o  \
+     krylov_gpu.o krylov.o \
+     krylov_h.o\
+     TSQR.o QRDecomposition.o \
+      power_method.o pcg.o pcbcg.o pcagmres.o pgmres.o pbicg.o  wrapper.o map.o
 # pcalanczos.o 
-     
-
-
+# magma_wrapper.o 
+# magma_cuda_wrapper.o 
+# magma_comm.o 
 
 %.o : %.c
-	${CC} -c ${CFLAGS} ${FDEFINE} $<
+	${CC}   -c ${CFLAGS} ${PARCEL_FDEFINE} $<
+%.o : %.cpp
+	${CXX} -c ${CXXFLAGS} ${PARCEL_FDEFINE} $<
+
 %.o : %.f90
-	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${FDEFINE} $<
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${PARCEL_FDEFINE} $<
 
 # all : ${PROG}
 all :  ${OBJS}

@@ -1,0 +1,57 @@
+
+confdir=./
+include ${confdir}/make_config
+PARCEL_dir = ../
+INCLUDEDIR = -I${PARCEL_dir}/include/
+LDFLAGS = ${PARCEL_dir}/lib/parcel_sparse.a  ${LD_LAPACK} ${LD_MPI} ${LD_CUDA}
+
+PARCEL_FDEFINE = ${FDEFINE}
+ifeq (${CUDAFLAG},ON)
+PARCEL_FDEFINE += -DCUDA_SOLVER 
+endif
+
+PROG2    = run_dd
+PROG3    = run
+PROG4    = run_ddm
+PROG5    = run_ddm_dd
+PROG6    = run_qr
+
+PROG7    = run_c
+PROG8    = run_dd_c
+PROG9    = run_qr_c
+PROG10   = run_ddm_c
+PROG11   = run_ddm_dd_c
+
+PROBLEM_FILE=problem.o 
+OBJS2 = ${PROBLEM_FILE} main_dd.o
+OBJS3 = ${PROBLEM_FILE} main_direct.o
+OBJS4 = ${PROBLEM_FILE} ddm_setup.o main_ddm.o
+OBJS5 = ${PROBLEM_FILE} ddm_setup.o main_ddm_dd.o
+OBJS6 = main_QR.o
+
+OBJS7 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_direct_c.o
+OBJS8 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_dd_c.o
+OBJS9 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_qr_c.o
+OBJS10 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_ddm_c.o
+OBJS11 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_ddm_dd_c.o
+
+%.o : %.c
+	${CC} -c ${CFLAGS} ${INCLUDEDIR} ${PARCEL_FDEFINE} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${PARCEL_FDEFINE} $<
+
+all : ${OBJS2} ${OBJS3} ${OBJS4} ${OBJS5} ${OBJS6} ${OBJS7} ${OBJS8} ${OBJS9} ${OBJS10} ${OBJS11}
+	 ${FC} -o ${PROG2} ${OBJS2} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${FC} -o ${PROG3} ${OBJS3} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${FC} -o ${PROG4} ${OBJS4} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${FC} -o ${PROG5} ${OBJS5} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${FC} -o ${PROG6} ${OBJS6} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS}
+	 ${CC} -o ${PROG7} ${OBJS7} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT}
+	 ${CC} -o ${PROG8} ${OBJS8} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT}
+	 ${CC} -o ${PROG9} ${OBJS9} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT} 
+	 ${CC} -o ${PROG10} ${OBJS10} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT} 
+	 ${CC} -o ${PROG11} ${OBJS11} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT}
+
+clean :
+	rm  ${PROG2} ${PROG3} ${PROG4} ${PROG5} ${PROG6} ${PROG7} ${PROG8} ${PROG9} ${PROG10} ${PROG11} *o *mod *~
+

@@ -1,3 +1,4 @@
+
 #include "ddfunc.h"
 
 module param_AS_ddm
@@ -336,7 +337,7 @@ contains
     implicit none
     !   include "ddm.h"
 
-    integer m
+    integer(kind=intType) m
     integer(kind=intType) n
     integer nnd
     integer ddmDim
@@ -345,14 +346,14 @@ contains
     integer ioff_stencil(nnd,ddmDim)
     type(ddm_param) :: prm
 
-    integer i
-    integer jz,jy,jx
-    integer ip,ipp
+    integer(kind=intType) i
+    integer(kind=intType) jz,jy,jx
+    integer(kind=intType) ip,ipp
     integer nx,ny,nz
     integer mx,my,mxy
     integer stmx,stmy,stmz
 
-    integer j_th,j
+    integer(kind=intType) j_th,j
     integer num_threads,my_thread
     integer max_numth_0
     integer nxs_th,nxe_th
@@ -378,6 +379,8 @@ contains
     real*8 ddmul_var2
     real*8 ddsub_var1
     real*8 c_hi,c_lo
+
+!    write(*,*)"AS m = ",m
 
     PRECISION = KSP_DOUBLE_PRECISION
     if(  present(PRECISION_CALC)  )then
@@ -430,7 +433,12 @@ contains
     call get_maxthreads(max_numth_0) 
     n = nx * ny * nz 
     call set_precon_maxthreads(n,prm%precon_thblock)
-
+! 加法シュバルツは袖なしのデータ構造なので
+!    mx = nx, mxy=nx*ny : nx,ny,nzは拡張領域の長さ
+!    stmx,stmy,stmz = 0
+! である.
+!    write(*,*)" AS :  mx,mxy ",mx,mxy
+!    write(*,*)" AS : stmx,stmy,stmz : ",stmx,stmy,stmz
     !$OMP PARALLEL &
     !$OMP PRIVATE( &
     !$OMP num_threads,my_thread,&
@@ -460,6 +468,7 @@ contains
     mz_th  = precon%AS_DDM(my_thread+1)%mz_th
     mxy_th = mx_th*my_th
     m_th   = mx_th * my_th * mz_th 
+
     ! write(*,*) "nxs_th, nxe_th = ", nxs_th, nxe_th
     ! write(*,*) "nys_th, nye_th = ", nys_th, nye_th
     ! write(*,*) "nzs_th, nze_th = ",  nzs_th, nze_th
@@ -476,6 +485,7 @@ contains
           enddo
        endif
     endif
+
     do jz=nzs_th,nze_th-1
        do jy=nys_th,nye_th-1
           do jx=nxs_th,nxe_th-1
@@ -629,9 +639,10 @@ contains
        svec_lo  &
        )
     use PARCEL_define
+    use PARCEL_integer
     implicit none
 
-    integer m
+    integer(kind=intType) m
     integer nnd
 !    real*8 r(m)
     integer mx,mxy
@@ -658,15 +669,15 @@ contains
     real*8,optional :: rvec_lo(m_th)
     real*8,optional :: svec_lo(m_th)
 
-    integer j,j_th,jx,jy,jz,ip
-    integer offset
+    integer(kind=intType) j,j_th,jx,jy,jz,ip
+    integer(kind=intType) offset
 !    integer jx0(nnd)
     real*8 sum_lx0,sum_lx(nxs_th:nxe_th -1)
     real*8 sum_lx0_lo,sum_lx_lo(nxs_th:nxe_th -1)
     integer iflag_DDM_independ
     integer ipL,ipU,ipLn,ipUn
     integer  ip_diaU(nnd),ip_diaL(nnd)
-    integer  j0,j0_th
+    integer(kind=intType)  j0,j0_th
     real*8 ddmul_var1
     real*8 ddsub_var1
     real*8 ddadd_var1
@@ -1063,7 +1074,8 @@ contains
 
     implicit none
     !      include "ddm.h"
-    integer m,nnd
+    integer(kind=intType) m
+    integer nnd
     real*8 r(m)
     type(ddm_param) prm
     type(precon_AS_wrap) precon
@@ -1084,7 +1096,7 @@ contains
     integer nzs_th,nze_th
     integer myth
     integer ioff_x(nnd), ioff_y(nnd), ioff_z(nnd)
-    integer i
+    integer(kind=intType) i
     integer div_direc_th
     integer PRECISION
     integer,optional :: PRECISION_CALC
@@ -1206,6 +1218,7 @@ contains
 
   end subroutine AdditiveSchwarz_ILU_DDM
 
+#if 0
   subroutine init_AS_Mat( &
        m,m_AS, &
        nnd, &
@@ -1276,6 +1289,7 @@ contains
     integer neighbor_ranks_xyz(6)
     integer comm_ndata(3,3)
     call MPI_Comm_rank(comm,myrank,ierr)
+
 
     stmx = prm%stmx
     stmy = prm%stmy
@@ -1655,6 +1669,7 @@ contains
     enddo
 
   end subroutine init_AS_Mat
+#endif
 
   subroutine set_AS_vec_DDM(&
        prm,precon,m,r,  &
@@ -1670,7 +1685,7 @@ contains
     !      include "ddm.h"
     type(ddm_param) :: prm
     type(precon_AS_wrap) precon
-    integer m
+    integer(kind=intType) m
     real*8 r(m)
     real*8,optional :: r_lo(m)
     integer,optional :: PRECISION_CALC
@@ -1685,7 +1700,7 @@ contains
     integer nxs_th,nxe_th
     integer nys_th,nye_th
     integer nzs_th,nze_th
-    integer jz,jy,jx,j,j_th
+    integer(kind=intType) jz,jy,jx,j,j_th
     integer nxs_local,nxe_local
     integer nys_local,nye_local
     integer nzs_local,nze_local
@@ -1694,6 +1709,7 @@ contains
     integer(kind=intType) n_tmp
     integer max_numth_0
     integer PRECISION
+
     PRECISION = KSP_DOUBLE_PRECISION
     if(  present(PRECISION_CALC)  )then
        PRECISION = PRECISION_CALC
@@ -1866,7 +1882,7 @@ contains
     !      include "ddm.h"
     type(ddm_param) :: prm
     type(precon_AS_wrap) precon
-    integer m
+    integer(kind=intType) m
     real*8 s(m)
     integer,optional :: PRECISION_CALC
     real*8,optional ::  s_lo(m)
@@ -1887,7 +1903,7 @@ contains
     integer nys_local,nye_local
     integer nzs_local,nze_local
 
-    integer jz,jy,jx,j,j_th
+    integer(kind=intType) jz,jy,jx,j,j_th
     integer iflagAS
     integer precon_thblock
     integer div_direc_th
@@ -2426,7 +2442,8 @@ contains
     use PARCEL_time,only : precon_ddm_time
     implicit none
     !      include "ddm.h"
-    integer m,nnd
+    integer(kind=intType) m
+    integer nnd
     real*8 r(m)
     real*8 s(m)
     type(ddm_param) prm
@@ -2435,7 +2452,7 @@ contains
     integer ddmOffset(nnd)
     real*8 ddmA(m*nnd)
     integer ioff_stencil(nnd,ddmDim)
-    integer i
+    integer(kind=intType) i
     integer addL
     real*8 stime,etime
 
@@ -2554,7 +2571,7 @@ contains
     type(AS_geom) :: prm_g ! 計算領域のオーバーラップに関する幾何情報 --> これは不要?
     type(precon_AS_wrap) precon
     integer precon_thblock
-    integer m
+    integer(kind=intType) m
     integer nnd
     integer ddmDim
     integer ddmOffset(nnd)

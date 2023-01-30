@@ -1,17 +1,37 @@
-CC     = mpiicc 
-FC     = mpiifort 
+# software version
+# gcc@12.2.0
+# openmpi@4.1.4
+# openblas@0.3.21
+# netlib-lapack@3.10.1
 
-CFLAGS  = -O3 
-FFLAGS  = -O3 -fpp -qopenmp -xHost  -mcmodel=large # -Dtimer
+CUDAFLAG  = OFF
+CUDAAWARE = OFF
 
-# CFLAGS  = -O0
-# FFLAGS  = -O0 -xHost -g -fpp -qopenmp -mcmodel=large  -CB -traceback -check all -Dtimer
- 
-FP_MODE = -fp-model precise
+CC     = mpicc 
+FC     = mpif90 
+CXX    = g++
+# NVC    = nvcc
 
-INCLUDEDIR =
-LD_MPI     = -lmpifort -lifcore
-LD_LAPACK  = -mkl 
+CFLAGS  = -O3 -march=native -mtune=native -fopenmp 
+FFLAGS  = -O3 -cpp -fopenmp -ffree-line-length-none  -march=native -mtune=native 
+
+CXXFLAGS = -O3 -march=native -mtune=native -fopenmp -std=c++11  
+FP_MODE = 
+
+INCLUDEDIR = 
+LD_MPI     = -lmpi_mpifh
+LD_FORT    = -lgfortran 
+LD_LAPACK  = -L${BLAS_DIR}/lib -L${LAPACK_DIR}/lib -lopenblas -llapack -lm -lstdc++
+# LD_CUDA    = -lcudart -lcublas -lcusparse -lstdc++ 
+
+# NVCFLAGS  = \
+# 	  -arch=sm_70 -ccbin=${CC} -O3 -restrict  \
+# 	  --expt-extended-lambda -use_fast_math   \
+# 	  --default-stream per-thread  \
+# 	  --nvlink-options -Werror     \
+# 	  --maxrregcount=128  \
+# 	  --extra-device-vectorization  \
+# 	  --restrict 
 
 # FDEFINE = -DPARCEL_INT8
-INSTALLDIR = ./PARCEL_1.1
+INSTALLDIR = ./PARCEL_1.2

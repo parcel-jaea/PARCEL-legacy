@@ -1,0 +1,24 @@
+# Currently Loaded Modulefiles:
+# 1) fjmpi/1.2.36
+# 2) fj/1.2.36(default)  
+
+
+CUDAFLAG  = OFF
+CUDAAWARE = OFF
+
+CC     = mpifccpx
+FC     = mpifrtpx
+CXX    = FCCpx
+
+CFLAGS =-Kfast -Knoalias -Kopenmp 
+FFLAGS =-Kfast -Kopenmp -Kocl -Kmfunc=2 -Cpp  -Knoalias -Koptmsg=2  # -Dtimer 
+CXXFLAGS = -Kfast -Knoalias -Kopenmp  -std=c++11
+FP_MODE =-Knofp_relaxed -Kopenmp,noeval
+
+INCLUDEDIR =
+LD_MPI     = -lmpi_mpifh
+LD_FORT    = 
+LD_LAPACK  = -SSL2 -lstdc++ 
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.2

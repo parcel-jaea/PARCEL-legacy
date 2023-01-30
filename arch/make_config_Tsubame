@@ -1,0 +1,37 @@
+# Currently Loaded Modulefiles:
+# 1) cuda/11.0.3
+# 2) openmpi/3.1.4-opa10.10
+# 3) intel/21.5.0
+
+CUDAFLAG  = ON
+CUDAAWARE = ON
+
+CC     = mpicc 
+FC     = mpif90 
+CXX    = g++
+NVC    = nvcc
+
+CFLAGS = -O3 -march=native -mtune=native -fopenmp 
+FFLAGS = -O3 -cpp -fopenmp -ffree-line-length-none  -march=native -mtune=native 
+
+CXXFLAGS = -O3 -march=native -mtune=native -fopenmp -std=c++11  
+FP_MODE  = 
+
+INCLUDEDIR = 
+LD_MPI     = -lmpi_mpifh 
+LD_FORT    = -lgfortran
+LD_LAPACK  = -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lm -lstdc++ 
+LD_CUDA    = -lcudart -lcublas -lcusparse 
+
+NVCFLAGS  = \
+	  -arch=sm_60 -ccbin=${CC} -O3 -restrict  \
+	  --expt-extended-lambda -use_fast_math   \
+	  --default-stream per-thread  \
+	  --nvlink-options -Werror     \
+	  --maxrregcount=128  \
+	  --extra-device-vectorization  \
+	  --restrict \
+	   "-std=c++11"
+
+# FDEFINE = -DPARCEL_INT8
+INSTALLDIR = ./PARCEL_1.2

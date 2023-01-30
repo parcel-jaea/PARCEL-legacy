@@ -1,46 +1,20 @@
+#define JACOBI_LIKE 0
+! #define PRINT_TIME 0
+#define PRINT_TIME 0
 
 module krylov_kernel
   use PARCEL_define
   use omp_lib
+  use cu_krylov
   implicit none
 contains
   subroutine SET_KSP_PARAM(method,input_param)
     use krylov
     implicit none
+
     type(KSP) :: method
     type(KSP_INPUT_PARAM) :: input_param
-#if 0
-    method%ipreflag               = input_param%ipreflag
-    method%ILU_method             = input_param%ILU_method
-    method%addL                   = input_param%addL
-    method%iflagAS                = input_param%iflagAS
-    method%solver                 = input_param%solver
-    method%iovlflag               = input_param%iovlflag
-    method%GMRES_m                = input_param%GMRES_m
-    method%GMRES_GSflag           = input_param%GMRES_GSflag
-    method%CAGMRES_sstep          = input_param%CAGMRES_sstep
-    method%CAGMRES_tstep          = input_param%CAGMRES_tstep
-    method%CAGMRES_basis          = input_param%CAGMRES_basis
-    method%CAGMRES_QRflag         = input_param%CAGMRES_QRflag
-    method%CBCG_kstep             = input_param%CBCG_kstep
-    method%CBCG_Eigenflag         = input_param%CBCG_Eigenflag
-    method%power_method_itrmax    = input_param%power_method_itrmax
-    method%CAARNOLDI_sstep        = input_param%CAARNOLDI_sstep
-    method%CAARNOLDI_tstep        = input_param%CAARNOLDI_tstep
-    method%CAARNOLDI_basis        = input_param%CAARNOLDI_basis
-    method%CAARNOLDI_QRflag       = input_param%CAARNOLDI_QRflag
 
-    method%itrmax                 = input_param%itrmax
-    method%rtolmax                = input_param%rtolmax
-    method%abstolmax              = input_param%abstolmax
-    method%independ_nvec          = input_param%independ_nvec
-    method%precon_thblock         = input_param%precon_thblock
-
-    method%PRECISION_A            = input_param%PRECISION_A
-    method%PRECISION_b            = input_param%PRECISION_b
-    method%PRECISION_x            = input_param%PRECISION_x
-    method%PRECISION_PRECONDITION = input_param%PRECISION_PRECONDITION
-#else
     call set_KSP_ipreflag(method,input_param%ipreflag)
     call set_KSP_ILU_method(method,input_param%ILU_method)
     call set_KSP_addL(method,input_param%addL)
@@ -60,6 +34,18 @@ contains
     call set_KSP_CAARNOLDI_tstep(method,input_param%CAARNOLDI_tstep)
     call set_KSP_CAARNOLDI_basis(method,input_param%CAARNOLDI_basis)
     call set_KSP_CAARNOLDI_QRflag(method,input_param%CAARNOLDI_QRflag)
+
+    call set_KSP_Neumanitr(method,input_param%Neuman_itr)
+
+    ! call set_KSP_dataflag(method,input_param%dataflag)\
+
+
+
+    ! call set_KSP_calcflag(method,input_param%calcflag)
+
+    call set_KSP_dataflag(method,KSP_DOUBLE_PRECISION)
+    call set_KSP_calcflag(method,KSP_DOUBLE_PRECISION)
+
     call set_KSP_itrmax(method,input_param%itrmax)
     call set_KSP_rtolmax(method,input_param%rtolmax)
     call set_KSP_abstolmax(method,input_param%abstolmax)
@@ -71,40 +57,6 @@ contains
     call set_PRECISION_b(method,input_param%PRECISION_b)
     call set_PRECISION_x(method,input_param%PRECISION_x)
     call set_PRECISION_PRECONDITION(method,input_param%PRECISION_PRECONDITION)
-
-    ! method%ipreflag               = input_param%ipreflag
-    ! method%ILU_method             = input_param%ILU_method
-    ! method%addL                   = input_param%addL
-    ! method%iflagAS                = input_param%iflagAS
-    ! method%solver                 = input_param%solver
-    ! method%iovlflag               = input_param%iovlflag
-    ! method%GMRES_m                = input_param%GMRES_m
-    ! method%GMRES_GSflag           = input_param%GMRES_GSflag
-    ! method%CAGMRES_sstep          = input_param%CAGMRES_sstep
-    ! method%CAGMRES_tstep          = input_param%CAGMRES_tstep
-    ! method%CAGMRES_basis          = input_param%CAGMRES_basis
-    ! method%CAGMRES_QRflag         = input_param%CAGMRES_QRflag
-    ! method%CBCG_kstep             = input_param%CBCG_kstep
-    ! method%CBCG_Eigenflag         = input_param%CBCG_Eigenflag
-    ! method%power_method_itrmax    = input_param%power_method_itrmax
-    ! method%CAARNOLDI_sstep        = input_param%CAARNOLDI_sstep
-    ! method%CAARNOLDI_tstep        = input_param%CAARNOLDI_tstep
-    ! method%CAARNOLDI_basis        = input_param%CAARNOLDI_basis
-    ! method%CAARNOLDI_QRflag       = input_param%CAARNOLDI_QRflag
-
-    ! method%itrmax                 = input_param%itrmax
-    ! method%rtolmax                = input_param%rtolmax
-    ! method%abstolmax              = input_param%abstolmax
-    ! method%independ_nvec          = input_param%independ_nvec
-    ! method%precon_thblock         = input_param%precon_thblock
-
-    ! method%PRECISION_A            = input_param%PRECISION_A
-    ! method%PRECISION_b            = input_param%PRECISION_b
-    ! method%PRECISION_x            = input_param%PRECISION_x
-    ! method%PRECISION_PRECONDITION = input_param%PRECISION_PRECONDITION
-
-
-#endif
 
   end subroutine SET_KSP_PARAM
 
@@ -146,6 +98,7 @@ contains
     write(*,*)"PRECISION_PRECONDITION",method%PRECISION_PRECONDITION
     write(*,*)"----------------------"
     write(*,*)
+
   end subroutine view_KSP_PARAM
 
   subroutine START_KSP_SOLVER(method)
@@ -209,7 +162,6 @@ contains
        n,gn,&
        istart, &
        diaA,offset,nnd,&
-!       itrmax,rtolmax,abstolmax, &
        input_param,&
        niter,reshistory,iret,&
        EigenValueReal, &
@@ -222,6 +174,9 @@ contains
 
     use krylov
     use mpi
+    use krylov_kernel_gpu,only : set_KSP_DIA_cuda,free_KSP_DIA_cuda
+    use iso_c_binding
+
     implicit none
     integer icomm ! MPI コミュニケータ
     integer(kind=intType) n ! プロセスの受け持つベクトルのサイズ
@@ -230,13 +185,33 @@ contains
     integer(kind=intType) istart ! ベクトルの開始位置
     integer(kind=intType) iend ! ベクトルの終了位置
     integer(kind=intType) nnd ! 対角数
+
+#ifdef CUDA_SOLVER
+    type(c_ptr) vecx   ! 解ベクトル
+    type(c_ptr) vecb   ! 右辺ベクトル
+    type(c_ptr) diaA   ! 行列値
+    type(c_ptr) offset ! 対角数
+
+    real*8,allocatable :: vecx_cpu(:)
+    real*8,allocatable :: vecb_cpu(:)
+    real*8,allocatable :: diaA_cpu(:)
+    integer(kind=intType),allocatable :: offset_cpu(:)
+
+    real*8,pointer :: vecx_Fptr(:)
+    real*8,pointer :: vecb_Fptr(:)
+    real*8,pointer :: diaA_Fptr(:)
+    integer(kind=intType),pointer :: offset_Fptr(:)
+
+    type(devicemem) :: C_diaA
+    type(devicemem) :: C_offset
+
+#else
     real*8 vecx(n) ! 解ベクトル
     real*8 vecb(n) ! 右辺ベクトル
     real*8 diaA(nnd*n)  ! 行列値
     integer(kind=intType) offset(nnd) ! 対角オフセット
-!    integer itrmax ! 最大反復回数
-!    real*8 rtolmax ! 相対残差 (収束条件)
-!    real*8 abstolmax  !  絶対残差 (収束条件)
+#endif
+
     type(KSP_INPUT_PARAM) :: input_param ! KSPの設定パラメータ
     integer niter
     integer iret 
@@ -252,6 +227,7 @@ contains
     integer precon_thblock
     type(KSP) :: method
 
+    integer(kind=intType) parcel_int
     integer myrank
     integer ierr
     integer i
@@ -262,73 +238,202 @@ contains
     real*8 finalize_time 
     integer solver
     integer ncount
+    integer(kind=intType),parameter :: offset_zero=0
 
     solver=method%solver
 
     call MPI_Barrier(icomm,ierr)
     stime=MPI_Wtime()
-
     call PARCEL_KSP_Default_Setting(method)
     call SET_KSP_PARAM(method,input_param)
 
-    ! method%rtolmax       = rtolmax
-    ! method%abstolmax     = abstolmax
-    ! ipreflag             = method%ipreflag
-    ! ILU_method           = method%ILU_method
-    ! addL                 = method%addL
-    ! precon_thblock = -1
-
-    call set_KSP_DIA(&
-         icomm, &
-         vecx,vecb,&
-         n,gn,istart, &
-         diaA,offset,nnd,&
-!         itrmax,rtolmax,abstolmax,&
-!         itrmax,ipreflag,ILU_method,addL,precon_thblock, &
-         method)           
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
-    initialize_time = etime-stime
-
-    call MPI_Barrier(icomm,ierr)
-    stime=MPI_Wtime()
-
-    myrank=method%commVec%myrank
-    call START_KSP_SOLVER(method)
-
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
-    solver_time=etime-stime
-
-    call MPI_Barrier(icomm,ierr)
-    stime=MPI_Wtime()
-    ! -------
-    !$OMP PARALLEL DO PRIVATE(i)
-    do i=1,method%niter
-       reshistory(i)=method%reshistory(i)
-    enddo
-    iret=method%iret
-    niter=method%niter
-    call get_vecx_KSP(n,vecx,method)
-
-    solver=method%solver
-    if(20<solver)then
-       ncount = size( method%EigenValueReal )
-       do i=1,ncount
-          EigenValueReal(i) = method%EigenValueReal(i)
-          EigenValueImag(i) = method%EigenValueImag(i)
-          EigenVector(i) = method%EigenVector(i)
-          EigenErrorNorm(i) = method%EigenErrorNorm(i)
-       enddo
-       MaxEigenID = method%MaxEigenID
-       MinEigenID = method%MinEigenID
+    call MPI_Comm_rank( icomm, myrank, ierr )
+    if( (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN_LOCAL) )then
+       if( method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON )then
+          if(myrank.eq.0)then
+             write(*,*)"not support Neuman Preconditione"
+          endif
+          return 
+       endif
     endif
 
-    ! -------
-    call free_KSP(method)
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
-    finalize_time=etime-stime
+#if 1
+    if( &
+         (method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_BLOCKJACOBI)     .or. &
+         (method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON) &
+         )then
+#else
+       if(1.eq.1)then
+#endif
+
+#ifdef CUDA_SOLVER
+
+       allocate(vecx_cpu(n))
+       allocate(vecb_cpu(n))
+       parcel_int = nnd*n
+       allocate(diaA_cpu(parcel_int))
+       allocate(offset_cpu(nnd))
+
+       call cudaMalloc_fp64(method%C_x,n)
+       call cudaMalloc_fp64(method%C_b,n)
+       parcel_int = nnd*n
+       call cudaMalloc_fp64(C_diaA,parcel_int)
+       call cudaMalloc_PARCEL_int(C_offset,nnd)
+
+       ! CポインタをFortranポインタに割り当て
+       call c_f_pointer(vecx,vecx_Fptr,[n])
+       call c_f_pointer(vecb,vecb_Fptr,[n])
+       parcel_int = nnd*n
+       call c_f_pointer(diaA  ,diaA_Fptr,[parcel_int])
+       call c_f_pointer(offset,offset_Fptr,[nnd])
+
+       ! CポインタのデータをGPUメモリにコピー
+       call cudaMemcpy_dptr2d_double(vecx_Fptr,method%C_x,n)
+       call cudaMemcpy_dptr2d_double(vecb_Fptr,method%C_b,n)
+       parcel_int = nnd*n
+       call cudaMemcpy_dptr2d_double(diaA_Fptr,C_diaA,parcel_int)
+       call cudaMemcpy_dptr2d_parcel_int(offset_Fptr,C_offset,nnd)
+
+       call cudaMemcpy_d2h_fp64(method%C_x,vecx_cpu,n,offset_zero,offset_zero)
+       call cudaMemcpy_d2h_fp64(method%C_b,vecb_cpu,n,offset_zero,offset_zero)
+
+       parcel_int = nnd*n
+       call cudaMemcpy_d2h_fp64(C_diaA,diaA_cpu,parcel_int,offset_zero,offset_zero)    
+       call cudaMemcpy_d2h_PARCEL_INT(C_offset,offset_cpu,nnd,offset_zero,offset_zero)
+
+       call cudaFree(C_diaA)
+       call cudaFree(C_offset)
+
+       call set_KSP_DIA(&
+            icomm, &
+            vecx_cpu,vecb_cpu,&
+            n,gn,istart, &
+            diaA_cpu,offset_cpu,nnd,&
+            method)           
+
+       deallocate(vecb_cpu)
+       deallocate(diaA_cpu)
+       deallocate(offset_cpu)
+
+#else
+
+       call set_KSP_DIA(&
+            icomm, &
+            vecx,vecb,&
+            n,gn,istart, &
+            diaA,offset,nnd,&
+            method)           
+
+#endif
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+       initialize_time = etime-stime
+
+       call MPI_Barrier(icomm,ierr)
+       stime=MPI_Wtime()
+
+       myrank=method%commVec%myrank
+       call START_KSP_SOLVER(method)
+
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+       solver_time=etime-stime
+
+       call MPI_Barrier(icomm,ierr)
+       stime=MPI_Wtime()
+       ! -------
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,method%niter
+          reshistory(i)=method%reshistory(i)
+       enddo
+       iret=method%iret
+       niter=method%niter
+
+#ifdef CUDA_SOLVER
+       call cudaMemcpy_d2dptr_double(method%C_x,vecx_Fptr,n)
+#else
+       call get_vecx_KSP(n,vecx,method)
+#endif
+
+       solver=method%solver
+       if(20<solver)then
+          ncount = size( method%EigenValueReal )
+          do i=1,ncount
+             EigenValueReal(i) = method%EigenValueReal(i)
+             EigenValueImag(i) = method%EigenValueImag(i)
+             EigenVector(i) = method%EigenVector(i)
+             EigenErrorNorm(i) = method%EigenErrorNorm(i)
+          enddo
+          MaxEigenID = method%MaxEigenID
+          MinEigenID = method%MinEigenID
+       endif
+
+       ! -------
+
+#ifdef CUDA_SOLVER
+       deallocate(vecx_cpu)
+       call cudafree(method%C_x)
+       call cudafree(method%C_b)
+#endif
+
+       call free_KSP(method)
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+       finalize_time=etime-stime
+
+    else
+
+#ifdef CUDA_SOLVER
+       call set_KSP_DIA_cuda(&
+            icomm, &
+            vecx,vecb, &
+            n,gn,istart, &
+            diaA, &
+            offset,nnd, &
+            method)
+
+       etime=MPI_Wtime()
+       initialize_time = etime-stime
+
+       stime=MPI_Wtime()
+
+       call START_KSP_SOLVER(method)
+       etime=MPI_Wtime()
+       solver_time=etime-stime
+
+       stime=MPI_Wtime()
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,method%niter
+          reshistory(i)=method%reshistory(i)
+       enddo
+       iret=method%iret
+       niter=method%niter
+
+#if CUDA_SOLVER
+       call c_f_pointer(vecx,vecx_Fptr,[n])
+       call cudaMemcpy_d2dptr_double(method%C_x,vecx_Fptr,n)
+#else
+       call get_vecx_KSP(n,vecx,method)
+#endif
+       ! ------------------------
+       call free_KSP_DIA_cuda(method)
+
+       etime=MPI_Wtime()
+       finalize_time=etime-stime
+
+       if(method%commVec%myrank.eq.0)then
+          write(*,*)"initialize time = ",initialize_time,"[s]"
+          write(*,*)"solver time     = ",solver_time,"[s]"
+          write(*,*)"finalize time   = ",finalize_time,"[s]"
+       endif
+
+       return 
+#endif
+
+    endif
+
 #if 0
     if(myrank.eq.0)then
        write(*,*)"initialize time = ",initialize_time,"[s]"
@@ -336,6 +441,7 @@ contains
        write(*,*)"finalize time   = ",finalize_time,"[s]"
     endif
 #endif
+
   end subroutine KSP_DIA
   
   subroutine KSP_CRS( &
@@ -356,23 +462,58 @@ contains
 
     use mpi
     use krylov
+!    use comm_kernel,only : set_comm_GPUmem,free_comm
+    use krylov_kernel_gpu,only : set_KSP_CRS_cuda,free_KSP_CRS_cuda
+    use iso_c_binding
+
     implicit none
+
     integer icomm ! MPI コミュニケータ
     integer(kind=intType) n ! プロセスの受け持つベクトルのサイズ
     integer(kind=intType) gn ! ベクトル全体のサイズ
     integer(kind=intType) nnz ! 非零要素数
     integer(kind=intType) istart ! ベクトルの開始位置
     integer(kind=intType) iend ! ベクトルの終了位置
+
+#ifdef CUDA_SOLVER
+    type(c_ptr) vecx ! 解ベクトル
+    type(c_ptr) vecb ! 右辺ベクトル
+    type(c_ptr) crsA ! 行列値
+    type(c_ptr) crsRow_ptr ! ポインタ 
+    type(c_ptr) crsCol     ! 列番号
+
+    real*8,allocatable :: vecx_cpu(:)
+    real*8,allocatable :: vecb_cpu(:)
+    real*8,allocatable :: crsA_cpu(:)
+    integer(kind=intType),allocatable :: crsRow_ptr_cpu(:)
+    integer(kind=intType),allocatable :: crsCol_cpu(:)
+
+    real*8,pointer :: vecx_Fptr(:)
+    real*8,pointer :: vecb_Fptr(:)
+    real*8,pointer :: crsA_Fptr(:)
+    integer(kind=intType),pointer :: crsRow_ptr_Fptr(:)
+    integer(kind=intType),pointer :: crsCol_Fptr(:)
+
+     type(devicemem) :: C_crsA
+     type(devicemem) :: C_crsRow_ptr
+     type(devicemem) :: C_crsCol
+
+#else
+
     real*8 vecx(n) ! 解ベクトル
     real*8 vecb(n) ! 右辺ベクトル
-    real*8  crsA(nnz) ! 行列値
+    real*8 crsA(nnz) ! 行列値
     integer(kind=intType) crsRow_ptr(n+1) ! ポインタ 
     integer(kind=intType) crsCol(nnz) ! 列番号
-!    integer itrmax ! 最大反復回数
-!    real*8 rtolmax ! 相対残差 (収束条件)
-!    real*8 abstolmax  !  絶対残差 (収束条件)
+
+#endif
+
+    !    integer itrmax ! 最大反復回数
+    !    real*8 rtolmax ! 相対残差 (収束条件)
+    !    real*8 abstolmax  !  絶対残差 (収束条件)
     type(KSP_INPUT_PARAM) :: input_param ! KSPの設定パラメータ
 
+    integer(kind=intType) parcel_int
     integer niter
     integer iret 
 
@@ -389,7 +530,7 @@ contains
 
     integer myrank
     integer ierr
-    integer i
+    integer(kind=intType) i,j
     integer ipreflag,ILU_method,addL
 
     real*8 stime,etime
@@ -400,92 +541,197 @@ contains
     integer precon_thblock
     integer solver
     integer ncount
+    integer(kind=intType),parameter :: offset_zero=0
 
     call MPI_Barrier(icomm,ierr)
     stime=MPI_Wtime()
     call PARCEL_KSP_Default_Setting(method)
     call SET_KSP_PARAM(method,input_param)
-!    call view_KSP_PARAM(method)
 
-    ! method%rtolmax       = rtolmax
-    ! method%abstolmax     = abstolmax
-    ! ipreflag             = method%ipreflag
-    ! ILU_method           = method%ILU_method
-    ! addL                 = method%addL
-    ! precon_thblock = -1
-
-    call set_KSP_CRS(&
-         icomm, &
-         vecx,vecb, &
-         n,gn,nnz,istart, &
-         crsA,crsRow_ptr,crsCol, &
-         method)
-!    call view_KSP_PARAM(method)
-
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
-    initialize_time = etime-stime
-
-    call MPI_Barrier(icomm,ierr)
-    stime=MPI_Wtime()
-    myrank=method%commVec%myrank
-    call START_KSP_SOLVER(method)
-
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
-    solver_time=etime-stime
-
-    call MPI_Barrier(icomm,ierr)
-    stime=MPI_Wtime()
-    ! -------
-    !$OMP PARALLEL DO PRIVATE(i)
-    do i=1,method%niter
-       reshistory(i)=method%reshistory(i)
-    enddo
-    iret=method%iret
-    niter=method%niter
-    call get_vecx_KSP(n,vecx,method)
-
-    solver=method%solver
-    if(20<solver)then
-#if 0
-       ncount = size( method%EigenValueReal )
-       do i=1,ncount
-          EigenValueReal(i) = method%EigenValueReal(i)
-          EigenValueImag(i) = method%EigenValueImag(i)
-          EigenErrorNorm(i) = method%EigenErrorNorm(i)
-       enddo
-       do i=1,ncount
-          EigenVector(i) = method%EigenVector(i)
-       enddo
-       MaxEigenID = method%MaxEigenID
-       MinEigenID = method%MinEigenID
+    call MPI_Comm_rank( icomm, myrank, ierr )
+    if( (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_NEUMANN_LOCAL) )then
+       if( method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON )then
+          if(myrank.eq.0)then
+             write(*,*)"not support Neuman Preconditione"
+          endif
+          return 
+       endif
+    endif
+    ! write(*,*)"ipreflag = ",method%ipreflag
+    ! call view_KSP_PARAM(method)
+#if 1
+    if( &
+         (method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ) .or. &
+         (method%ipreflag.eq.KSP_PRECONDITION_BLOCKJACOBI) .or. &
+         (method%flag%machineflag.eq.PARCEL_CPU_FLAG_ON) &
+         )then
 #else
-  call get_EigenPair_count_KSP(ncount,method)
-  call get_EigenPair_KSP( &
-       ncount,&
-       EigenValueReal,EigenValueImag, &
-       EigenVector, &
-       EigenErrorNorm, &
-       MaxEigenID,MinEigenID,method)
+       if(1.eq.1)then
 #endif
-    endif
 
+#ifdef CUDA_SOLVER
 
-    ! -------
+       allocate(vecx_cpu(n))
+       allocate(vecb_cpu(n))
+       allocate(crsA_cpu(nnz))
+       parcel_int = n + 1
+       allocate(crsRow_ptr_cpu(parcel_int))
+       allocate(crsCol_cpu(nnz))
 
-    call free_KSP(method)
-    call MPI_Barrier(icomm,ierr)
-    etime=MPI_Wtime()
+       call cudaMalloc_fp64(method%C_x,n)
+       call cudaMalloc_fp64(method%C_b,n)
+       call cudaMalloc_fp64(C_crsA,nnz)
+       parcel_int = n + 1
+       call cudaMalloc_PARCEL_int(C_crsRow_ptr,parcel_int)
+       call cudaMalloc_PARCEL_int(C_crsCol,nnz)
 
-    finalize_time=etime-stime
+       ! CポインタをFortranポインタに割り当て
+       call c_f_pointer(vecx,vecx_Fptr,[n])
+       call c_f_pointer(vecb,vecb_Fptr,[n])
+       call c_f_pointer(crsA,crsA_Fptr,[nnz])
+       parcel_int = n + 1
+       call c_f_pointer(crsRow_ptr,crsRow_ptr_Fptr,[parcel_int])
+       call c_f_pointer(crsCol,crsCol_Fptr,[nnz])
+
+       ! CポインタのデータをGPUメモリにコピー
+       call cudaMemcpy_dptr2d_double(vecx_Fptr,method%C_x,n)
+       call cudaMemcpy_dptr2d_double(vecb_Fptr,method%C_b,n)
+       
+       call cudaMemcpy_dptr2d_double(crsA_Fptr,C_crsA,nnz)
+       call cudaMemcpy_dptr2d_parcel_int(crsCol_Fptr,C_crsCol,nnz)
+       parcel_int = n + 1
+       call cudaMemcpy_dptr2d_parcel_int(crsRow_ptr_Fptr,C_crsRow_ptr,parcel_int)
+
+       ! GPU側のデータをCPU側にコピー
+       call cudaMemcpy_d2h_fp64(method%C_x,vecx_cpu,n,offset_zero,offset_zero)
+       call cudaMemcpy_d2h_fp64(method%C_b,vecb_cpu,n,offset_zero,offset_zero)
+
+       call cudaMemcpy_d2h_fp64(C_crsA,crsA_cpu,nnz,offset_zero,offset_zero)    
+       call cudaMemcpy_d2h_PARCEL_INT(C_crsRow_ptr,crsRow_ptr_cpu,n+1,offset_zero,offset_zero)
+       call cudaMemcpy_d2h_PARCEL_INT(C_crsCol,crsCol_cpu,nnz,offset_zero,offset_zero)
+       call cudaFree(C_crsA)
+       call cudaFree(C_crsRow_ptr)
+       call cudaFree(C_crsCol)
+
+       call set_KSP_CRS(&
+            icomm, &
+            vecx_cpu,vecb_cpu, &
+            n,gn,nnz,istart, &
+            crsA_cpu,crsRow_ptr_cpu,crsCol_cpu, &
+            method)
+
+       deallocate(vecb_cpu)
+       deallocate(crsA_cpu)
+       deallocate(crsRow_ptr_cpu)
+       deallocate(crsCol_cpu)
+
+#else
+       call set_KSP_CRS(&
+            icomm, &
+            vecx,vecb, &
+            n,gn,nnz,istart, &
+            crsA,crsRow_ptr,crsCol, &
+            method)
+#endif
+
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+       initialize_time = etime-stime
+
+       call MPI_Barrier(icomm,ierr)
+       stime=MPI_Wtime()
+       myrank=method%commVec%myrank
+
+       call START_KSP_SOLVER(method)
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+       solver_time=etime-stime
+
+       call MPI_Barrier(icomm,ierr)
+       stime=MPI_Wtime()
+
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,method%niter
+          reshistory(i)=method%reshistory(i)
+       enddo
+       iret=method%iret
+       niter=method%niter
+#ifdef CUDA_SOLVER
+       call cudaMemcpy_d2dptr_double(method%C_x,vecx_Fptr,n)
+#else
+       call get_vecx_KSP(n,vecx,method)
+#endif
+       solver=method%solver
+       if(20<solver)then
+          call get_EigenPair_count_KSP(ncount,method)
+          call get_EigenPair_KSP( &
+               ncount,&
+               EigenValueReal,EigenValueImag, &
+               EigenVector, &
+               EigenErrorNorm, &
+               MaxEigenID,MinEigenID,method)
+       endif
+
+       ! -------
+
+#ifdef CUDA_SOLVER
+       deallocate(vecx_cpu)
+       call cudafree(method%C_x)
+       call cudafree(method%C_b)
+#endif
+
+       call free_KSP(method)
+       call MPI_Barrier(icomm,ierr)
+       etime=MPI_Wtime()
+
+       finalize_time=etime-stime
+
 #if 0
-    if(myrank.eq.0)then
-       write(*,*)"initialize time = ",initialize_time,"[s]"
-       write(*,*)"solver time     = ",solver_time,"[s]"
-       write(*,*)"finalize time   = ",finalize_time,"[s]"
-    endif
+       if(myrank.eq.0)then
+          write(*,*)"initialize time = ",initialize_time,"[s]"
+          write(*,*)"solver time     = ",solver_time,"[s]"
+          write(*,*)"finalize time   = ",finalize_time,"[s]"
+       endif
 #endif
+       return 
+
+    else
+
+#ifdef CUDA_SOLVER
+       ! GPU側の入力
+       call set_KSP_CRS_cuda(&
+            icomm, &
+            vecx,vecb, &
+            n,gn,nnz,istart, &
+            crsA, &
+            crsRow_ptr, &
+            crsCol, &
+            method)
+
+       call START_KSP_SOLVER(method)
+
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,method%niter
+          reshistory(i)=method%reshistory(i)
+       enddo
+       iret=method%iret
+       niter=method%niter
+
+#if CUDA_SOLVER
+       call c_f_pointer(vecx,vecx_Fptr,[n])
+       call cudaMemcpy_d2dptr_double(method%C_x,vecx_Fptr,n)
+#else
+       call get_vecx_KSP(n,vecx,method)
+#endif
+
+       ! ------------------------
+       call free_KSP_CRS_cuda(method)
+       return 
+#endif
+
+    endif
+
   end subroutine KSP_CRS
 
   subroutine set_KSP_CRS(&
@@ -499,8 +745,10 @@ contains
        method)
 
     use krylov
+    use cu_krylov
     use matrix_kernel
     use common_kernel
+
     implicit none
     integer icomm ! MPI コミュニケータ
     integer(kind=intType) n ! プロセスの受け持つベクトルのサイズ
@@ -510,7 +758,7 @@ contains
     integer(kind=intType) iend ! ベクトルの終了位置
     real*8 vecx(n) ! 解ベクトル
     real*8 vecb(n) ! 右辺ベクトル
-    real*8  crsA(nnz) ! 行列値
+    real*8 crsA(nnz) ! 行列値
     integer(kind=intType) crsRow_ptr(n+1) ! ポインタ 
     integer(kind=intType) crsCol(nnz) ! 列番号
     integer itrmax ! 最大反復回数
@@ -528,59 +776,72 @@ contains
     ! CRS Format
     iend  =istart + n -1
     method%prm%MatFormat  = MATRIX_FORMAT_CRS 
-    ! method%itrmax         = itrmax
-    ! method%ipreflag       = ipreflag
-    ! method%ILU_method     = ILU_method
-    ! method%addL           = addL
-    ! method%precon_thblock = precon_thblock
 
-!    method%rtolmax       = rtolmax
-!    method%abstolmax     = abstolmax
-
-    allocate(method%reshistory(method%itrmax))
+    allocate(method%reshistory(max(method%itrmax+100,100)))
     !$OMP PARALLEL DO PRIVATE(i)
-    do i=1,method%itrmax
+    do i=1,max(method%itrmax+100,100)
        method%reshistory(i)=0.0d0
     enddo
 
     call MPI_Barrier(icomm,ierr)
     stime=MPI_Wtime()
+
     call init_KSP_CRS(&
          icomm, &
          n,gn,nnz,istart,iend, &
          crsA, crsRow_ptr,crsCol,&
          method)
+
     call MPI_Barrier(icomm,ierr)
     etime=MPI_Wtime()
-!     if(method%commVec%myrank.eq.0)then
-!        write(*,*)"@ 1 @",etime-stime
-!     endif
-
+#if PRINT_TIME
+    if(method%commVec%myrank.eq.0)then
+       write(*,*)"@ 1 @",etime-stime
+    endif
+#endif
     stime=MPI_Wtime()
     call set_vecx_KSP(n,vecx,method)
     call set_vecb_KSP(n,vecb,method)
     call MPI_Barrier(icomm,ierr)
     etime=MPI_Wtime()
-!     if(method%commVec%myrank.eq.0)then
-!        write(*,*)"@ 2 @",etime-stime
-!     endif
+#if PRINT_TIME
+    if(method%commVec%myrank.eq.0)then
+       write(*,*)"@ 2 @",etime-stime
+    endif
+#endif
 
-!    method%ipreflag = ipreflag 
-!    method%addL     = addL
-!    iflagAS  = method%iflagAS
     call get_maxthreads(method%max_numth)
 
     call MPI_Barrier(icomm,ierr)
     stime=MPI_Wtime()
     call set_precon_CRS(method%ipreflag,method)
+
     call MPI_Barrier(icomm,ierr)
     etime=MPI_Wtime()
-!     if(method%commVec%myrank.eq.0)then
-!        write(*,*)"@ 3 @",etime-stime
-!     endif
+#if PRINT_TIME
+    if(method%commVec%myrank.eq.0)then
+       write(*,*)"@ 3 @",etime-stime
+    endif
+#endif
+
+    ! --------    
+    ! GPU計算が有効ならGPU側のメモリを確保する
+    call MPI_Barrier(icomm,ierr)
+    stime=MPI_Wtime()
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call init_GPU(method)
+    endif
+
+    call MPI_Barrier(icomm,ierr)
+    etime=MPI_Wtime()
+#if PRINT_TIME
+    if(method%commVec%myrank.eq.0)then
+       write(*,*)"@ 4 @",etime-stime
+    endif
+#endif
 
   end subroutine set_KSP_CRS
-  
+    
   subroutine set_KSP_DIA(&
        icomm, &
        vecx,vecb, &
@@ -618,17 +879,10 @@ contains
     ! DIA Format
     iend  =istart + n -1
     method%prm%MatFormat  = MATRIX_FORMAT_DIA 
-    ! method%itrmax         = itrmax
-    ! method%ipreflag       = ipreflag
-    ! method%ILU_method     = ILU_method
-    ! method%addL           = addL
-    ! method%precon_thblock = precon_thblock
+    allocate(method%reshistory(max(method%itrmax+100,100)))
 
-!    method%rtolmax       = rtolmax
-!    method%abstolmax     = abstolmax
-    allocate(method%reshistory(method%itrmax))
     !$OMP PARALLEL DO PRIVATE(i)
-    do i=1,method%itrmax
+    do i=1,max(method%itrmax+100,100)
        method%reshistory(i)=0.0d0
     enddo
 
@@ -641,15 +895,16 @@ contains
     call set_vecx_KSP(n,vecx,method)
     call set_vecb_KSP(n,vecb,method)
 
-    ! method%ipreflag = ipreflag
-    ! method%addL     = addL
-    ! iflagAS  = method%iflagAS
     call get_maxthreads(method%max_numth)
-    ! -----
     call set_precon_DIA(method%ipreflag,method)
+
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call init_GPU(method)
+    endif
 
   end subroutine set_KSP_DIA
 
+#if 0
   subroutine reset_CRS_Mat(&
        itrmax, &
        ipreflag, &
@@ -665,11 +920,16 @@ contains
     type(KSP) :: method
     integer itrmax
     integer ipreflag
+    integer ipreflag0
     integer ILU_method
     integer addL
     real*8  crsA(method%prm%nnz) ! 行列値
     integer(kind=intType) nnz
     integer(kind=intType) i
+
+    call free_GPU(method)
+
+    ipreflag0 = method%ipreflag
     nnz=method%prm%nnz
     if(method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ)then
        deallocate(method%ivec_AS)
@@ -686,9 +946,9 @@ contains
     if(itrmax.ne.PARCEL_RESET_INHERIT)then
        method%itrmax=itrmax
        deallocate(method%reshistory)
-       allocate(method%reshistory(itrmax))
+       allocate(method%reshistory(max(method%itrmax+100,100)))
        !$OMP PARALLEL DO PRIVATE(i)
-       do i=1,itrmax
+       do i=1,max(method%itrmax+100,100)
           method%reshistory(i)=0.0d0
        enddo
     endif
@@ -701,6 +961,8 @@ contains
 
     call xcpy(nnz,crsA,method%crsMat%crsA)
     call set_precon_CRS(method%ipreflag,method)
+
+    call init_GPU(method)
 
   end subroutine reset_CRS_Mat
 
@@ -718,20 +980,27 @@ contains
     type(KSP) :: method
     integer itrmax
     integer ipreflag
+    integer ipreflag0
     integer ILU_method
     integer addL
     integer(kind=intType) n,nnd
     integer(kind=intType) i
     real*8 diaMat(method%prm%nnd * method%prm%n)
 
+    call free_GPU(method)
+    call free_crsMat(method%precon_crsMatAS)
+
+    ipreflag0 = method%ipreflag
     n=method%prm%n
     nnd=method%prm%nnd
     if(method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ)then
        deallocate(method%ivec_AS)
        deallocate(method%ovec_AS)
        call free_diaMat(method%precon_diaMatAS)
+       call free_crsMat(method%precon_crsMatAS)
        call free_precon_AS(method)
     endif
+
     call free_ILUregion(method)
     call free_precon_ILU_dia(method)
 
@@ -741,7 +1010,7 @@ contains
     if(itrmax.ne.PARCEL_RESET_INHERIT)then
        method%itrmax=itrmax
        deallocate(method%reshistory)
-       allocate(method%reshistory(itrmax))
+       allocate(method%reshistory(itrmax+100))
        !$OMP PARALLEL DO PRIVATE(i)
        do i=1,itrmax
           method%reshistory(i)=0.0d0
@@ -757,15 +1026,150 @@ contains
     call xcpy(n*nnd,diaMat,method%diaMat%diaA)
     call set_precon_DIA(method%ipreflag,method)
 
+    call init_GPU(method)
+
   end subroutine reset_DIA_Mat
 
+#else
+  subroutine reset_CRS_Mat(&
+       itrmax, &
+       ipreflag, &
+       ILU_method, &
+       addL,&
+       crsA,&
+       method)
+
+    use krylov
+    use matrix_kernel
+    use vec_kernel
+    implicit none
+    type(KSP) :: method
+    integer itrmax
+    integer ipreflag
+    integer ipreflag0
+    integer ILU_method
+    integer addL
+    real*8  crsA(method%prm%nnz) ! 行列値
+    integer(kind=intType) nnz
+    integer(kind=intType) i
+
+    ipreflag0 = method%ipreflag
+    nnz=method%prm%nnz
+    if(method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ)then
+       deallocate(method%ivec_AS)
+       deallocate(method%ovec_AS)
+       call free_crsMat(method%precon_crsMatAS)
+       call free_precon_AS(method)
+    endif
+    call free_ILUregion(method)
+    call free_precon_ILU_crs(method)
+
+    if(ipreflag.ne.PARCEL_RESET_INHERIT)then
+       method%ipreflag=ipreflag
+    endif
+    if(itrmax.ne.PARCEL_RESET_INHERIT)then
+       method%itrmax=itrmax
+       deallocate(method%reshistory)
+       allocate(method%reshistory(max(method%itrmax+100,100)))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,max(method%itrmax+100,100)
+          method%reshistory(i)=0.0d0
+       enddo
+    endif
+    if(ILU_method.ne.PARCEL_RESET_INHERIT)then
+       method%ILU_method=ILU_method
+    endif
+    if(addL.ne.PARCEL_RESET_INHERIT)then
+       method%addL=addL
+    endif
+
+    call xcpy(nnz,crsA,method%crsMat%crsA)
+    call set_precon_CRS(method%ipreflag,method)
+
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call reset_GPU(method,ipreflag0)
+    endif
+
+  end subroutine reset_CRS_Mat
+
+  subroutine reset_DIA_Mat(&
+       itrmax, &
+       ipreflag, &
+       ILU_method, &
+       addL,&
+       diaMat,&
+       method)
+    use krylov
+    use matrix_kernel
+    use vec_kernel
+    implicit none
+    type(KSP) :: method
+    integer itrmax
+    integer ipreflag
+    integer ipreflag0
+    integer ILU_method
+    integer addL
+    integer(kind=intType) n,nnd
+    integer(kind=intType) i
+    real*8 diaMat(method%prm%nnd * method%prm%n)
+
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call free_crsMat(method%precon_crsMatAS)
+    endif
+    call cudaDeviceSynchronize() 
+
+    ipreflag0 = method%ipreflag
+    n=method%prm%n
+    nnd=method%prm%nnd
+    if(method%ipreflag.eq.KSP_PRECONDITION_ADDITIVESCHWARZ)then
+       deallocate(method%ivec_AS)
+       deallocate(method%ovec_AS)
+       call free_diaMat(method%precon_diaMatAS)
+       call free_crsMat(method%precon_crsMatAS)
+       call free_precon_AS(method)
+    endif
+
+    call free_ILUregion(method)
+    call free_precon_ILU_dia(method)
+
+    if(ipreflag.ne.PARCEL_RESET_INHERIT)then
+       method%ipreflag=ipreflag
+    endif
+    if(itrmax.ne.PARCEL_RESET_INHERIT)then
+       method%itrmax=itrmax
+       deallocate(method%reshistory)
+       allocate(method%reshistory(itrmax+100))
+       !$OMP PARALLEL DO PRIVATE(i)
+       do i=1,itrmax
+          method%reshistory(i)=0.0d0
+       enddo
+    endif
+    if(ILU_method.ne.PARCEL_RESET_INHERIT)then
+       method%ILU_method=ILU_method
+    endif
+    if(addL.ne.PARCEL_RESET_INHERIT)then
+       method%addL=addL
+    endif
+
+    call xcpy(n*nnd,diaMat,method%diaMat%diaA)
+    call set_precon_DIA(method%ipreflag,method)
+
+    call cudaDeviceSynchronize() 
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call reset_GPU(method,ipreflag0)
+    endif
+
+  end subroutine reset_DIA_Mat
+#endif
   subroutine set_precon_DIA(ipreflag,method)
     use krylov
     use matrix_kernel
+    use vec_kernel
     implicit none
     integer ipreflag
     type(KSP) :: method
     integer(kind=intType) n,nnz,istart,nnd
+    integer(kind=intType) n_nnd
 
     n      = method%prm%n
     istart = method%prm%istart
@@ -776,6 +1180,8 @@ contains
 !     write(*,*)ipreflag,method%addL,nnz
 !    method%independ_nvec=CONST_nvec
 !    method%precon_thblock=CONST_thblock
+
+    method%prm_AS%MatFormat=MATRIX_FORMAT_CRS
 
     select case (ipreflag)
     case(KSP_PRECONDITION_NONE)
@@ -818,9 +1224,41 @@ contains
                method%prm_AS%nnz,&
                method%prm_AS%istart)
           ! addLが0の場合はブロックヤコビ前処理なので加法シュヴァルツ前処理用の行列は作成しない
-          call free_crsMat(method%precon_crsMatAS)
+          ! CUDAの場合この結果が必要
+          if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+
+          else
+             call free_crsMat(method%precon_crsMatAS)
+          endif
        endif
        call free_crsMat(method%crsMat)
+
+    case(KSP_PRECONDITION_NEUMANN)
+       call xcpy_diaMat(method,method%diaMat,method%preconNeuman%diaMat)
+
+       if(allocated(method%preconNeuman%D))deallocate(method%preconNeuman%D)
+       if(allocated(method%preconNeuman%Dinv))deallocate(method%preconNeuman%Dinv)
+       if(allocated(method%preconNeuman%vecx))deallocate(method%preconNeuman%vecx)
+       if(allocated(method%preconNeuman%vecy))deallocate(method%preconNeuman%vecy)
+
+       allocate(method%preconNeuman%D(n));
+       allocate(method%preconNeuman%Dinv(n));
+       allocate(method%preconNeuman%vecx(n)); 
+       allocate(method%preconNeuman%vecy(n)); 
+
+       call zero_initialize(n,method%preconNeuman%D)
+       call zero_initialize(n,method%preconNeuman%Dinv)
+       call zero_initialize(n,method%preconNeuman%vecx)
+       call zero_initialize(n,method%preconNeuman%vecy)
+
+       ! A = I - F 
+       ! (I - F)^-1 = I + F + F^2 + F^3 + ....
+       ! Fを計算する 
+       call Neumann_scaling_dia( &
+            method%prm, &
+            method%preconNeuman%diaMat, &
+            method%preconNeuman%D , &
+            method%preconNeuman%Dinv)
 
     case default
        if(method%commVec%myrank.eq.0)then
@@ -839,12 +1277,16 @@ contains
 
   subroutine set_precon_CRS(ipreflag,method)
     use krylov
+    use vec_kernel,only : zero_initialize
     use matrix_kernel
     implicit none
     integer ipreflag
     type(KSP) :: method
+    integer(kind=intType) n
+    integer(kind=intType) nnz
 
     method%prm_AS%MatFormat=MATRIX_FORMAT_CRS
+
 !    method%independ_nvec=CONST_nvec
 !    method%precon_thblock=CONST_thblock
 
@@ -867,6 +1309,44 @@ contains
        endif
     case(KSP_PRECONDITION_ADDITIVESCHWARZ)
        call get_DILU_DInv_AS_crs(method,method%crsMat)
+
+    case(KSP_PRECONDITION_NEUMANN)
+
+       n = method%prm%n
+       call xcpy_crsMat(method,method%crsMat,method%preconNeuman%crsMat)
+
+       if(allocated(method%preconNeuman%D))deallocate(method%preconNeuman%D)
+       if(allocated(method%preconNeuman%Dinv))deallocate(method%preconNeuman%Dinv)
+       if(allocated(method%preconNeuman%vecx))deallocate(method%preconNeuman%vecx)
+       if(allocated(method%preconNeuman%vecy))deallocate(method%preconNeuman%vecy)
+
+       allocate(method%preconNeuman%D(n));
+       allocate(method%preconNeuman%Dinv(n));
+       allocate(method%preconNeuman%vecx(n)); 
+       allocate(method%preconNeuman%vecy(n)); 
+
+       call zero_initialize(n,method%preconNeuman%D)
+       call zero_initialize(n,method%preconNeuman%Dinv)
+       call zero_initialize(n,method%preconNeuman%vecx)
+       call zero_initialize(n,method%preconNeuman%vecy)
+
+#if JACOBI_LIKE 
+       call init_jacobilike_crs( &
+            method%prm, &
+            method%preconNeuman%crsMat, &
+            method%preconNeuman%D , &
+            method%preconNeuman%Dinv)
+#else
+       ! A = I - F 
+       ! (I - F)^-1 = I + F + F^2 + F^3 + ....
+       ! Fを計算する 
+       call Neumann_scaling_crs( &
+            method%prm, &
+            method%preconNeuman%crsMat, &
+            method%preconNeuman%D , &
+            method%preconNeuman%Dinv)
+#endif
+
     case default
        if(method%commVec%myrank.eq.0)then
           write(*,*)"error :: not support preconditioning = ",ipreflag
@@ -886,28 +1366,28 @@ contains
 
   end subroutine set_precon_CRS
 
-  subroutine set_CRS_Mat(n,nnz, crsA,crsRow_ptr,crsCol, method)
+  subroutine set_CRS_Mat(n,nnz, crsA,crsRow_ptr,crsCol, crsMat)
     use krylov
     implicit none
     integer(kind=intType) n,nnz
     real*8  crsA(nnz) ! 行列値
     integer(kind=intType) crsRow_ptr(n+1) ! ポインタ 
     integer(kind=intType) crsCol(nnz) ! 列番号
-    type(KSP) :: method
+    type(CRS_Mat) :: crsMat
     integer(kind=intType) i
 
     !$OMP PARALLEL DO PRIVATE(i)  
     do i=1,n+1
-       method%crsMat%crsRow_ptr(i)=crsRow_ptr(i)
+       crsMat%crsRow_ptr(i)=crsRow_ptr(i)
     enddo
     !$OMP END PARALLEL DO 
 
-    !$OMP PARALLEL DO PRIVATE(i)  
+!    !$OMP PARALLEL DO PRIVATE(i)  
     do i=1,nnz
-       method%crsMat%crsA(i)=crsA(i)
-       method%crsMat%crsCol(i)=crsCol(i)
+       crsMat%crsA(i)   = crsA(i)
+       crsMat%crsCol(i) = crsCol(i)
     enddo
-    !$OMP END PARALLEL DO 
+!    !$OMP END PARALLEL DO 
 
   end subroutine set_CRS_Mat
 
@@ -945,18 +1425,24 @@ contains
     call init_crsMat(method%crsMat,n,nnz)
     call MPI_Barrier(icomm,ierr)
     te=MPI_Wtime()
-!      if(myrank.eq.0)then
-!         write(*,*)"@ 1-1 @",te-ts
-!      endif
-
+#if PRINT_TIME
+     if(myrank.eq.0)then
+        write(*,*)"@ 1-1 @",te-ts
+     endif
+#endif
+!
     call MPI_Barrier(icomm,ierr)
     ts=MPI_Wtime()
-    call set_CRS_Mat(n,nnz, crsA,crsRow_ptr,crsCol, method)
+    call set_CRS_Mat(n,nnz, crsA,crsRow_ptr,crsCol, method%crsMat)
     call MPI_Barrier(icomm,ierr)
     te=MPI_Wtime()
-!      if(myrank.eq.0)then
-!         write(*,*)"@ 1-2 @",te-ts
-!      endif
+
+
+#if PRINT_TIME
+     if(myrank.eq.0)then
+        write(*,*)"@ 1-2 @",te-ts
+     endif
+#endif
 
     call MPI_Barrier(icomm,ierr)
     ts=MPI_Wtime()
@@ -964,10 +1450,11 @@ contains
          nCol,nColL,nColU,nColD)
     call MPI_Barrier(icomm,ierr)
     te=MPI_Wtime()
-!      if(myrank.eq.0)then
-!         write(*,*)"@ 1-3 @",te-ts
-!      endif
-
+#if PRINT_TIME
+     if(myrank.eq.0)then
+        write(*,*)"@ 1-3 @",te-ts
+     endif
+#endif
     method%crsMat%nColL = nColL
     method%crsMat%nColU = nColU
 
@@ -976,19 +1463,23 @@ contains
     call get_crs_Row(method%prm,method%crsMat,nCol,Colsort)
     call MPI_Barrier(icomm,ierr)
     te=MPI_Wtime()
-!     if(myrank.eq.0)then
-!        write(*,*)"@ 1-4 @",te-ts
-!     endif
+
+#if PRINT_TIME
+    if(myrank.eq.0)then
+       write(*,*)"@ 1-4 @",te-ts
+    endif
+#endif
 
     call MPI_Barrier(icomm,ierr)
     ts=MPI_Wtime()
     call set_comm(method%commVec,icomm,method%prm,Colsort,nCol)
     call MPI_Barrier(icomm,ierr)
     te=MPI_Wtime()
-!     if(myrank.eq.0)then
-!        write(*,*)"@ 1-5 @",te-ts
-!     endif
-
+#if PRINT_TIME
+    if(myrank.eq.0)then
+       write(*,*)"@ 1-5 @",te-ts
+    endif
+#endif
     ! ----
    !  call MPI_Barrier(icomm,ierr)
     ts=MPI_Wtime()
@@ -1004,10 +1495,11 @@ contains
 !        allocate(method%commVec%nrk_prm(i)%iLe_Ovl2(nnz))
 !     enddo
     te=MPI_Wtime()
-!      if(myrank.eq.0)then
-!         write(*,*)"@ 1-6 @",te-ts
-!      endif
-
+#if PRINT_TIME
+     if(myrank.eq.0)then
+        write(*,*)"@ 1-6 @",te-ts
+     endif
+#endif
    !  call MPI_Barrier(icomm,ierr)
     ts=MPI_Wtime()
 !    call init_MatVec_crs_ovl2(method%prm,method%crsMat,method%commVec)
@@ -1133,7 +1625,8 @@ contains
 
     etime0=MPI_Wtime()
 
-#ifdef timer_init
+! #ifdef timer_init
+#if 0
     if(method%commVec%myrank.eq.0)then
        write(*,*)"------------------------------------------"
        write(*,*)"init_KSP_Mat_DIA         ",etime0 - stime0
@@ -1180,6 +1673,7 @@ contains
     allocate(method%x(n))
     allocate(method%b(n))
     allocate(method%Dinv(n))
+
     ! do i=1,n
     !    method%r(i)=0.0d0
     !    method%x(i)=0.0d0
@@ -1288,10 +1782,22 @@ contains
 
   subroutine free_KSP(method)
     use krylov
+    use cu_krylov
+    use matrix_kernel,only : free_crsMat
     implicit none
     type(KSP) :: method
     integer MatFormat 
-    MatFormat = method%prm%MatFormat 
+    MatFormat = method%prm%MatFormat
+    if(method%GPUflag .eq. PARCEL_GPU_FLAG_ON)then
+       call free_GPU(method)
+       select case (MatFormat)
+       case(MATRIX_FORMAT_CRS)
+
+       case(MATRIX_FORMAT_DIA)
+          call free_crsMat(method%precon_crsMatAS)
+       end select
+    endif
+    
     select case (MatFormat)
     case(MATRIX_FORMAT_CRS)
        call free_KSP_CRS(method)
@@ -1380,6 +1886,9 @@ contains
     implicit none
     type(KSP) :: method
 
+    ! C側ポインタの後片付けを行う    
+    ! CPU側のメモリで解放するメモリを指定するためCPUメモリ解放前に解放する
+    
     deallocate(method%r)
     deallocate(method%x)
     deallocate(method%b)
@@ -1402,7 +1911,54 @@ contains
        call free_crsMat(method%precon_crsMatAS)
        call free_precon_AS(method)
     endif
-    deallocate(method%reshistory)
+
+    if(method%ipreflag.eq.KSP_PRECONDITION_NEUMANN)then
+       call free_crsMat(method%preconNeuman%crsMat)
+       call free_diaMat(method%preconNeuman%diaMat)
+
+       if(allocated(method%preconNeuman%vecx))then
+          deallocate(method%preconNeuman%vecx)
+       endif
+       if(allocated(method%preconNeuman%vecx_hi))then
+          deallocate(method%preconNeuman%vecx_hi)
+       endif
+       if(allocated(method%preconNeuman%vecx_lo))then
+          deallocate(method%preconNeuman%vecx_lo)
+       endif
+
+       if(allocated(method%preconNeuman%vecy))then
+          deallocate(method%preconNeuman%vecy)
+       endif
+       if(allocated(method%preconNeuman%vecy_hi))then
+          deallocate(method%preconNeuman%vecy_hi)
+       endif
+       if(allocated(method%preconNeuman%vecy_lo))then
+          deallocate(method%preconNeuman%vecy_lo)
+       endif
+
+       if(allocated(method%preconNeuman%D))then
+          deallocate(method%preconNeuman%D)
+       endif
+       if(allocated(method%preconNeuman%D_hi))then
+          deallocate(method%preconNeuman%D_hi)
+       endif
+       if(allocated(method%preconNeuman%D_lo))then
+          deallocate(method%preconNeuman%D_lo)
+       endif
+
+       if(allocated(method%preconNeuman%Dinv))then
+          deallocate(method%preconNeuman%Dinv)
+       endif
+       if(allocated(method%preconNeuman%Dinv_hi))then
+          deallocate(method%preconNeuman%Dinv_hi)
+       endif
+       if(allocated(method%preconNeuman%Dinv_lo))then
+          deallocate(method%preconNeuman%Dinv_lo)
+       endif
+
+    end if
+
+    if(allocated(method%reshistory))deallocate(method%reshistory)
 
   end subroutine free_KSP_CRS
 
@@ -1434,6 +1990,53 @@ contains
        call free_diaMat(method%precon_diaMatAS)
        call free_precon_AS(method)
     endif
+
+    if(method%ipreflag.eq.KSP_PRECONDITION_NEUMANN)then
+       call free_crsMat(method%preconNeuman%crsMat)
+       call free_diaMat(method%preconNeuman%diaMat)
+
+       if(allocated(method%preconNeuman%vecx))then
+          deallocate(method%preconNeuman%vecx)
+       endif
+       if(allocated(method%preconNeuman%vecx_hi))then
+          deallocate(method%preconNeuman%vecx_hi)
+       endif
+       if(allocated(method%preconNeuman%vecx_lo))then
+          deallocate(method%preconNeuman%vecx_lo)
+       endif
+
+       if(allocated(method%preconNeuman%vecy))then
+          deallocate(method%preconNeuman%vecy)
+       endif
+       if(allocated(method%preconNeuman%vecy_hi))then
+          deallocate(method%preconNeuman%vecy_hi)
+       endif
+       if(allocated(method%preconNeuman%vecy_lo))then
+          deallocate(method%preconNeuman%vecy_lo)
+       endif
+
+       if(allocated(method%preconNeuman%D))then
+          deallocate(method%preconNeuman%D)
+       endif
+       if(allocated(method%preconNeuman%D_hi))then
+          deallocate(method%preconNeuman%D_hi)
+       endif
+       if(allocated(method%preconNeuman%D_lo))then
+          deallocate(method%preconNeuman%D_lo)
+       endif
+
+       if(allocated(method%preconNeuman%Dinv))then
+          deallocate(method%preconNeuman%Dinv)
+       endif
+       if(allocated(method%preconNeuman%Dinv_hi))then
+          deallocate(method%preconNeuman%Dinv_hi)
+       endif
+       if(allocated(method%preconNeuman%Dinv_lo))then
+          deallocate(method%preconNeuman%Dinv_lo)
+       endif
+
+    end if
+
     deallocate(method%reshistory)
   end subroutine free_KSP_DIA
 
@@ -1650,6 +2253,7 @@ contains
 
   subroutine calc_precon(method,r,s)
     use krylov
+    use precon_DILU,only : solve_DILU_DDM
     implicit none
     type(KSP) :: method
     real*8 s(method%prm%n)
@@ -1663,7 +2267,11 @@ contains
     case(MATRIX_FORMAT_DIA)
        call precon_dia(method,r,s)
     case(MATRIX_FORMAT_DDM)
-       call calc_precon_DDM(method%ddmMat,r,s)
+       if(method%ipreflag.eq.21)then
+          call solve_DILU_DDM(method,r,s)
+       else
+          call calc_precon_DDM(method%ddmMat,r,s)
+       endif
     end select
 
   end subroutine calc_precon
@@ -1708,6 +2316,15 @@ contains
        ! iflag = 3 :: Additive Schwarz (addL>0)
        call AdditiveSchwarz_crs(method,r,s)
        return
+    case(KSP_PRECONDITION_NEUMANN)
+       ! iflag = 4 :: Neumann 
+#if JACOBI_LIKE
+       call Jacobilike_crs(method,r,s)
+#else
+       call Neumann_crs(method,r,s)
+#endif
+       return
+
 #if 0
     case(4) ! 反復形式の加法シュワルツ (未確認)
        call zero_initialize(n,r1)
@@ -1763,81 +2380,85 @@ contains
        ! iflag = 3 :: Additive Schwarz (addL>0)
        call AdditiveSchwarz_dia(method,r,s)
        return
+    case(KSP_PRECONDITION_NEUMANN)
+       ! iflag = 4 :: Neumann 
+       call Neumann_dia(method,r,s)
+       return
     end select
   end subroutine precon_dia
 
 ! ----
-  subroutine calc_Matvec_DDM(DDM_MAT,x,y,PRECISION_CALC,PRECISION_A,x_lo,y_lo)
+  subroutine calc_Matvec_DDM(DDM_MAT_,x,y,PRECISION_CALC,PRECISION_A,x_lo,y_lo)
     use DDM_TYPE
     use ddm_matv,only : matv_ddm
 
     implicit none
 
-    type (DDM_ALL_TYPE) DDM_MAT
-    double precision x(DDM_MAT%n)
-    double precision y(DDM_MAT%n)
+    type (DDM_ALL_TYPE) DDM_MAT_
+    double precision x(DDM_MAT_%n)
+    double precision y(DDM_MAT_%n)
     integer ,optional :: PRECISION_CALC
     integer ,optional :: PRECISION_A
-    double precision ,optional ::  x_lo(DDM_MAT%n)
-    double precision ,optional ::  y_lo(DDM_MAT%n)
+    double precision ,optional ::  x_lo(DDM_MAT_%n)
+    double precision ,optional ::  y_lo(DDM_MAT_%n)
 
     if(  present(PRECISION_CALC)  )then
        call matv_ddm( &
-            DDM_MAT%icomm, &
-            DDM_MAT%mat%nnd_dia, &
-            DDM_MAT%n, &
-            DDM_MAT%mat%val_dia, &
-            DDM_MAT%mat%ioff_dia, &
+            DDM_MAT_%icomm, &
+            DDM_MAT_%mat%nnd_dia, &
+            DDM_MAT_%n, &
+            DDM_MAT_%mat%val_dia, &
+            DDM_MAT_%mat%ioff_dia, &
             x, &
             y,  &
-            DDM_MAT%myrank, &
-            DDM_MAT%ncpu,   &
-            DDM_MAT%mat%prm,&
-            DDM_MAT%commHide,&
+            DDM_MAT_%myrank, &
+            DDM_MAT_%ncpu,   &
+            DDM_MAT_%prm,&
+            DDM_MAT_%commHide,&
             PRECISION_CALC,&
             PRECISION_A,&
-            DDM_MAT%mat%val_dia_lo, &
+            DDM_MAT_%mat%val_dia_lo, &
             x_lo,y_lo)
     else
        call matv_ddm( &
-            DDM_MAT%icomm, &
-            DDM_MAT%mat%nnd_dia, &
-            DDM_MAT%n, &
-            DDM_MAT%mat%val_dia, &
-            DDM_MAT%mat%ioff_dia, &
+            DDM_MAT_%icomm, &
+            DDM_MAT_%mat%nnd_dia, &
+            DDM_MAT_%n, &
+            DDM_MAT_%mat%val_dia, &
+            DDM_MAT_%mat%ioff_dia, &
             x, &
             y,  &
-            DDM_MAT%myrank, &
-            DDM_MAT%ncpu,   &
-            DDM_MAT%mat%prm,&
-            DDM_MAT%commHide )
+            DDM_MAT_%myrank, &
+            DDM_MAT_%ncpu,   &
+            DDM_MAT_%prm,&
+            DDM_MAT_%commHide )
     endif
   end subroutine calc_Matvec_DDM
 
-  subroutine calc_res_DDM(DDM_MAT,x,b,r)
+  subroutine calc_res_DDM(DDM_MAT_,x,b,r)
 
     use DDM_TYPE
     use vec_kernel
     use PARCEL_integer
     implicit none
 
-    type (DDM_ALL_TYPE) DDM_MAT
-    real*8 x(DDM_MAT%n)
-    real*8 b(DDM_MAT%n)
-    real*8 r(DDM_MAT%n)
+    type (DDM_ALL_TYPE) DDM_MAT_
+    real*8 x(DDM_MAT_%n)
+    real*8 b(DDM_MAT_%n)
+    real*8 r(DDM_MAT_%n)
     real*8 alpha,beta
     integer(kind=intType) n_intType
     
-    call calc_Matvec_DDM(DDM_MAT,x,r)
+    call calc_Matvec_DDM(DDM_MAT_,x,r)
     alpha= 1.0d0
     beta =-1.0d0
-    n_intType=DDM_MAT%n
+    n_intType=DDM_MAT_%n
     call axpy(n_intType,alpha,beta,b,r)
 
   end subroutine calc_res_DDM
 
   subroutine calc_precon_DDM(&
-       DDM_MAT,r,s,&
+       DDM_MAT_,r,s,&
        PRECISION_CALC, &
        PRECISION_PRECONDITION, &
        r_lo, &
@@ -1846,14 +2467,14 @@ contains
     use DDM_TYPE
     use ddm_kernel,only : precon_main_ddm
     implicit none    
-    type (DDM_ALL_TYPE) DDM_MAT
-    double precision r(DDM_MAT%n)
-    double precision s(DDM_MAT%n)
+    type (DDM_ALL_TYPE) DDM_MAT_
+    double precision r(DDM_MAT_%n)
+    double precision s(DDM_MAT_%n)
     integer,optional :: PRECISION_CALC
     integer,optional :: PRECISION_PRECONDITION
-    double precision,optional :: r_lo(DDM_MAT%n)
-    double precision,optional :: s_lo(DDM_MAT%n)
-
+    double precision,optional :: r_lo(DDM_MAT_%n)
+    double precision,optional :: s_lo(DDM_MAT_%n)
+    integer(kind=intType) parcel_int
     integer PRECISION
     PRECISION = KSP_DOUBLE_PRECISION
     if(  present(PRECISION_CALC)  )then
@@ -1861,107 +2482,112 @@ contains
     endif
     if( PRECISION.eq.KSP_DOUBLE_DOUBLE_PRECISION )then
        if(PRECISION_PRECONDITION.eq.KSP_DOUBLE_DOUBLE_PRECISION )then
+          parcel_int = -1
           call precon_main_ddm(&
-               DDM_MAT%ipc, &
-               DDM_MAT%n, &
-               -1, &
-               DDM_MAT%nnd, &
-               DDM_MAT%diag, &
-               DDM_MAT%mat%val_dia,&
-               DDM_MAT%mat%ioff_dia, &
+               DDM_MAT_%ipc, &
+               DDM_MAT_%n, &
+               parcel_int, &
+               DDM_MAT_%nnd, &
+               DDM_MAT_%diag, &
+               DDM_MAT_%mat%val_dia,&
+               DDM_MAT_%mat%ioff_dia, &
                r, &
                s, &
-               DDM_MAT%mat%prm, &
-               DDM_MAT%mat%prm%ncomp_grids, &
-               DDM_MAT%mat%ioff_grids, & 
-               DDM_MAT%k, &
-               DDM_MAT%icomm, &
-               DDM_MAT%myrank, &
-               DDM_MAT%AS_n, &
-               DDM_MAT%AS_prm, &
-               DDM_MAT%AS_mean, &
-               DDM_MAT%AS_g, &
-               DDM_MAT%AS_val_dia, &
-               DDM_MAT%AS_ioff_dia, &
-               DDM_MAT%AS_v1, &
-               DDM_MAT%AS_v2 , &
-               DDM_MAT%precon,&
+               DDM_MAT_%prm, &
+               DDM_MAT_%prm%ncomp_grids, &
+               DDM_MAT_%mat%ioff_grids, & 
+               DDM_MAT_%k, &
+               DDM_MAT_%icomm, &
+               DDM_MAT_%myrank, &
+               DDM_MAT_%AS_n, &
+               DDM_MAT_%AS_prm, &
+               DDM_MAT_%AS_mean, &
+               DDM_MAT_%AS_g, &
+               DDM_MAT_%AS_val_dia, &
+               DDM_MAT_%AS_ioff_dia, &
+               DDM_MAT_%AS_v1, &
+               DDM_MAT_%AS_v2 , &
+               DDM_MAT_%precon,&
                PRECISION_CALC, &
                PRECISION_PRECONDITION, &
-               DDM_MAT%diag_lo, &
-               DDM_MAT%mat%val_dia_lo,&
+               DDM_MAT_%diag_lo, &
+               DDM_MAT_%mat%val_dia_lo,&
                r_lo, &
                s_lo, &
-               DDM_MAT%AS_val_dia_lo, &
-               DDM_MAT%AS_v1_lo, &
-               DDM_MAT%AS_v2_lo  &
+               DDM_MAT_%AS_val_dia_lo, &
+               DDM_MAT_%AS_v1_lo, &
+               DDM_MAT_%AS_v2_lo  &
                )
        else
+          parcel_int = -1
           call precon_main_ddm(&
-               DDM_MAT%ipc, &
-               DDM_MAT%n, &
-               -1, &
-               DDM_MAT%nnd, &
-               DDM_MAT%diag, &
-               DDM_MAT%mat%val_dia,&
-               DDM_MAT%mat%ioff_dia, &
+               DDM_MAT_%ipc, &
+               DDM_MAT_%n, &
+               parcel_int, &
+               DDM_MAT_%nnd, &
+               DDM_MAT_%diag, &
+               DDM_MAT_%mat%val_dia,&
+               DDM_MAT_%mat%ioff_dia, &
                r, &
                s, &
-               DDM_MAT%mat%prm, &
-               DDM_MAT%mat%prm%ncomp_grids, &
-               DDM_MAT%mat%ioff_grids, & 
-               DDM_MAT%k, &
-               DDM_MAT%icomm, &
-               DDM_MAT%myrank, &
-               DDM_MAT%AS_n, &
-               DDM_MAT%AS_prm, &
-               DDM_MAT%AS_mean, &
-               DDM_MAT%AS_g, &
-               DDM_MAT%AS_val_dia, &
-               DDM_MAT%AS_ioff_dia, &
-               DDM_MAT%AS_v1, &
-               DDM_MAT%AS_v2 , &
-               DDM_MAT%precon,&
+               DDM_MAT_%prm, &
+               DDM_MAT_%prm%ncomp_grids, &
+               DDM_MAT_%mat%ioff_grids, & 
+               DDM_MAT_%k, &
+               DDM_MAT_%icomm, &
+               DDM_MAT_%myrank, &
+               DDM_MAT_%AS_n, &
+               DDM_MAT_%AS_prm, &
+               DDM_MAT_%AS_mean, &
+               DDM_MAT_%AS_g, &
+               DDM_MAT_%AS_val_dia, &
+               DDM_MAT_%AS_ioff_dia, &
+               DDM_MAT_%AS_v1, &
+               DDM_MAT_%AS_v2 , &
+               DDM_MAT_%precon,&
                PRECISION_CALC, &
                PRECISION_PRECONDITION, &
-!               DDM_MAT%diag_lo, &
-!               DDM_MAT%mat%val_dia_lo,&
+!               DDM_MAT_%diag_lo, &
+!               DDM_MAT_%mat%val_dia_lo,&
                v1_lo=r_lo, &
                v2_lo=s_lo, &
-!               DDM_MAT%AS_val_dia_lo, &
-               AS_v1_lo=DDM_MAT%AS_v1_lo,&
-               AS_v2_lo=DDM_MAT%AS_v2_lo&
+!               DDM_MAT_%AS_val_dia_lo, &
+               AS_v1_lo=DDM_MAT_%AS_v1_lo,&
+               AS_v2_lo=DDM_MAT_%AS_v2_lo & 
                )
        endif
     else
+       parcel_int = -1
        call precon_main_ddm(&
-         DDM_MAT%ipc, &
-         DDM_MAT%n, &
-         -1, &
-         DDM_MAT%nnd, &
-         DDM_MAT%diag, &
-         DDM_MAT%mat%val_dia,&
-         DDM_MAT%mat%ioff_dia, &
+         DDM_MAT_%ipc, &
+         DDM_MAT_%n, &
+         parcel_int, &
+         DDM_MAT_%nnd, &
+         DDM_MAT_%diag, &
+         DDM_MAT_%mat%val_dia,&
+         DDM_MAT_%mat%ioff_dia, &
          r, &
          s, &
-         DDM_MAT%mat%prm, &
-         DDM_MAT%mat%prm%ncomp_grids, &
-         DDM_MAT%mat%ioff_grids, & 
-         DDM_MAT%k, &
-         DDM_MAT%icomm, &
-         DDM_MAT%myrank, &
-         DDM_MAT%AS_n, &
-         DDM_MAT%AS_prm, &
-         DDM_MAT%AS_mean, &
-         DDM_MAT%AS_g, &
-         DDM_MAT%AS_val_dia, &
-         DDM_MAT%AS_ioff_dia, &
-         DDM_MAT%AS_v1, &
-         DDM_MAT%AS_v2 , &
-         DDM_MAT%precon )
+         DDM_MAT_%prm, &
+         DDM_MAT_%prm%ncomp_grids, &
+         DDM_MAT_%mat%ioff_grids, & 
+         DDM_MAT_%k, &
+         DDM_MAT_%icomm, &
+         DDM_MAT_%myrank, &
+         DDM_MAT_%AS_n, &
+         DDM_MAT_%AS_prm, &
+         DDM_MAT_%AS_mean, &
+         DDM_MAT_%AS_g, &
+         DDM_MAT_%AS_val_dia, &
+         DDM_MAT_%AS_ioff_dia, &
+         DDM_MAT_%AS_v1, &
+         DDM_MAT_%AS_v2 , &
+         DDM_MAT_%precon )
     endif
     
    end subroutine calc_precon_DDM
 
 end module krylov_kernel
+
+
 

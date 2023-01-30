@@ -283,6 +283,7 @@ subroutine ddKSP_pCG( pcg&
   real*8 rho1_hi,rho1_lo
   real*8 rnorm_hi,rnorm_lo
   real*8 bnorm_hi,bnorm_lo
+
   integer itr
   real*8 tmp1_hi,tmp1_lo
   real*8 tmp2_hi,tmp2_lo
@@ -404,8 +405,15 @@ subroutine ddKSP_pCG( pcg&
   rtime(1) =  rtime(1) + etime-stime
   do itr = 1,itrmax
      pcg%reshistory(itr)=rnorm_hi/bnorm_hi
+#if 0
+  call ddcalc_dot(n,icomm,&
+       x_hi,x_lo,&
+       x_hi,x_lo,&
+       xnorm_hi,xnorm_lo)
+#endif
      if(myrank.eq.0)then
 !        write(*,*)"@ res @",itr,rnorm_hi,rnorm_hi/bnorm_hi
+!        write(*,*)"@ res @",itr,rnorm_hi,bnorm_hi
      endif
      !   x = x + alpha*p
      !   p = s + beta * p

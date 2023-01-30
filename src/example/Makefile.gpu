@@ -1,0 +1,40 @@
+
+confdir=./
+include ${confdir}/make_config
+PARCEL_dir = ../
+INCLUDEDIR = -I${PARCEL_dir}/include/
+LDFLAGS = ${PARCEL_dir}/lib/parcel_sparse.a  ${LD_LAPACK} ${LD_MPI} ${LD_CUDA}
+
+PARCEL_FDEFINE = ${FDEFINE}
+ifeq (${CUDAFLAG},ON)
+PARCEL_FDEFINE += -DCUDA_SOLVER 
+endif
+
+PROG3    = run
+PROG4    = run_ddm
+
+PROG7    = run_c
+PROG10   = run_ddm_c
+
+PROBLEM_FILE=problem.o 
+OBJS3 = ${PROBLEM_FILE} main_direct.o
+OBJS4 = ${PROBLEM_FILE} ddm_setup.o main_ddm.o
+OBJS5 = ${PROBLEM_FILE} ddm_setup.o main_ddm_dd.o
+
+OBJS7 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_direct_c.o
+OBJS10 = ${PROBLEM_FILE} ddm_setup.o c2fortran_kernel.o main_ddm_c.o
+
+%.o : %.c
+	${CC} -c ${CFLAGS} ${INCLUDEDIR} ${PARCEL_FDEFINE} $<
+%.o : %.f90
+	${FC} -c ${FFLAGS} ${INCLUDEDIR} ${PARCEL_FDEFINE} $<
+
+all : ${OBJS3} ${OBJS4} ${OBJS7} ${OBJS10} 
+	 ${FC} -o ${PROG3} ${OBJS3} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${FC} -o ${PROG4} ${OBJS4} ${FFLAGS} ${INCLUDEDIR} ${LDFLAGS} 
+	 ${CC} -o ${PROG7} ${OBJS7} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT}
+	 ${CC} -o ${PROG10} ${OBJS10} ${CFLAGS} ${INCLUDEDIR} ${LDFLAGS} ${LD_FORT} 
+
+clean :
+	rm  ${PROG3} ${PROG4} ${PROG7} ${PROG10} ${PROG11} *o *mod *~
+
