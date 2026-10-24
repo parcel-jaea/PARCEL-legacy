@@ -6,7 +6,7 @@
 PARCEL (PARallel Computing ELements) の過去の版を保存するものである。これらの版の開発は終了している。
 
 **現在の PARCEL は SYCL 版 (PARCEL_SYCL) である:** <https://github.com/parcel-jaea/PARCEL-release>
-(Release: <https://github.com/parcel-jaea/PARCEL-release/releases>)。
+(Release: <https://github.com/parcel-jaea/PARCEL-release/releases>、マニュアル: <https://ccse2.jaea.go.jp/software/parcel/v1.2/index.html>)。
 
 ## 版
 
