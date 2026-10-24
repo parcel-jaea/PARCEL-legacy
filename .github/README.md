@@ -6,7 +6,7 @@ This repository keeps the past versions of PARCEL (PARallel Computing ELements),
 solver library written in Fortran (and CUDA from version 1.2). They are no longer developed.
 
 **The current PARCEL is the SYCL version (PARCEL_SYCL):** <https://github.com/parcel-jaea/PARCEL-release>
-(releases: <https://github.com/parcel-jaea/PARCEL-release/releases>; manual: <https://ccse2.jaea.go.jp/software/parcel/v1.2/index_en.html>).
+(releases: <https://github.com/parcel-jaea/PARCEL-release/releases>; manual: <https://ccse2.jaea.go.jp/software/parcel/index_en.html>).
 
 ## Versions
 
